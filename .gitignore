@@ -47,3 +47,6 @@ rsconnect/
 
 *.DS_Store
 
+# modified glatos sim fn
+fn/glatos/*.r
+
