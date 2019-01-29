@@ -80,7 +80,13 @@ sim_move <-
     names(X) <- c("x", "y", "s")
     phi <- c(NA, diff(theta))
     fill <- rep(NA, nrow(X) - length(phi))
-    data.frame(X, ps=c(ps,fill), delta=c(delta,fill), theta=c(theta,fill), phi=c(phi,fill)) %>%
+    
+    sim <- data.frame(X, ps=c(ps,fill), delta=c(delta,fill), theta=c(theta,fill), phi=c(phi,fill)) %>%
       tbl_df()
+    
+    out <- list(sim = sim, data = psim)  
+    class(out) <- "simsmolt"
+    
+    return(out)
     
 }
