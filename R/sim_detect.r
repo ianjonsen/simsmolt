@@ -10,7 +10,7 @@
 #' @importFrom sp Polygon Polygons SpatialPolygons CRS
 #' @importFrom raster buffer
 #' @importFrom prevR point.in.SpatialPolygons
-#' @importFrom dplyr %>%
+#' @importFrom dplyr %>% bind_rows mutate arrange desc
 #' @importFrom glatos detect_transmissions
 #' @importFrom stats plogis
 #' @export
@@ -73,5 +73,10 @@ sim_detect <-
       ndt_labsea <- ifelse(nrow(dt_labsea) == 0, 0, nrow(dt_labsea))
     }
     time2sobi <- which(s$sim$y > mrec[2])[1]
-    browser()
+    
+    s$detect <- bind_rows(dt_sobi, dt_labsea) %>%
+      mutate(array = rep(c("sobi", "labsea"), c(nrow(dt_sobi), nrow(dt_labsea)))) %>%
+      arrange(desc(array), etime, recv_id, trns_id)
+
+    s
   }

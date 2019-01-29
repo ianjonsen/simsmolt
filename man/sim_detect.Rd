@@ -4,7 +4,7 @@
 \alias{sim_detect}
 \title{simulate acoustic transmissions & detection, using sim_move & presim output}
 \usage{
-sim_detect(d, delay = c(20, 60), burst = 5, psim = NULL)
+sim_detect(s, delay = c(20, 60), burst = 5, psim = NULL)
 }
 \arguments{
 \item{delay}{- min & max time intervals (s) between transmissions}

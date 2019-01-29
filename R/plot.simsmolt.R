@@ -20,19 +20,10 @@ m <- ggplot() +
   geom_point(data = s$sim, aes(x, y), colour = "yellow", size = 0.025) +
   geom_point(data = s$data$sobi, aes(x/1000, y/1000), colour = "red", size = 0.01) +
   geom_point(data = s$data$labsea, aes(x/1000, y/1000), colour = "red", size = 0.01)
-  # if(!is.null(trS)) {
-  #   m <- m + geom_point(data = trS, aes(x/1000, y/1000), colour = "blue", size = 0.01) + 
-  #     geom_point(data = dtS, aes(recv_x/1000, recv_y/1000), colour = "green", alpha = 0.45) 
-  # }
-  # if(!is.null(trL)) {
-  #   m <- m + geom_point(data = trL, aes(x/1000, y/1000), colour = "blue", size = 0.01) + 
-  #     geom_point(data = dtL, aes(recv_x/1000, recv_y/1000), colour = "green", alpha = 0.45)
-  # }
-  # 
+   if(!is.null(s$detect)) {
+     m <- m + geom_point(data = s$detect, aes(recv_x/1000, recv_y/1000, colour = array), alpha = 0.45) 
+   }
 
 print(m)
-
-
-
 
 }
