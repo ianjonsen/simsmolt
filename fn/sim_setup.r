@@ -59,7 +59,6 @@ sim_setup <-
       ## `place` receivers in Labrador Sea & generate Polygon object for track sampling
       Lrecs <-
         expand.grid(x = seq(780, 830, l = 26), y = seq(850, 856, l = 4)) * 1000
-
       
     }
     if(!is.null(uv)) list(bathy = bathy.xy, uv = uv, sobi = Srecs, labsea = Lrecs, prj = prj_laea)
