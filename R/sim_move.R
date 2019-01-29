@@ -9,6 +9,10 @@
 #' @param coa - optional Centre-Of-Attraction location(s) to provide movement bias(es)
 #' @param params - movement & (otpional) survival parameters supplied as a list, see details
 #' @param psim - a list of required data from \code{presim}
+#' @importFrom raster extract
+#' @importFrom dplyr %>%
+#' @importFrom tibble as_tibble
+#' @importFrom stats runif rbinom
 #' @export
 #' 
 sim_move <-
@@ -24,8 +28,6 @@ sim_move <-
              ntries = 100,
              surv = 0.9936
            )) {
-    
-    source("fn/rw.r")
     
     if (is.null(psim))
       stop("A `presim` object must be supplied\n")
@@ -63,12 +65,12 @@ sim_move <-
       if(is.null(psim$uv)) {
         tmp <- cbind(X[i - 1, 1] + d[, 1], X[i - 1, 2] + d[, 2])
       } else {
-        uv <- raster::extract(psim$uv, rbind(X[i-1, 1:2])) * 3600/1000 # to convert from m/s to km/h
+        uv <- extract(psim$uv, rbind(X[i-1, 1:2])) * 3600/1000 # to convert from m/s to km/h
         tmp <- cbind(X[i - 1, 1] + d[, 1] + uv[1], X[i - 1, 2] + d[, 2] + uv[2])
       }
      
       ## check if proposed update is on land or in deep ocean
-      p.step <- raster::extract(psim$bathy, tmp, method = "simple")
+      p.step <- extract(psim$bathy, tmp, method = "simple")
       idx <- which(p.step == max(p.step))[1]
       ps[i] <- p.step[p.step == max(p.step)][1]
       X[i, 1:2] <- tmp[idx,]
@@ -82,8 +84,13 @@ sim_move <-
     fill <- rep(NA, nrow(X) - length(phi))
     
     sim <- data.frame(X, ps=c(ps,fill), delta=c(delta,fill), theta=c(theta,fill), phi=c(phi,fill)) %>%
-      tbl_df()
+      as_tibble()
     
+    
+    psim$tag <- tag
+    psim$coa <- coa
+    psim$chgpt <- chgpt
+  
     out <- list(sim = sim, data = psim)  
     class(out) <- "simsmolt"
     

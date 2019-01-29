@@ -11,10 +11,14 @@
 #' @param uv - optional current layers, supplied as u and v components, velocity must be in m/s
 #' @param sst - optional sea surface temperature layer(s)
 #' @param rec - optional acoustic receiver locations
+#' @importFrom raster raster brick
+#' @importFrom sp coordinates<- proj4string<- CRS spTransform
+#' @importFrom dplyr select filter rename bind_cols %>% 
+#' @importFrom readr read_csv
 #' @export
 #' 
 sim_setup <-
-  function(bathy = "dat/prob_xy.grd",
+  function(bathy = file.path("..","simdata","prob_xy.grd"),
            uv = NULL,
            sst = NULL,
            rec = TRUE
@@ -24,8 +28,8 @@ sim_setup <-
     if(is.null(bathy)) stop("path to bathymetry layer must be supplied\n")
     
     ## load required raster layers
-    bathy.xy <- raster::raster(bathy)
-    if(!is.null(uv)) uv <- raster::brick(uv)
+    bathy.xy <- raster(bathy)
+    if(!is.null(uv)) uv <- brick(uv)
     
     ## load receiver location data
     if(rec) {
@@ -34,27 +38,27 @@ sim_setup <-
       ## FIXME:  prep code would prob require consistent receiver location / history format on OTN server
       
       ## get ASF receiver locations
-      asf <- read_csv("dat/stations.csv") %>% 
-        dplyr::select(-notes) %>% 
-        dplyr::filter(collectioncode=="ASF", 
+      asf <- read_csv(file.path("..","simdata","stations.csv")) %>% 
+        select(-notes) %>% 
+        filter(collectioncode=="ASF", 
                       grepl("Acoustic", station_type),
                       stationstatus == "active") %>% 
         rename(lon=longitude, lat=latitude) %>%
-        dplyr::select(-FID, -collectioncode, -station_type, -stationclass, -the_geom)
+        select(-FID, -collectioncode, -station_type, -stationclass, -the_geom)
       
       ## project from longlat to laea
       prj_ll <- "+proj=longlat +ellps=WGS84"
       prj_laea <- "+proj=laea +datum=WGS84 +lat_0=45.00833 +lon_0=-66.99167 +ellps=WGS84 +units=km"
       loc <- data.frame(x=asf$lon, y=asf$lat)
-      sp::coordinates(loc) <- c("x","y")
-      sp::proj4string(loc) <- sp::CRS(prj_ll)
-      locp <- sp::spTransform(loc, sp::CRS(prj_laea)) %>% data.frame()
+      coordinates(loc) <- c("x","y")
+      proj4string(loc) <- CRS(prj_ll)
+      locp <- spTransform(loc, CRS(prj_laea)) %>% data.frame()
       asf <- bind_cols(asf, locp) %>%
-        dplyr::filter(x >= 0)
+        filter(x >= 0)
       ## get SoBI receiver locations
       sobi <- asf %>% filter(grepl("Strait", locality)) 
       ## set receiver locations in m
-      Srecs <- sobi %>% dplyr::select(x, y) * 1000
+      Srecs <- sobi %>% select(x, y) * 1000
       
       ## `place` receivers in Labrador Sea & generate Polygon object for track sampling
       Lrecs <-
