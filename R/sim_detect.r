@@ -67,21 +67,21 @@ sim_detect <-
       browser()
       s$trans <- bind_rows(tr_sobi, tr_labsea) %>%
         mutate(array = rep(c("sobi", "labsea"), c(nrow(tr_sobi), nrow(tr_labsea)))) %>%
-        arrange(desc(array), etime)
+        arrange(desc(array), et)
         s$detect <- bind_rows(dt_sobi, dt_labsea) %>%
           mutate(array = rep(c("sobi", "labsea"), c(nrow(dt_sobi), nrow(dt_labsea)))) %>%
           arrange(desc(array), etime, recv_id, trns_id)
     } else if (exists("dt_sobi") & !exists("dt_labsea")) {
       s$trans <- tr_sobi %>%
         mutate(array = rep(c("sobi"), c(nrow(tr_sobi)))) %>%
-        arrange(desc(array), etime)
+        arrange(desc(array), et)
       s$detect <- dt_sobi %>%
         mutate(array = rep(c("sobi"), c(nrow(dt_sobi)))) %>%
         arrange(desc(array), etime, recv_id, trns_id)
     } else if (!exists("dt_sobi") & exists("dt_labsea")) {
       s$trans <- tr_labse %>%
         mutate(array = rep(c("labsea"), c(nrow(tr_labsea)))) %>%
-  arrange(desc(array), etime)
+  arrange(desc(array), et)
       s$detect <- dt_labsea %>%
         mutate(array = rep(c("labsea"), c(nrow(dt_labsea)))) %>%
         arrange(desc(array), etime, recv_id, trns_id)
