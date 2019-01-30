@@ -64,7 +64,17 @@ sim_setup <-
       Lrecs <-
         expand.grid(x = seq(780, 830, l = 26), y = seq(850, 856, l = 4)) * 1000
       
+      ## create SpatialPolygon around LabSea receivers (for summary & detection purposes)
+      rec <- Polygon(Lrec[chull(Lrecs),] / 1000)
+      rec.box <-
+        SpatialPolygons(
+          list(Polygons(list(rec), ID = 1)),
+          integer(1),
+          proj4string = CRS(prj_laea)
+        )
+      
+      
     }
     if(!is.null(uv)) list(bathy = bathy.xy, uv = uv, sobi = Srecs, labsea = Lrecs, prj = prj_laea)
-    else list(bathy = bathy.xy, sobi = Srecs, labsea = Lrecs, prj = prj_laea)
+    else list(bathy = bathy.xy, sobi = Srecs, labsea = Lrecs, labsea_poly = rec.box, prj = prj_laea)
   }
