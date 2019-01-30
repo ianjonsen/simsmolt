@@ -64,7 +64,6 @@ sim_detect <-
     }
     
     if (exists("dt_sobi") & exists("dt_labsea")) {
-      browser()
       s$trans <- bind_rows(tr_sobi, tr_labsea) %>%
         mutate(array = rep(c("sobi", "labsea"), c(nrow(tr_sobi), nrow(tr_labsea)))) %>%
         arrange(desc(array), et)

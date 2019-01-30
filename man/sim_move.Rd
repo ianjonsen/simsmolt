@@ -5,7 +5,7 @@
 \title{simulate movements & survival, using inputs from presim}
 \usage{
 sim_move(N = 1800, tag = c(150, 240), coa = c(900, 950),
-  chgpt = c(800, 835), psim = NULL, param = list(a = 2, b = 0.864,
+  chgpt = c(800, 835), data = NULL, param = list(a = 2, b = 0.864,
   rho = 0.8, ntries = 100, surv = 0.9936))
 }
 \arguments{
@@ -15,7 +15,7 @@ sim_move(N = 1800, tag = c(150, 240), coa = c(900, 950),
 
 \item{coa}{- optional Centre-Of-Attraction location(s) to provide movement bias(es)}
 
-\item{psim}{- a list of required data from \code{presim}}
+\item{data}{- a list of required data from \code{presim}}
 
 \item{params}{- movement & (otpional) survival parameters supplied as a list, see details}
 }

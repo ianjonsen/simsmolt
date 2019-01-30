@@ -8,7 +8,7 @@
 #' @param tag - start location(s) of simulated animals
 #' @param coa - optional Centre-Of-Attraction location(s) to provide movement bias(es)
 #' @param params - movement & (otpional) survival parameters supplied as a list, see details
-#' @param psim - a list of required data from \code{presim}
+#' @param data - a list of required data from \code{presim}
 #' @importFrom raster extract
 #' @importFrom dplyr %>%
 #' @importFrom tibble as_tibble
@@ -20,7 +20,7 @@ sim_move <-
            tag = c(150, 240),
            coa = c(900, 950),
            chgpt = c(800, 835),
-           psim = NULL,
+           data = NULL,
            param = list(
              a = 2,
              b = 0.864,
@@ -29,11 +29,11 @@ sim_move <-
              surv = 0.9936
            )) {
     
-    if (is.null(psim))
-      stop("A `presim` object must be supplied\n")
-    if(class(psim$bathy)[1] != "RasterLayer") stop("bathymetry must be a RasterLayer")
-    if(!is.null(psim$uv)) {
-      if(class(psim$uv)[1] != "RasterBrick" || (!names(psim$uv) %in% c("u","v"))) 
+    if (is.null(data))
+      stop("Can't find output from sim_setup()\n")
+    if(class(data$bathy)[1] != "RasterLayer") stop("bathymetry must be a RasterLayer")
+    if(!is.null(data$uv)) {
+      if(class(data$uv)[1] != "RasterBrick" || (!names(data$uv) %in% c("u","v"))) 
         stop("current data must be supplied as a RasterBrick with u and v layers")
     }
     if(is.null(chgpt)) chgpt <- c(100000, 100000) # set to huge number to ensure all steps are before chgpt
@@ -62,15 +62,15 @@ sim_move <-
       d <- rw(n = param$ntries, mu = theta[i], rho = param$rho, a = param$a, b = param$b) 
       
       ## add advection due to current, if raster is supplied
-      if(is.null(psim$uv)) {
+      if(is.null(data$uv)) {
         tmp <- cbind(X[i - 1, 1] + d[, 1], X[i - 1, 2] + d[, 2])
       } else {
-        uv <- extract(psim$uv, rbind(X[i-1, 1:2])) * 3600/1000 # to convert from m/s to km/h
+        uv <- extract(data$uv, rbind(X[i-1, 1:2])) * 3600/1000 # to convert from m/s to km/h
         tmp <- cbind(X[i - 1, 1] + d[, 1] + uv[1], X[i - 1, 2] + d[, 2] + uv[2])
       }
      
       ## check if proposed update is on land or in deep ocean
-      p.step <- extract(psim$bathy, tmp, method = "simple")
+      p.step <- extract(data$bathy, tmp, method = "simple")
       idx <- which(p.step == max(p.step))[1]
       ps[i] <- p.step[p.step == max(p.step)][1]
       X[i, 1:2] <- tmp[idx,]
@@ -87,11 +87,11 @@ sim_move <-
       as_tibble()
     
     
-    psim$tag <- tag
-    psim$coa <- coa
-    psim$chgpt <- chgpt
+    data$tag <- tag
+    data$coa <- coa
+    data$chgpt <- chgpt
   
-    out <- list(sim = sim, data = psim)  
+    out <- list(sim = sim, data = data)  
     class(out) <- "simsmolt"
     
     return(out)

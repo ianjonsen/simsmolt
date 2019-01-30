@@ -4,14 +4,14 @@
 \alias{sim_detect}
 \title{simulate acoustic transmissions & detection, using sim_move & presim output}
 \usage{
-sim_detect(s, delay = c(20, 60), burst = 5, psim = NULL)
+sim_detect(s, delay = c(20, 60), burst = 5)
 }
 \arguments{
+\item{s}{- a simsmolt class list containing output from sim_setup and sim_move}
+
 \item{delay}{- min & max time intervals (s) between transmissions}
 
 \item{burst}{- duration of each transmission (s)}
-
-\item{psim}{- a list of required data from \code{presim}}
 }
 \description{
 simulates transmissions & detections along simulated track segments within a defined range of acoustic array(s)
