@@ -31,15 +31,10 @@ sim_detect <-
     if (length(in.rng) > 0)
       tr_sobi <- trap(s$sim[in.rng, c("x", "y")] * 1000, delayRng = c(20, 60)) ## delay from Chaput et al 2018
    
-    ## create SpatialPolygon around LabSea receivers with a 2km buffer
-    rec <- Polygon(s$data$labsea[chull(s$data$labsea),] / 1000)
-    rec.box <-
-      SpatialPolygons(
-        list(Polygons(list(rec), ID = 1)),
-        integer(1),
-        proj4string = CRS(s$data$prj)
-      )
-    rb.buff <- rec.box %>% buffer(., 1)
+    ## create 1 km buffer around Lab Sea array
+    rb.buff <- s$data$labsea_poly %>% buffer(., 1)
+    
+    ## determine which smolt track locations are in Lab Sea array
     in.grid <- point.in.SpatialPolygons(s$sim$x, s$sim$y, rb.buff)
     if (sum(in.grid) > 0)
       ## FIXME: will return approx error if only 1 location in grid
@@ -54,29 +49,32 @@ sim_detect <-
     
     ## simulate detections given receiver locations & simulated transmission along track
     ##  FIXME: NEED TO ADAPT GLATOS VERSION SO PDRF CAN BE MODIFIED IN FN CALL
-    dt_sobi <- dt_labsea <- ndt_labsea <- ndt_sobi <- h.in.grid <- NULL
+    dt_sobi <- dt_labsea <- NULL
     if (!is.null(tr_sobi)) {
       dt_sobi <-
         detect_transmissions(trnsLoc = tr_sobi,
                                      recLoc = s$data$sobi,
                                      detRngFun = pdrf)
-      ndt_sobi <- ifelse(nrow(dt_sobi) == 0, 0, nrow(dt_sobi))
     }
     if (!is.null(tr_labsea)) {
-      ## count number of h smolt is in receiver grid
-      h.in.grid <-
-        point.in.SpatialPolygons(s$sim$x, s$sim$y, rec.box) %>% sum()
       dt_labsea <-
         detect_transmissions(trnsLoc = tr_labsea,
                                      recLoc = s$data$labsea,
                                      detRngFun = pdrf)
-      ndt_labsea <- ifelse(nrow(dt_labsea) == 0, 0, nrow(dt_labsea))
     }
-    time2sobi <- which(s$sim$y > mrec[2])[1]
     
+    if(exists("dt_sobi") & exists("dt_labsea")) {
     s$detect <- bind_rows(dt_sobi, dt_labsea) %>%
       mutate(array = rep(c("sobi", "labsea"), c(nrow(dt_sobi), nrow(dt_labsea)))) %>%
       arrange(desc(array), etime, recv_id, trns_id)
-
+    } else if(exists("dt_sobi") & !exists("dt_labsea")) {
+      s$detect <- dt_sobi %>%
+        mutate(array = rep(c("sobi"), c(nrow(dt_sobi)))) %>%
+        arrange(desc(array), etime, recv_id, trns_id)
+    } else if(!exists("dt_sobi") & exists("dt_labsea")) {
+      s$detect <- dt_labsea %>%
+        mutate(array = rep(c("labsea"), c(nrow(dt_labsea)))) %>%
+        arrange(desc(array), etime, recv_id, trns_id)
+    }
     s
   }
