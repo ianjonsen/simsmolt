@@ -41,7 +41,7 @@
 #' 
 #' @importFrom stats runif approx
 #' @export
-trap <- function(path = NA, delayRng = c(60, 180), burstDur = 5.0) {
+sim_transmit <- function(path = NA, delayRng = c(60, 180), burstDur = 5.0) {
   #cumulative distance travelled in meters 
   path$cumdistm <- c(0, cumsum(sqrt(diff(path$x)^2 + diff(path$y)^2)))
   path$etime <- c(0, cumsum(rep(3600, nrow(path) - 1))) #elapsed time in s 
