@@ -55,7 +55,7 @@ sim_transmit <- function(path = NA, delayRng = c(60, 180), burstDur = 5.0) {
   trns <- data.frame(
     x = approx(path$etime, path$x, xout=etime)$y,      
     y = approx(path$etime, path$y, xout=etime)$y,
-    et = etime)
+    etime = etime)
   
   return(trns)
 }

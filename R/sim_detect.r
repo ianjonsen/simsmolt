@@ -4,9 +4,9 @@
 #' 
 #' @author Ian Jonsen \email{ian.jonsen@mq.edu.au}
 #' 
+#' @param s - a simsmolt class list containing output from sim_setup and sim_move
 #' @param delay - min & max time intervals (s) between transmissions
 #' @param burst - duration of each transmission (s)
-#' @param psim - a list of required data from \code{presim}
 #' @importFrom sp Polygon Polygons SpatialPolygons CRS
 #' @importFrom raster buffer
 #' @importFrom prevR point.in.SpatialPolygons
@@ -16,7 +16,7 @@
 #' @export
 #' 
 sim_detect <-
-  function(s, delay = c(20,60), burst = 5.0, psim=NULL){
+  function(s, delay = c(20,60), burst = 5.0){
     
     ## simulate tag transmissions along track but only within +/-10 km of avg receiver location
     ##  otherwise trap() output is far too big to generate along full track
@@ -64,6 +64,7 @@ sim_detect <-
     }
     
     if (exists("dt_sobi") & exists("dt_labsea")) {
+      browser()
       s$trans <- bind_rows(tr_sobi, tr_labsea) %>%
         mutate(array = rep(c("sobi", "labsea"), c(nrow(tr_sobi), nrow(tr_labsea)))) %>%
         arrange(desc(array), etime)
