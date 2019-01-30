@@ -65,7 +65,7 @@ sim_setup <-
         expand.grid(x = seq(780, 830, l = 26), y = seq(850, 856, l = 4)) * 1000
       
       ## create SpatialPolygon around LabSea receivers (for summary & detection purposes)
-      rec <- Polygon(Lrec[chull(Lrecs),] / 1000)
+      rec <- Polygon(Lrecs[chull(Lrecs),] / 1000)
       rec.box <-
         SpatialPolygons(
           list(Polygons(list(rec), ID = 1)),
