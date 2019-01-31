@@ -4,7 +4,7 @@ language: r
 
 r:
   - release
-- devel
+  - devel
 
 warnings_are_errors: false
 
@@ -15,7 +15,7 @@ dist: trusty
 
 cache:
   - packages
-- ccache
+  - ccache
 
 latex: false
 
@@ -23,5 +23,5 @@ addons:
   apt:
   packages:
   - libgdal-dev
-- libproj-dev
-- libgeos-dev
+  - libproj-dev
+  - libgeos-dev
