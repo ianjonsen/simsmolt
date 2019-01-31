@@ -27,6 +27,9 @@ sim_setup <-
     
     if(is.null(bathy)) stop("path to bathymetry layer must be supplied\n")
     
+    ## FIXME: this needs to be generalized - provide spatial extent for query to download ETOPO2 data?
+    ## FIXME:   or rely on user supplying their own bathymetry data
+    
     ## load required raster layers
     bathy.xy <- raster(bathy)
     if(!is.null(uv)) uv <- brick(uv)
