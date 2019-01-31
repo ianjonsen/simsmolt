@@ -34,11 +34,10 @@ summary.simsmolt <- function(x, ...) {
 print.summary.simsmolt <- function(x, digits = 3,
                                ...)
 {
-  browser()
   cat(sprintf("%3.0f d to reach SoBI\n", x$time2sobi/24))
   cat(sprintf("%3.0d h in Lab Sea grid\n", x$h.in.grid))
-  cat(sprintf("%3.0i total transmissions\n", x$trans$tr))
-  cat(sprintf("%3.0i total detections\n", x$dets$dt))
+  cat(sprintf("%3.0i transmissions on SoBI line, %3.0i transimissions on LabSea array\n", x$trans$tr[2], x$trans$tr[1]))
+  cat(sprintf("%3.0i detections on SoBI line, %3.0i detections on LabSea array\n", x$dets$dt[2], x$dets$dt[1]))
   
   invisible(x)
 }## print.summary.simsmolt
