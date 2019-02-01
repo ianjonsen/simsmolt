@@ -14,4 +14,5 @@ while focused on a specific project, this code will be generalised so detections
 `plot(out)`
 
 ### simulate multiple, independent smolts
+`d <- sim_setup()`  
 `out <- data.frame(id=1:10) %>% group_by(id) %>% do(sims = sim_move(N=1800, data = d))`
