@@ -14,7 +14,7 @@ bathy <- rasterToPoints(s$data$bathy) %>% data.frame()
 names(bathy)[3] <- "z"
   
 m <- ggplot() + 
-  coord_fixed(ratio = 1.84, xlim = c(s$data$tag[1], s$data$coa[1]), ylim = c(s$data$tag[2], max(s$sim$y, na.rm = TRUE) * 1.1)) + 
+  coord_fixed(ratio = 1.84, xlim = c(100, 1250), ylim = c(700, 2000)) + 
   geom_raster(data = bathy, aes(x, y, fill = z)) + 
   scale_fill_gradient2(low = "#053061", mid = "#43a2ca", high = "#e0f3db", guide = "none") +
   theme_minimal() + 
@@ -26,6 +26,6 @@ m <- ggplot() +
        scale_color_brewer(type = "qual", palette = 1)
    }
 
-print(m)
+return(m)
 
 }
