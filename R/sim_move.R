@@ -17,9 +17,9 @@
 #' 
 sim_move <-
   function(N = 1800,
-           tag = c(150, 240),
-           coa = c(900, 950),
-           chgpt = c(800, 835),
+           tag = c(712, 761),
+           coa = c(1000, 1000),
+           y.chgpts = c(835, 1100),
            data = NULL,
            param = list(
              a = 2,
@@ -36,7 +36,7 @@ sim_move <-
       if(class(data$uv)[1] != "RasterBrick" || (!names(data$uv) %in% c("u","v"))) 
         stop("current data must be supplied as a RasterBrick with u and v layers")
     }
-    if(is.null(chgpt)) chgpt <- c(100000, 100000) # set to huge number to ensure all steps are before chgpt
+    if(is.null(y.chgpts)) y.chgpts <- c(100000, 100000) # set to huge number to ensure all steps are before chgpt
     
     ## define location/survivourship, s matrix & start position
     X <- matrix(NA, N, 3)
@@ -48,13 +48,17 @@ sim_move <-
   
     ## recursion
     for (i in 2:N) {
-      if(X[i - 1, 1] < chgpt[1] & X[i - 1, 2] < chgpt[2]) {
+      if(X[i - 1, 2] < y.chgpts[1]) {
         delta[i] <- sqrt((coa[1] - X[i - 1, 1]) ^ 2 + (coa[2] - X[i - 1, 2]) ^ 2)
         theta[i] <- atan2(coa[1] - X[i - 1, 1], coa[2] - X[i - 1, 2])
-      } else {
+      } else if(X[i - 1, 2] >= y.chgpts[1] & X[i - 1, 2] < y.chgpts[2]) {
         ## if in Lab Sea then head NW
         delta[i] <- NA
-        theta[i] <- thetaL / 180*pi
+        theta[i] <- thetaL / 180 * pi
+        rho <- rhoL
+      } else if(X[ i - 1, 2] >= y.chgpts[2]) {
+        delta[i] <- NA
+        theta[i] <- (thetaL - 20) / 180 * pi
         rho <- rhoL
       }
     
@@ -89,7 +93,7 @@ sim_move <-
     
     data$tag <- tag
     data$coa <- coa
-    data$chgpt <- chgpt
+    data$chgpts <- y.chgpts
   
     out <- list(sim = sim, data = data)  
     class(out) <- "simsmolt"
