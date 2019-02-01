@@ -8,6 +8,10 @@ while focused on a specific project, this code will be generalised so detections
 [![Build Status](https://travis-ci.org/ianjonsen/simsmolt.svg?branch=master)](https://travis-ci.org/ianjonsen/simsmolt)
 
 ## tidy simulation
-`out <- sim_setup() %>% sim_move(data=.) %>% sim_detect()`  
+### simulate a single smolt's migration for 75 d (1800 h)
+`out <- sim_setup() %>% sim_move(N=1800, data=.) %>% sim_detect()`  
 `summary(out)`  
 `plot(out)`
+
+## simulate multiple, independent smolts
+`out <- data.frame(id=1:10) %>% group_by(id) %>% do(sims = sim_move(N=1800, data = d))`
