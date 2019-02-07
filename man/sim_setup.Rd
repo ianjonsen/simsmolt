@@ -4,11 +4,12 @@
 \alias{sim_setup}
 \title{Pre-simulation setup}
 \usage{
-sim_setup(bathy = file.path("..", "simdata", "prob_xy.grd"), uv = NULL,
+sim_setup(land = file.path("..", "simdata", "d2land_xy.grd"),
+  land.dir = file.path("..", "simdata", "land_dir.grd"), uv = NULL,
   sst = NULL, rec = TRUE)
 }
 \arguments{
-\item{bathy}{- required bathymetry layer to define simulation domain}
+\item{land}{- required distance to layer to define simulation domain}
 
 \item{uv}{- optional current layers, supplied as u and v components, velocity must be in m/s}
 

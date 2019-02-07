@@ -4,10 +4,14 @@
 \alias{plot.simsmolt}
 \title{plot}
 \usage{
-\method{plot}{simsmolt}(s, ...)
+\method{plot}{simsmolt}(s, xlim = NULL, ylim = NULL, ...)
 }
 \arguments{
 \item{s}{a fitted object of class simsmolt}
+
+\item{xlim}{plot x limits}
+
+\item{ylim}{plot y limits}
 }
 \description{
 Map simulated track
