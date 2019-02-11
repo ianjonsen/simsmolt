@@ -6,12 +6,18 @@ summary.simsmolt <- function(x, ...) {
   if (length(list(...)) > 0) {
     warning("additional arguments ignored")
   }
-  browser()
+
+  if(class(x)[2] == "rowwise_df") {
+    ## summarise multiple replicates
+    if(names(x)[2] != "rep") stop("expecting simulation output objects to be named 'rep'")
+    all.tr <- lapply(x$rep, function(.) .$trans) %>% do.call(rbind, .)
+    all.dt <- lapply(x$rep, function(.) .$detect) %>% do.call(rbind, .)
+    mNdt <- sapply(x$rep, function(.) max(.$sim$y) / nrow(.$sim) / 24) 
+    
+    browser() 
+  }
   
-  all.trans <- lapply(1:nrow(x), function(i) x$out[[i]]$trans) %>% do.call(rbind, .)
-  all.detects <- lapply(1:nrow(x), function(i) x$out[[i]]$detect) %>% do.call(rbind, .)
   
-  browser()
   
   ## num h smolt is in Lab Sea array
   h.in.grid <-

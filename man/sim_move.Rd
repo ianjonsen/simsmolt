@@ -4,7 +4,8 @@
 \alias{sim_move}
 \title{simulate movements & survival, using inputs from presim}
 \usage{
-sim_move(N = 1800, tag = c(712, 761), data = NULL, mpar = list())
+sim_move(N = 1800, tag = c(712, 761), data = NULL, mpar = list(),
+  pb = TRUE)
 }
 \arguments{
 \item{N}{- number of 1-h time steps to simulate}

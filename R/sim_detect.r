@@ -12,7 +12,6 @@
 #' @importFrom raster buffer
 #' @importFrom prevR point.in.SpatialPolygons
 #' @importFrom dplyr %>% bind_rows mutate arrange desc
-#' @importFrom glatos detect_transmissions
 #' @importFrom stats plogis
 #' @export
 #' 
@@ -29,7 +28,7 @@ sim_detect <-
     yrec <- recs$y %>% unique()
     
     in.rng <- lapply(1:length(yrec), function(i) {
-      which(abs(yrec[i] - s$sim[, "y"]) <= 10)
+      which(abs(yrec[i] - s$sim[, "y"]) <= 1.5)
     })
     ## drop rec lines that smolt did not cross
     in.rng <- in.rng[which(sapply(in.rng, length) > 0 )]
@@ -56,7 +55,7 @@ sim_detect <-
 #    if(nrow(trans) > 0) {
       detect <- trans %>% 
         group_by(line) %>%
-        do(detect_transmissions(trnsLoc = ., recLoc = recs[, c("x","y")] * 1000, detRngFun = pdrf))
+        do(glatos_detect_transmissions(trnsLoc = ., recLoc = recs[, c("x","y")] * 1000, detRngFun = pdrf))
       
       s$trans <- trans %>%
         select(line, et, x, y) %>%

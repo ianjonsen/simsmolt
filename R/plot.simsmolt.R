@@ -11,6 +11,85 @@
 ##' @export
 
 plot.simsmolt <- function(s, xlim = NULL, ylim = NULL, ...) {
+  
+  if(!is.na(class(s)[2]) & class(s)[2] == "rowwise_df") {
+    bathy <- s$rep[[1]]$data$bathy
+    bathy[bathy > 0] <- NA
+    bathy <- rasterToPoints(bathy) %>% data.frame()
+    land <- s$rep[[1]]$data$land
+    land <- rasterToPoints(land) %>% data.frame()
+    names(land)[3] <- "d"
+    
+    if(is.null(xlim)) xlim <- extendrange(sapply(s$rep, function(.) .$sim$x), f = 1)
+    if(is.null(ylim)) ylim <- extendrange(sapply(s$rep, function(.) .$sim$y), f = 0.25)
+    
+    coa <-
+      data.frame(
+        x = sapply(s$rep, function(.)
+          .$data$coa[1]),
+        y = sapply(s$rep, function(.)
+          .$data$coa[2])
+      )
+   
+    trans <- lapply(s$rep, function(.) .$trans) %>% do.call(rbind, .)
+    detect <- lapply(s$rep, function(.) .$detect) %>% do.call(rbind, .)
+    recs <- s$rep[[1]]$data$recs
+    sim <- lapply(1:nrow(s), function(i) data.frame(id=i, s$rep[[i]]$sim)) %>% do.call(rbind, .)
+    
+    m <- ggplot() +
+      coord_fixed(
+        ratio = 1.84,
+        xlim = xlim,
+        ylim = ylim,
+        expand = TRUE
+      ) +
+      #  coord_quickmap(xlim = xrng, ylim = yrng) +
+      geom_raster(data = land, aes(x, y, fill = d)) +
+      #  scale_fill_gradient2(low = "#053061", mid = "#43a2ca", high = "#e0f3db", guide = "none") +
+      scale_fill_viridis_c(direction = -1) +
+      theme_minimal() +
+      geom_point(data = coa,
+                 aes(x, y),
+                 colour = "red",
+                 size = 1) +
+      geom_contour(
+        data = bathy,
+        aes(x, y, z = z),
+        breaks = seq(-400,-700,by=-100),
+        col = "white",
+        lwd = 0.2
+      )
+    if (!is.null(trans) && nrow(trans) > 0) {
+      m <-
+        m + geom_point(
+          data = trans,
+          aes(x / 1000, y / 1000),
+          col = "lightblue",
+          alpha = 0.35,
+          size = 0.75
+        )
+    }
+    m <-
+      m + geom_point(
+        data = recs,
+        aes(x, y),
+        colour = "blue",
+        size = 0.4
+      ) +
+      geom_path(data = sim,
+                 aes(x, y, group=id),
+                 colour = "firebrick",
+                 size = 0.1)
+    
+    if (!is.null(detect) && nrow(detect) > 0) {
+      m <-
+        m + geom_point(data = detect, aes(recv_x / 1000, recv_y / 1000, colour = line)) +
+        scale_color_brewer(type = "qual", palette = 1)
+    }
+    
+    return(m) 
+    } else if(is.na(class(s)[2])){
+      
   bathy <- s$data$bathy
   bathy[bathy > 0] <- NA
   bathy <- rasterToPoints(bathy) %>% data.frame()
@@ -77,5 +156,5 @@ plot.simsmolt <- function(s, xlim = NULL, ylim = NULL, ...) {
   }
   
   return(m)
-  
+    }
 }

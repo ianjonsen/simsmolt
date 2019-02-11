@@ -196,8 +196,7 @@ sim_move <-
     X <- data.frame(X)
     names(X) <- c("x", "y", "s")
 
-    sim <- data.frame(X, r=rd, rz=rz, delta=delta, theta_s=theta_s) %>%
-      as_tibble()
+    sim <- X %>% as_tibble()
     
     
     data$tag <- tag

@@ -12,6 +12,8 @@ sim_detect(s, delay = c(20, 60), burst = 5)
 \item{delay}{- min & max time intervals (s) between transmissions}
 
 \item{burst}{- duration of each transmission (s)}
+
+\item{b}{- logistic regression parameters for detection range function (pdrf) - parameters from glm - estimated SoBI sentinel data (old)}
 }
 \description{
 simulates transmissions & detections along simulated track segments within a defined range of acoustic array(s)
