@@ -23,13 +23,14 @@ sim_detect <-
     ##    - convert locs from km to m grid; vel in m/s
 
     recs <- s$data$recs %>%
-      arrange(desc(id))
+      arrange(desc(line))
     trans <- tmp.tr <- dt <- tmp.dt <- NULL
     yrec <- recs$y %>% unique()
     
     in.rng <- lapply(1:length(yrec), function(i) {
       which(abs(yrec[i] - s$sim[, "y"]) <= 1.5)
     })
+
     ## drop rec lines that smolt did not cross
     in.rng <- in.rng[which(sapply(in.rng, length) > 0 )]
     

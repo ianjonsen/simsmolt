@@ -100,10 +100,10 @@ sim_setup <-
           rgdal::project(., proj=prj_laea) %>%
           as.data.frame()
         names(nain) <- c("x","y")
-        recLines <- list(data.frame(id=rep("Lab_4", 22), x=seq(365,575, by = 10), y=rep(1292, 22)))
-        recLines[[2]] <- data.frame(id=rep("Lab_3", 36), x=seq(520, 870, by = 10), y=rep(1292-154, 36))
-        recLines[[3]] <- data.frame(id=rep("Lab_2", 27), x=seq(740, 1000, by = 10), y=rep(1292-154*2, 27))
-        recLines[[4]] <- data.frame(id=rep("Lab_1", 40), x=seq(765, 1160, by = 10), y=rep(1292-154*3, 40))
+        recLines <- list(data.frame(line=rep("Lab_4", 22), x=seq(365,575, by = 10), y=rep(1292, 22)))
+        recLines[[2]] <- data.frame(line=rep("Lab_3", 36), x=seq(520, 870, by = 10), y=rep(1292-154, 36))
+        recLines[[3]] <- data.frame(line=rep("Lab_2", 27), x=seq(740, 1000, by = 10), y=rep(1292-154*2, 27))
+        recLines[[4]] <- data.frame(line=rep("Lab_1", 40), x=seq(765, 1160, by = 10), y=rep(1292-154*3, 40))
         recLines <- do.call(rbind, recLines)
       
 #      Lrecs <-
