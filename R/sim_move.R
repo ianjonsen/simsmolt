@@ -19,11 +19,12 @@ sim_move <-
   function(N = 1800,
            tag = c(712, 761),
            data = NULL,
-           mpar = list()
+           mpar = list(),
+           pb = TRUE
            ) {
     ## default move parameters
     mpar.full <- list(
-      coa = c(rnorm(1,200,50), rnorm(1,1750,100)),
+      coa = c(rnorm(1,150,50), rnorm(1,1500,100)),
       a = 2,
       b = 0.864,
       rho_s = 0.9,
@@ -68,6 +69,8 @@ sim_move <-
 
     ## recursion
     for (i in 2:N) {
+      if(i==2 && pb)  tpb <- txtProgressBar(min = 2, max = N, style = 3)
+      
       ## get distance from land at first step
       if(i == 2) {
         rd[i-1] <- extract(data$land, rbind(X[i - 1, 1:2]))
@@ -93,7 +96,7 @@ sim_move <-
         
         ## apply weighting based on current distance to coast, 700 m isobath & specified buffer distance
         if(rz[i-1] > mpar$buffer[2]) {
-          cat(cbind(i, rd[i-1], rz[i-1]),"\n")
+#          cat(cbind(i, rd[i-1], rz[i-1]),"\n")
           ## direction ~ parallel to coast (to East) at current location
           theta_d <- (extract(data$land.dir, rbind(X[i - 1, 1:2]), buffer=10, fun=mean, na.rm=TRUE) + 0.6 * pi) %% (2*pi)
           ## draw n proposal steps for move deflection (to avoid land)
@@ -109,7 +112,7 @@ sim_move <-
           z <- cbind(0,0)
           
         } else if(rz[i-1] <= mpar$buffer[2]){
-          cat(cbind(i, rd[i-1], rz[i-1]),"\n")
+#          cat(cbind(i, rd[i-1], rz[i-1]),"\n")
           ## direction opposite to -700 m isobath at current location
           theta_z <- (extract(data$b700.dir, rbind(X[i - 1, 1:2]), buffer=10, fun=mean, na.rm=TRUE) - 0.75 * pi) %% (2*pi)
           ## draw n proposal steps for move deflection to stay in water < 700 m deep (~ on shelf)
@@ -162,7 +165,11 @@ sim_move <-
       }
       ## select first proposal that is > mindist (km) from land 
       idx <- which(dist > mpar$mindist)
-      if(length(idx)==0) stop("track stuck at a coastal boundary")
+      if(length(idx)==0) {
+        X[i, 3] <- -1
+        break
+        #stop("track stuck at a coastal boundary")
+      }
       idx <- sample(idx, 1)
       
       rd[i] <- dist[idx]
@@ -173,11 +180,17 @@ sim_move <-
       
       ## determine survivourship
       X[i, 3] <- rbinom(1, 1, mpar$surv^(1/24)) # rescale daily survival to hourly prob. 
+      
+      if(pb){
+        setTxtProgressBar(tpb, i)
+        if(i==N | X[i, 3] == 0) close(tpb)
+      }
+      
       if(X[i, 3] == 0) break # stop if dead
     }
     ## truncate matrix if death occurs before i = N
     if(length(na.omit(X[, 3])) < N) {
-      end <- which(X[, 3] == 0)
+      end <- which(X[, 3] < 1)
       X <- X[1:end, ]
     }
     X <- data.frame(X)

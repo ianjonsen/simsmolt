@@ -6,6 +6,12 @@ summary.simsmolt <- function(x, ...) {
   if (length(list(...)) > 0) {
     warning("additional arguments ignored")
   }
+  browser()
+  
+  all.trans <- lapply(1:nrow(x), function(i) x$out[[i]]$trans) %>% do.call(rbind, .)
+  all.detects <- lapply(1:nrow(x), function(i) x$out[[i]]$detect) %>% do.call(rbind, .)
+  
+  browser()
   
   ## num h smolt is in Lab Sea array
   h.in.grid <-

@@ -4,12 +4,23 @@
 \alias{sim_setup}
 \title{Pre-simulation setup}
 \usage{
-sim_setup(land = file.path("..", "simdata", "d2land_xy.grd"),
-  land.dir = file.path("..", "simdata", "land_dir.grd"), uv = NULL,
+sim_setup(bathy = file.path("..", "simdata", "bathy.nc"),
+  land = file.path("..", "simdata", "d2land_xy.grd"),
+  land.dir = file.path("..", "simdata", "land_dir2.grd"),
+  b700.dist = file.path("..", "simdata", "b700_dist.grd"),
+  b700.dir = file.path("..", "simdata", "b700_dir.grd"), uv = NULL,
   sst = NULL, rec = TRUE)
 }
 \arguments{
-\item{land}{- required distance to layer to define simulation domain}
+\item{bathy}{- required bathymetry file}
+
+\item{land}{- required distance to land to define simulation domain}
+
+\item{land.dir}{- required direction to nearest land}
+
+\item{b700.dist}{- required distance to 700 m isobath}
+
+\item{b700.dir}{-  required direction to 700 m isobath}
 
 \item{uv}{- optional current layers, supplied as u and v components, velocity must be in m/s}
 
