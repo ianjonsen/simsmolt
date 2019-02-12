@@ -16,11 +16,18 @@ while focused on a specific project, this code will be generalised so detections
 ### simulate multiple, independent smolts
 `d <- sim_setup()`  
 `out <- data.frame(id=1:5) %>% group_by(id) %>% do(rep = sim_move(N=1200, data = d, mpar=list(surv=1)) %>% sim_detect(.))`
+`class(out) <- append(class(out), "simsmolt", 0)`  
+`plot(out)`
 
 ### simulate multiple smolts across multiple processor cores
 `d <- sim_setup()`  
 `cls <- multidplyr::create_cluster(11)`  
+`multidplyr::cluster_library(cls, c("simsmolt", "dplyr"))`  
+`multidplyr::cluster_copy(cls, d)`  
 `out <- data.frame(id = 1:100) %>%`  
   `multidplyr::partition(id, cluster = cls) %>%`  
   `do(rep = sim_move(N=1200, data = d, mpar=list(surv=1, rho=0.8), pb=FALSE) %>% sim_detect(.)) %>%`  
-  `collect()`
+  `collect()`  
+`class(out) <- append(class(out), "simsmolt", 0)`  
+`plot(out)`  
+`summary(out)`
