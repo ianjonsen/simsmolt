@@ -24,7 +24,7 @@ sim_move <-
            ) {
     ## default move parameters
     mpar.full <- list(
-      coa = c(rnorm(1,300,50), rnorm(1,1700,100)),
+      coa = c(300,1700) + rnorm(2, 0, 100),
       a = 2,
       b = 0.864,
       rho_s = 0.9,
@@ -114,7 +114,7 @@ sim_move <-
         } else if(rz[i-1] <= mpar$buffer[2]){
 #          cat(cbind(i, rd[i-1], rz[i-1]),"\n")
           ## direction opposite to -700 m isobath at current location
-          theta_z <- (extract(data$b700.dir, rbind(X[i - 1, 1:2]), buffer=10, fun=mean, na.rm=TRUE) - 0.75 * pi) %% (2*pi)
+          theta_z <- (extract(data$b700.dir, rbind(X[i - 1, 1:2]), na.rm=TRUE) - 0.75 * pi) %% (2*pi)
           ## draw n proposal steps for move deflection to stay in water < 700 m deep (~ on shelf)
           z <- rw(n = mpar$ntries,
                   mu = theta_z,
