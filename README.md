@@ -15,7 +15,7 @@ while focused on a specific project, this code will be generalised so detections
 
 ### simulate multiple, independent smolts
 `d <- sim_setup()`  
-`out <- data.frame(id=1:5) %>% group_by(id) %>% do(rep = sim_move(N=1200, data = d, mpar=list(surv=1)) %>% sim_detect(.))`  
+`out <- data.frame(id=1:5) %>% group_by(id) %>% do(rep = try(sim_move(N=1200, data = d, mpar=list(surv=1)) %>% sim_detect(.)))`  
 `class(out) <- append(class(out), "simsmolt", 0)`  
 `plot(out)`
 
@@ -26,7 +26,7 @@ while focused on a specific project, this code will be generalised so detections
 `multidplyr::cluster_copy(cls, d)`  
 `out <- data.frame(id = 1:100) %>%`  
   `multidplyr::partition(id, cluster = cls) %>%`  
-  `do(rep = sim_move(N=1200, data = d, mpar=list(surv=1, rho=0.8), pb=FALSE) %>% sim_detect(.)) %>%`  
+  `do(rep = try(sim_move(N=1200, data = d, mpar=list(surv=1, rho=0.8), pb=FALSE) %>% sim_detect(.))) %>%`  
   `collect()`  
 `class(out) <- append(class(out), "simsmolt", 0)`  
 `plot(out)`  
