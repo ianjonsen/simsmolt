@@ -10,9 +10,9 @@
 ##' @method plot simsmolt
 ##' @export
 
-plot.simsmolt <- function(s, xlim = NULL, ylim = NULL, ...) {
+plot.simsmolt <- function(s, xlim = NULL, ylim = NULL, ca = TRUE, ...) {
   
-  if(!is.na(class(s)[2]) & class(s)[2] == "rowwise_df") {
+  if (!is.na(class(s)[2]) & (class(s)[2] == "rowwise_df" | class(s)[2] == "grouped_df")) {
     bathy <- s$rep[[1]]$data$bathy
     bathy[bathy > 0] <- NA
     bathy <- rasterToPoints(bathy) %>% data.frame()
@@ -20,21 +20,34 @@ plot.simsmolt <- function(s, xlim = NULL, ylim = NULL, ...) {
     land <- rasterToPoints(land) %>% data.frame()
     names(land)[3] <- "d"
     
-    if(is.null(xlim)) xlim <- extendrange(sapply(s$rep, function(.) .$sim$x), f = 1)
-    if(is.null(ylim)) ylim <- extendrange(sapply(s$rep, function(.) .$sim$y), f = 0.25)
+    if (is.null(xlim))
+      xlim <- extendrange(sapply(s$rep, function(.)
+        .$sim$x), f = 1)
+    if (is.null(ylim))
+      ylim <- extendrange(sapply(s$rep, function(.)
+        .$sim$y), f = 0.25)
     
-    coa <-
-      data.frame(
-        x = sapply(s$rep, function(.)
-          .$data$coa[1]),
-        y = sapply(s$rep, function(.)
-          .$data$coa[2])
-      )
-   
-    trans <- lapply(s$rep, function(.) .$trans) %>% do.call(rbind, .)
-    detect <- lapply(s$rep, function(.) .$detect) %>% do.call(rbind, .)
+    if (ca) {
+      coa <-
+        data.frame(
+          x = sapply(s$rep, function(.)
+            .$data$coa[1]),
+          y = sapply(s$rep, function(.)
+            .$data$coa[2])
+        )
+      coa$y <- ifelse(coa$y > ylim[2], ylim[2] - 0.5, coa$y)
+    }
+    
+    trans <-
+      lapply(s$rep, function(.)
+        .$trans) %>% do.call(rbind, .)
+    detect <-
+      lapply(s$rep, function(.)
+        .$detect) %>% do.call(rbind, .)
     recs <- s$rep[[1]]$data$recs
-    sim <- lapply(1:nrow(s), function(i) data.frame(id=i, s$rep[[i]]$sim)) %>% do.call(rbind, .)
+    sim <-
+      lapply(1:nrow(s), function(i)
+        data.frame(id = i, s$rep[[i]]$sim)) %>% do.call(rbind, .)
     
     m <- ggplot() +
       coord_fixed(
@@ -47,18 +60,20 @@ plot.simsmolt <- function(s, xlim = NULL, ylim = NULL, ...) {
       geom_raster(data = land, aes(x, y, fill = d)) +
       #  scale_fill_gradient2(low = "#053061", mid = "#43a2ca", high = "#e0f3db", guide = "none") +
       scale_fill_viridis_c(direction = -1) +
-      theme_minimal() +
-      geom_point(data = coa,
-                 aes(x, y),
-                 colour = "red",
-                 size = 1) +
-      geom_contour(
-        data = bathy,
-        aes(x, y, z = z),
-        breaks = seq(-400,-700,by=-100),
-        col = "white",
-        lwd = 0.2
-      )
+      theme_minimal()
+    if (ca) {
+      m <- m + geom_point(data = coa,
+                          aes(x, y),
+                          colour = "red",
+                          size = 1)
+    }
+    m <- m + geom_contour(
+      data = bathy,
+      aes(x, y, z = z),
+      breaks = seq(-400, -700, by = -100),
+      col = "white",
+      lwd = 0.2
+    )
     if (!is.null(trans) && nrow(trans) > 0) {
       m <-
         m + geom_point(
