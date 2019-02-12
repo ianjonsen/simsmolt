@@ -1,5 +1,4 @@
 ##' @importFrom dplyr %>% summarise group_by n
-##' @importFrom prevR point.in.SpatialPolygons
 ##' @method summary simsmolt
 ##' @export
 summary.simsmolt <- function(x, ...) {
@@ -7,12 +6,12 @@ summary.simsmolt <- function(x, ...) {
     warning("additional arguments ignored")
   }
 
-  if(class(x)[2] == "rowwise_df") {
+  if(class(x)[2] == "rowwise_df" || class(x)[2] == "grouped_df") {
     ## summarise multiple replicates
     if(names(x)[2] != "rep") stop("expecting simulation output objects to be named 'rep'")
     all.tr <- lapply(x$rep, function(.) .$trans) %>% do.call(rbind, .)
     all.dt <- lapply(x$rep, function(.) .$detect) %>% do.call(rbind, .)
-    mNdt <- sapply(x$rep, function(.) max(.$sim$y) / nrow(.$sim) / 24) 
+    mNdt <- sapply(x$rep, function(.) (max(.$sim$y) - min(.$sim$y)) / (nrow(.$sim) / 24))
     
     browser() 
   }
