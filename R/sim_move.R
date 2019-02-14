@@ -25,7 +25,7 @@ sim_move <-
     ## default move parameters
     mpar.full <- list(
       tag = c(712, 761),
-      coa = c(300,1700) + rnorm(2, 0, 100),
+      coa = c(250,1900) + rnorm(2, 0, 100),
       a = 2,
       b = 0.864,
       rho = 0.9,
