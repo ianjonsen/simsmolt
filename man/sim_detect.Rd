@@ -4,7 +4,7 @@
 \alias{sim_detect}
 \title{simulate acoustic transmissions & detection, using sim_move & presim output}
 \usage{
-sim_detect(s, delay = c(20, 60), burst = 5)
+sim_detect(s, data, delay = c(20, 60), burst = 5)
 }
 \arguments{
 \item{s}{- a simsmolt class list containing output from sim_setup and sim_move}

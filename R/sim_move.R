@@ -10,24 +10,25 @@
 #' @param mpar - movement & (otpional) survival parameters supplied as a list, see details
 #' @param data - a list of required data from \code{presim}
 #' @importFrom raster extract
+#' @importFrom CircStats rwrpcauchy
 #' @importFrom dplyr %>%
 #' @importFrom tibble as_tibble
 #' @importFrom stats runif rbinom
 #' @export
 #' 
 sim_move <-
-  function(N = 1800,
-           tag = c(712, 761),
+  function(id=1, N = 1800,
            data = NULL,
            mpar = list(),
            pb = TRUE
            ) {
     ## default move parameters
     mpar.full <- list(
+      tag = c(712, 761),
       coa = c(300,1700) + rnorm(2, 0, 100),
       a = 2,
       b = 0.864,
-      rho_s = 0.9,
+      rho = 0.9,
       ntries = 100,
       surv = 0.9936,
       taxis = "no",
@@ -64,8 +65,9 @@ sim_move <-
     ## define location/survivourship, s matrix & start position
     X <- matrix(NA, N, 3)
     s <- matrix(NA, N, 2)
-    X[1,] <- cbind(tag[1], tag[2], 1)
-    delta <- theta_s <- theta_d <- theta_z <- rd <- rz <- c()
+    X[1,] <- cbind(mpar$tag[1], mpar$tag[2], 1)
+    theta_s <- rd <- rz <- c()
+    theta_s[1] <- 0 / 180 * pi
 
     ## recursion
     for (i in 2:N) {
@@ -77,10 +79,11 @@ sim_move <-
         rz[i-1] <- extract(data$b700.dist, rbind(X[i - 1, 1:2]))
       }
       ## direction to centre of attraction from current location
-      theta_s[i] <- atan2(mpar$coa[1] - X[i - 1, 1], mpar$coa[2] - X[i - 1, 2])
-      
-      ## distance to centre of attraction from current location
-      delta[i] <- sqrt((mpar$coa[1] - X[i - 1, 1]) ^ 2 + (mpar$coa[2] - X[i - 1, 2]) ^ 2)
+      if(all(!is.na(mpar$coa))) {
+        theta_s[i] <- atan2(mpar$coa[1] - X[i - 1, 1], mpar$coa[2] - X[i - 1, 2])
+      } else {
+        theta_s[i] <- rwrpcauchy(1, theta_s[i-1], mpar$rho) %% (2*pi)
+      }
       
       switch(mpar$taxis, no = {
         ## biased RW, no taxis
@@ -89,16 +92,16 @@ sim_move <-
           rw(
             n = mpar$ntries,
             mu = theta_s[i],
-            rho = mpar$rho_s,
+            rho = mpar$rho,
             a = mpar$a,
             b = mpar$b
           ) 
         
         ## apply weighting based on current distance to coast, 700 m isobath & specified buffer distance
-        if(rz[i-1] > mpar$buffer[2]) {
+        if(rd[i-1] <= mpar$buffer[1]) {
 #          cat(cbind(i, rd[i-1], rz[i-1]),"\n")
           ## direction ~ parallel to coast (to East) at current location
-          theta_d <- (extract(data$land.dir, rbind(X[i - 1, 1:2]), buffer=10, fun=mean, na.rm=TRUE) + 0.6 * pi) %% (2*pi)
+          theta_d <- (extract(data$land.dir, rbind(X[i - 1, 1:2]), na.rm=TRUE) + 0.6 * pi) %% (2*pi)
           ## draw n proposal steps for move deflection (to avoid land)
           d <-
             rw(
@@ -111,7 +114,8 @@ sim_move <-
           s <- s * min(c((rd[i-1] - mpar$mindist) / (mpar$buffer[1] - mpar$mindist), 1))
           z <- cbind(0,0)
           
-        } else if(rz[i-1] <= mpar$buffer[2]){
+        } 
+        if(!is.na(mpar$buffer[2]) && rz[i-1] <= mpar$buffer[2]){
 #          cat(cbind(i, rd[i-1], rz[i-1]),"\n")
           ## direction opposite to -700 m isobath at current location
           theta_z <- (extract(data$b700.dir, rbind(X[i - 1, 1:2]), na.rm=TRUE) - 0.75 * pi) %% (2*pi)
@@ -123,7 +127,8 @@ sim_move <-
                   b = mpar$b
           ) * (1 - rz[i-1] / mpar$buffer[2])
           s <- s * rz[i-1] / mpar$buffer[2]
-        } 
+          
+        }
         
         if (is.null(data$uv)) {
           ## no current advection
@@ -196,15 +201,11 @@ sim_move <-
     X <- data.frame(X)
     names(X) <- c("x", "y", "s")
 
-    sim <- X %>% as_tibble()
-    
-    
-    data$tag <- tag
-    data$coa <- mpar$coa
-    data$y.cpts <- mpar$y.cpts
-    data$taxis <- mpar$taxis
+    sim <- X %>% as_tibble() %>%
+      mutate(id = id)
   
-    out <- list(sim = sim, data = data)  
+    param <- mpar  
+    out <- list(sim = sim, params = param)  
     class(out) <- "simsmolt"
     
     return(out)

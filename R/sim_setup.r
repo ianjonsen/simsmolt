@@ -16,8 +16,8 @@
 #' @param sst - optional sea surface temperature layer(s)
 #' @param rec - optional acoustic receiver locations
 #' @importFrom raster raster brick projectRaster
-#' @importFrom sp coordinates<- proj4string<- CRS spTransform
-#' @importFrom dplyr select filter rename bind_cols %>%
+#' @importFrom sp coordinates<- proj4string<- CRS spTransform SpatialPointsDataFrame
+#' @importFrom dplyr select filter rename bind_cols %>% tibble
 #' @importFrom readr read_csv
 #' @export
 #'
@@ -92,7 +92,7 @@ sim_setup <-
       # Srecs <- sobi %>% select(x, y) * 1000
       
       ## Nain, NL - 56.542222, -61.692778
-      ## `place` receivers in Labrador Sea & generate Polygon object for track sampling
+      ## `place` receivers in Labrador Sea 
  
         ## 4 lines from just N of SoBI to Nain, NL
         ## 10 km spacing
@@ -100,12 +100,19 @@ sim_setup <-
           rgdal::project(., proj=prj_laea) %>%
           as.data.frame()
         names(nain) <- c("x","y")
-        recLines <- list(data.frame(line=rep("Lab_4", 22), x=seq(365,575, by = 10), y=rep(1292, 22)))
-        recLines[[2]] <- data.frame(line=rep("Lab_3", 36), x=seq(520, 870, by = 10), y=rep(1292-154, 36))
-        recLines[[3]] <- data.frame(line=rep("Lab_2", 27), x=seq(740, 1000, by = 10), y=rep(1292-154*2, 27))
-        recLines[[4]] <- data.frame(line=rep("Lab_1", 40), x=seq(765, 1160, by = 10), y=rep(1292-154*3, 40))
-        recLines <- do.call(rbind, recLines)
-      
+        recLines <- list(data.frame(line=rep("l1", 40), x=seq(765, 1160, by = 10), y=rep(1292-154*3, 40)))
+        recLines[[2]] <- data.frame(line=rep("l2", 27), x=seq(740, 1000, by = 10), y=rep(1292-154*2, 27))
+        recLines[[3]] <- data.frame(line=rep("l3", 36), x=seq(520, 870, by = 10), y=rep(1292-154, 36))
+        recLines[[4]] <- data.frame(line=rep("l4", 22), x=seq(365,575, by = 10), y=rep(1292, 22))
+        
+        recLines <- do.call(rbind, recLines) 
+        recLines$line <- as.character(recLines$line)
+        recLines$z <- extract(bathy, recLines[, c("x","y")])
+        ## drop receivers at >= -10 m elevation
+        recLines <- recLines[!extract(bathy, recLines[, c("x","y")]) >= -10, ]
+        ## adjust depth, assuming receivers placed 100 m off seafloor
+        recLines$z <- ifelse(recLines$z < -120, (recLines$z + 100), recLines$z)
+        
 #      Lrecs <-
 #        expand.grid(x = seq(780, 830, l = 26), y = seq(850, 856, l = 4)) * 1000
       
@@ -137,7 +144,6 @@ sim_setup <-
         b700.dist = b700.dist,
         b700.dir = b700.dir,
         recs = recLines,
-#        labsea_poly = rec.box,
         prj = prj_laea
       )
   }

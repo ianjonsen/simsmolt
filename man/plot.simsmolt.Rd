@@ -4,7 +4,8 @@
 \alias{plot.simsmolt}
 \title{plot}
 \usage{
-\method{plot}{simsmolt}(s, xlim = NULL, ylim = NULL, ca = TRUE, ...)
+\method{plot}{simsmolt}(s, data, xlim = NULL, ylim = NULL,
+  ca = FALSE, ...)
 }
 \arguments{
 \item{s}{a fitted object of class simsmolt}

@@ -5,18 +5,23 @@
 ##' @param xlim plot x limits
 ##' @param ylim plot y limits
 ##'
-##' @importFrom ggplot2 ggplot coord_fixed geom_raster aes theme_minimal geom_point scale_color_brewer scale_fill_gradient2
+##' @importFrom ggplot2 ggplot coord_fixed geom_raster aes theme_minimal geom_point 
+##' @importFrom ggplot2 scale_color_brewer scale_fill_viridis_c geom_contour geom_path
 ##' @importFrom raster rasterToPoints
 ##' @method plot simsmolt
 ##' @export
 
-plot.simsmolt <- function(s, xlim = NULL, ylim = NULL, ca = TRUE, ...) {
+plot.simsmolt <- function(s, data, xlim = NULL, ylim = NULL, ca = FALSE, ...) {
   
   if (!is.na(class(s)[2]) & (class(s)[2] == "rowwise_df" | class(s)[2] == "grouped_df")) {
-    bathy <- s$rep[[1]]$data$bathy
+    compl <- sapply(s$rep, function(.) !inherits(., "try-error"))
+    cat(sprintf("dropping %i failed runs\n\n", sum(!compl)))
+    s <- s[compl, ]
+    
+    bathy <- data$bathy
     bathy[bathy > 0] <- NA
     bathy <- rasterToPoints(bathy) %>% data.frame()
-    land <- s$rep[[1]]$data$land
+    land <- data$land
     land <- rasterToPoints(land) %>% data.frame()
     names(land)[3] <- "d"
     
@@ -31,9 +36,9 @@ plot.simsmolt <- function(s, xlim = NULL, ylim = NULL, ca = TRUE, ...) {
       coa <-
         data.frame(
           x = sapply(s$rep, function(.)
-            .$data$coa[1]),
+            .$params$coa[1]),
           y = sapply(s$rep, function(.)
-            .$data$coa[2])
+            .$params$coa[2])
         )
       coa$y <- ifelse(coa$y > ylim[2], ylim[2] - 0.5, coa$y)
     }
@@ -44,7 +49,7 @@ plot.simsmolt <- function(s, xlim = NULL, ylim = NULL, ca = TRUE, ...) {
     detect <-
       lapply(s$rep, function(.)
         .$detect) %>% do.call(rbind, .)
-    recs <- s$rep[[1]]$data$recs
+    recs <- data$recs
     sim <-
       lapply(1:nrow(s), function(i)
         data.frame(id = i, s$rep[[i]]$sim)) %>% do.call(rbind, .)
@@ -94,7 +99,7 @@ plot.simsmolt <- function(s, xlim = NULL, ylim = NULL, ca = TRUE, ...) {
       geom_path(data = sim,
                  aes(x, y, group=id),
                  colour = "firebrick",
-                 size = 0.1)
+                 size = 0.1, alpha = 0.25)
     
     if (!is.null(detect) && nrow(detect) > 0) {
       m <-
@@ -103,12 +108,13 @@ plot.simsmolt <- function(s, xlim = NULL, ylim = NULL, ca = TRUE, ...) {
     }
     
     return(m) 
+    
     } else if(is.na(class(s)[2])){
       
-  bathy <- s$data$bathy
+  bathy <- data$bathy
   bathy[bathy > 0] <- NA
   bathy <- rasterToPoints(bathy) %>% data.frame()
-  land <- rasterToPoints(s$data$land) %>% data.frame()
+  land <- rasterToPoints(data$land) %>% data.frame()
   
   names(land)[3] <- "d"
   
@@ -116,8 +122,9 @@ plot.simsmolt <- function(s, xlim = NULL, ylim = NULL, ca = TRUE, ...) {
     xlim <- extendrange(s$sim$x, f = 1)
   if (is.null(ylim))
     ylim <- extendrange(s$sim$y, f = 0.25)
-  
-  coa <- data.frame(x = s$data$coa[1], y = s$data$coa[2])
+  if(ca) {
+  coa <- data.frame(x = s$params$coa[1], y = s$params$coa[2])
+  }
   
   m <- ggplot() +
     coord_fixed(
@@ -130,12 +137,16 @@ plot.simsmolt <- function(s, xlim = NULL, ylim = NULL, ca = TRUE, ...) {
     geom_raster(data = land, aes(x, y, fill = d)) +
     #  scale_fill_gradient2(low = "#053061", mid = "#43a2ca", high = "#e0f3db", guide = "none") +
     scale_fill_viridis_c(direction = -1) +
-    theme_minimal() +
-    geom_point(data = coa,
+    theme_minimal() 
+  
+  if(ca) {
+    m <- m + geom_point(data = coa,
                aes(x, y),
                colour = "red",
-               size = 1) +
-    geom_contour(
+               size = 1) 
+  }
+  
+    m <- m + geom_contour(
       data = bathy,
       aes(x, y, z = z),
       breaks = seq(-700, -100, by = 100),
@@ -154,7 +165,7 @@ plot.simsmolt <- function(s, xlim = NULL, ylim = NULL, ca = TRUE, ...) {
   }
   m <-
     m + geom_point(
-      data = s$data$recs,
+      data = data$recs,
       aes(x, y),
       colour = "blue",
       size = 0.4

@@ -16,14 +16,13 @@
 #' @export
 #' 
 sim_detect <-
-  function(s, delay = c(20,60), burst = 5.0){
+  function(s, data, delay = c(20,60), burst = 5.0){
     
     ## simulate tag transmissions along track but only within +/-10 km of avg receiver location
     ##  otherwise trap() output is far too big to generate along full track
     ##    - convert locs from km to m grid; vel in m/s
 
-    recs <- s$data$recs %>%
-      arrange(desc(line))
+    recs <- data$recs 
     trans <- tmp.tr <- dt <- tmp.dt <- NULL
     yrec <- recs$y %>% unique()
     
@@ -36,8 +35,10 @@ sim_detect <-
     
 #    if (any(sapply(in.rng, length) > 0)) {
       trans <- lapply(1:length(in.rng), function(i){
-        sim_transmit(s$sim[in.rng[[i]], c("x", "y")] * 1000, delayRng = delay, burstDur = burst) %>%
-        mutate(line = rep(paste0("Lab_", i), nrow(.)))
+        path <- s$sim[in.rng[[i]], c("id","x","y")]
+        path[, c("x","y")] <- path[, c("x","y")] * 1000
+        sim_transmit(path, delayRng = delay, burstDur = burst) %>%
+        mutate(line = rep(paste0("l", i), nrow(.)))
       }) %>% 
       do.call(rbind, .) 
       
@@ -52,14 +53,15 @@ sim_detect <-
     ## simulate detections given receiver locations & simulated transmission along track
     ## FIXME: need to adapt glatos::detect_transmissions so logistic parameters for pdrf can be
     ## FIXME: passed in via sim_detect arguments
-
 #    if(nrow(trans) > 0) {
+      recs <- recs %>%
+        mutate(x = x * 1000, y = y * 1000)
       detect <- trans %>% 
         group_by(line) %>%
-        do(glatos_detect_transmissions(trnsLoc = ., recLoc = recs[, c("x","y")] * 1000, detRngFun = pdrf))
+        do(glatos_detect_transmissions(trnsLoc = ., recLoc = recs[, c("x","y","z")], detRngFun = pdrf))
       
       s$trans <- trans %>%
-        select(line, et, x, y) %>%
+        select(id, line, et, x, y) %>%
         arrange(line, et)
       
       s$detect <- detect %>%

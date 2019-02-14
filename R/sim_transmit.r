@@ -52,7 +52,7 @@ sim_transmit <- function(path = NA, delayRng = c(60, 180), burstDur = 5.0) {
   etime <- etime[etime <= max(path$etime)] #subset trans during track duration
   
   #interpolate transmit locations along track
-  trns <- data.frame(
+  trns <- data.frame(id=rep(path$id[1], length(etime)),
     x = approx(path$etime, path$x, xout=etime)$y,      
     y = approx(path$etime, path$y, xout=etime)$y,
     et = etime)

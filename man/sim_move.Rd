@@ -4,17 +4,16 @@
 \alias{sim_move}
 \title{simulate movements & survival, using inputs from presim}
 \usage{
-sim_move(N = 1800, tag = c(712, 761), data = NULL, mpar = list(),
-  pb = TRUE)
+sim_move(N = 1800, data = NULL, mpar = list(), pb = TRUE)
 }
 \arguments{
 \item{N}{- number of 1-h time steps to simulate}
 
-\item{tag}{- start location(s) of simulated animals}
-
 \item{data}{- a list of required data from \code{presim}}
 
 \item{mpar}{- movement & (otpional) survival parameters supplied as a list, see details}
+
+\item{tag}{- start location(s) of simulated animals}
 
 \item{coa}{- optional Centre-Of-Attraction location(s) to provide movement bias(es)}
 }
