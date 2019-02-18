@@ -28,7 +28,7 @@ sim_move <-
       coa = c(250,1900) + rnorm(2, 0, 100),
       a = 2,
       b = 0.864,
-      rho = 0.9,
+      rho = 0.8,
       ntries = 100,
       surv = 0.9936,
       taxis = "no",
