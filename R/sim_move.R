@@ -34,7 +34,8 @@ sim_move <-
       taxis = "no",
       buffer = c(20, 30),
       mindist = 5,
-      maxdist = 820
+      maxdist = 820, 
+      pdrf = c(3.017, -0.0139)
     )
     pnms <- names(mpar.full)
     

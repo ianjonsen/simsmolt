@@ -25,6 +25,7 @@ sim_detect <-
     recs <- data$recs 
     trans <- tmp.tr <- dt <- tmp.dt <- NULL
     yrec <- recs$y %>% unique()
+    b <- s$params$pdrf
     
     in.rng <- lapply(1:length(yrec), function(i) {
       which(abs(yrec[i] - s$sim[, "y"]) <= 1.5)
@@ -33,8 +34,7 @@ sim_detect <-
     ## drop rec lines that smolt did not cross
     in.rng <- in.rng[which(sapply(in.rng, length) > 0 )]
     
-#    if (any(sapply(in.rng, length) > 0)) {
-      trans <- lapply(1:length(in.rng), function(i){
+    trans <- lapply(1:length(in.rng), function(i){
         path <- s$sim[in.rng[[i]], c("id","x","y")]
         path[, c("x","y")] <- path[, c("x","y")] * 1000
         sim_transmit(path, delayRng = delay, burstDur = burst) %>%
@@ -46,19 +46,13 @@ sim_detect <-
     ## define logistic detection range (m) function
     ## parameterised from analysis of SoBI sentinel tag detections
     ## in July 2009 & July 2010 (see ~/Dropbox/collab/otn/fred/r/fn/sentinel.r)
-    pdrf <- function(dm, b = c(3.017, -0.0139)) {
-      plogis(b[1] + b[2] * dm)
-    }
- 
+
     ## simulate detections given receiver locations & simulated transmission along track
-    ## FIXME: need to adapt glatos::detect_transmissions so logistic parameters for pdrf can be
-    ## FIXME: passed in via sim_detect arguments
-#    if(nrow(trans) > 0) {
       recs <- recs %>%
         mutate(x = x * 1000, y = y * 1000)
+     
       detect <- trans %>% 
-        group_by(line) %>%
-        do(glatos_detect_transmissions(trnsLoc = ., recLoc = recs[, c("x","y","z")], detRngFun = pdrf))
+        pdet(trs = ., rec = recs[, c("id","x","y","z")], b = b)
       
       s$trans <- trans %>%
         select(id, line, et, x, y) %>%
@@ -66,7 +60,7 @@ sim_detect <-
       
       s$detect <- detect %>%
         arrange(line, etime, recv_id, trns_id)
-#    }
+
  
     return(s)
   }

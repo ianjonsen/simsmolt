@@ -112,6 +112,7 @@ sim_setup <-
         recLines <- recLines[!extract(bathy, recLines[, c("x","y")]) >= -10, ]
         ## adjust depth, assuming receivers placed 100 m off seafloor
         recLines$z <- ifelse(recLines$z < -120, (recLines$z + 100), recLines$z)
+        recLines$id <- rownames(recLines)
         
 #      Lrecs <-
 #        expand.grid(x = seq(780, 830, l = 26), y = seq(850, 856, l = 4)) * 1000

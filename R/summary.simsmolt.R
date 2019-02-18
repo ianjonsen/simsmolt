@@ -6,7 +6,11 @@ summary.simsmolt <- function(x, data = NULL, ...) {
     warning("additional arguments ignored")
   }
   
-  if(class(x)[2] == "rowwise_df" || class(x)[2] == "grouped_df") {
+  if(length(class(x)) == 1) {
+    stop("summary not yet implemented for single simulation runs...\n")
+  }
+  
+  else if(class(x)[2] == "rowwise_df" || class(x)[2] == "grouped_df") {
     compl <- sapply(x$rep, function(.) !inherits(., "try-error"))
     cat(sprintf("dropping %i failed runs\n\n", sum(!compl)))
     x <- x[compl, ]
@@ -62,7 +66,7 @@ summary.simsmolt <- function(x, data = NULL, ...) {
       num.smolt.dt.by.line <- rbind(num.smolt.dt.by.line, data.frame(line = lines[ex], n = ex*0)) %>%
         arrange(line)
     }
-  }
+  
   
   n <- c(num.cross, nrow(x))
   ndt <- c(num.smolt.dt.by.line$n, length(unique(num.ind.smolt.dt.by.line$id)))
@@ -75,7 +79,8 @@ summary.simsmolt <- function(x, data = NULL, ...) {
     p.smolt = ndt/n
   ),
   class = "summary.simsmolt")
-
+  }
+  
 }
 
 ##' @method print summary.simsmolt
