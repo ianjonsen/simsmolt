@@ -4,7 +4,7 @@
 \alias{sim_detect}
 \title{simulate acoustic transmissions & detection, using sim_move & presim output}
 \usage{
-sim_detect(s, data, delay = c(20, 60), burst = 5)
+sim_detect(s, data, delay = c(60, 180), burst = 5)
 }
 \arguments{
 \item{s}{- a simsmolt class list containing output from sim_setup and sim_move}
@@ -12,8 +12,6 @@ sim_detect(s, data, delay = c(20, 60), burst = 5)
 \item{delay}{- min & max time intervals (s) between transmissions}
 
 \item{burst}{- duration of each transmission (s)}
-
-\item{b}{- logistic regression parameters for detection range function (pdrf) - parameters from glm - estimated SoBI sentinel data (old)}
 }
 \description{
 simulates transmissions & detections along simulated track segments within a defined range of acoustic array(s)

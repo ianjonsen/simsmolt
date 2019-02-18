@@ -7,7 +7,6 @@
 #' @param s - a simsmolt class list containing output from sim_setup and sim_move
 #' @param delay - min & max time intervals (s) between transmissions
 #' @param burst - duration of each transmission (s)
-#' @param b - logistic regression parameters for detection range function (pdrf) - parameters from glm - estimated SoBI sentinel data (old)
 #' @importFrom sp Polygon Polygons SpatialPolygons CRS
 #' @importFrom raster buffer
 #' @importFrom prevR point.in.SpatialPolygons
@@ -16,7 +15,7 @@
 #' @export
 #' 
 sim_detect <-
-  function(s, data, delay = c(20,60), burst = 5.0){
+  function(s, data, delay = c(60,180), burst = 5.0){
     
     ## simulate tag transmissions along track but only within +/-10 km of avg receiver location
     ##  otherwise trap() output is far too big to generate along full track
