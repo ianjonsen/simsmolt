@@ -15,7 +15,6 @@ summary.simsmolt <- function(x, data = NULL, ...) {
     cat(sprintf("dropping %i failed runs\n\n", sum(!compl)))
     x <- x[compl, ]
   
-
     ## count smolts passing each receiver line/array (whether or not detected)
     r <- data$recs
     yrec <- unique(r$y)
@@ -42,7 +41,7 @@ summary.simsmolt <- function(x, data = NULL, ...) {
     dt.by.recline <- all.dt %>% group_by(line,recv_id) %>% summarise(n = n()) %>% group_by(line) %>% summarise(n = n())
   
     ## count individual smolts detected at each line
-    num.ind.smolt.dt.by.line <- all.dt %>% group_by(line, id) %>% summarise(n = n())
+    num.ind.smolt.dt.by.line <- all.dt %>% group_by(line, trns_id) %>% summarise(n = n())
     num.smolt.dt.by.line <-  num.ind.smolt.dt.by.line %>% summarise(n = n())
     
     lines <- paste0("l",1:length(yrec))
@@ -69,7 +68,8 @@ summary.simsmolt <- function(x, data = NULL, ...) {
   
   
   n <- c(num.cross, nrow(x))
-  ndt <- c(num.smolt.dt.by.line$n, length(unique(num.ind.smolt.dt.by.line$id)))
+  ndt <- c(num.smolt.dt.by.line$n, length(unique(num.ind.smolt.dt.by.line$trns_id)))
+
   structure(list(
     n = n,
     ndt = ndt,
