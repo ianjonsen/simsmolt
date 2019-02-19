@@ -198,12 +198,15 @@ sim_move <-
     if(length(na.omit(X[, 3])) < N) {
       end <- which(X[, 3] < 1)
       X <- X[1:end, ]
+      N <- nrow(X)
     }
     X <- data.frame(X)
     names(X) <- c("x", "y", "s")
 
     sim <- X %>% as_tibble() %>%
-      mutate(id = id)
+      mutate(id = id) %>%
+      mutate(date = seq(ISOdatetime(2018,07,10,00,00,00), by = 3600, length.out = N)) %>%
+      select(id, date, x, y, s)
   
     param <- mpar  
     out <- list(sim = sim, params = param)  
