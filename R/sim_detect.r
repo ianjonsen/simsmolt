@@ -34,7 +34,7 @@ sim_detect <-
     in.rng <- in.rng[which(sapply(in.rng, length) > 0 )]
     
     trans <- lapply(1:length(in.rng), function(i){
-        path <- s$sim[in.rng[[i]], c("id","x","y")]
+        path <- s$sim[in.rng[[i]], c("id","date","x","y")]
         path[, c("x","y")] <- path[, c("x","y")] * 1000
         sim_transmit(path, delayRng = delay, burstDur = burst) %>%
         mutate(line = rep(paste0("l", i), nrow(.)))
@@ -54,12 +54,11 @@ sim_detect <-
         pdet(trs = ., rec = recs[, c("id","x","y","z")], b = b)
       
       s$trans <- trans %>%
-        select(id, line, et, x, y) %>%
-        arrange(line, et)
+        select(id, date, line, x, y) %>%
+        arrange(line, date)
       
       s$detect <- detect %>%
-        arrange(line, etime, recv_id, trns_id)
-
+        arrange(line, date, recv_id, trns_id)
  
     return(s)
   }
