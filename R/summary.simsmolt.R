@@ -66,7 +66,6 @@ summary.simsmolt <- function(x, data = NULL, ...) {
         arrange(line)
     }
   
-  
   n <- c(num.cross, nrow(x))
   ndt <- c(num.smolt.dt.by.line$n, length(unique(num.ind.smolt.dt.by.line$trns_id)))
 
