@@ -25,7 +25,7 @@ sim_move <-
     ## default move parameters
     mpar.full <- list(
       tag = c(712, 761),
-      coa = c(250,1900) + rnorm(2, 0, 100),
+      coa = cbind(c(900, 250), c(900,1900)),
       a = 2,
       b = 0.864,
       rho = 0.8,
@@ -33,7 +33,7 @@ sim_move <-
       surv = 0.9936,
       taxis = "no",
       buffer = c(20, 30),
-      mindist = 5,
+      mindist = 8,
       maxdist = 820, 
       pdrf = c(3.017, -0.0139)
     )
@@ -69,7 +69,10 @@ sim_move <-
     X[1,] <- cbind(mpar$tag[1], mpar$tag[2], 1)
     theta_s <- rd <- rz <- c()
     theta_s[1] <- 0 / 180 * pi
-
+    ncoa <- nrow(mpar$coa)
+    mpar$coa[2:ncoa, ] <- mpar$coa[2:ncoa, ] + rnorm(ncoa*2 - 2, 0, 100)
+    mpar$coa[1, 1:2] <- rep(runif(1, 900, 1000), 2)
+    
     ## recursion
     for (i in 2:N) {
       if(i==2 && pb)  tpb <- txtProgressBar(min = 2, max = N, style = 3)
@@ -81,8 +84,17 @@ sim_move <-
       }
       ## direction to centre of attraction from current location
       if(all(!is.na(mpar$coa))) {
-        theta_s[i] <- atan2(mpar$coa[1] - X[i - 1, 1], mpar$coa[2] - X[i - 1, 2])
+        ## get dist & dir to all coa's
+        d2coa <- sqrt((mpar$coa[,1] - X[i - 1, 1])^2 + (mpar$coa[,2] - X[i - 1, 2])^2)
+        theta <- atan2(mpar$coa[, 1] - X[i - 1, 1], mpar$coa[, 2] - X[i - 1, 2])
+        
+        ## calculate weighted direction
+        if(i == 2) maxdist <- d2coa[1]
+        wt <- (d2coa[1] - 20) / (maxdist - 20)
+        if(X[i - 1, 2] > 850) wt <- wt * 0 # only apply weight if S of 850 - avoids crashing into land near SoBI
+        theta_s[i] <- wt * theta[1] + (1 - wt) * theta[2]
       } else {
+        ## do this if no coa exists
         theta_s[i] <- rwrpcauchy(1, theta_s[i-1], mpar$rho) %% (2*pi)
       }
       
@@ -97,10 +109,12 @@ sim_move <-
             a = mpar$a,
             b = mpar$b
           ) 
+        z <- cbind(0,0)
+        d <- cbind(0,0)
         
         ## apply weighting based on current distance to coast, 700 m isobath & specified buffer distance
-        if(rd[i-1] <= mpar$buffer[1]) {
-#          cat(cbind(i, rd[i-1], rz[i-1]),"\n")
+        ##  first buffer's influence starts after exiting SoBI and after influence of first coa
+         if(rd[i-1] <= mpar$buffer[1] & X[i - 1, 2] > 850) {
           ## direction ~ parallel to coast (to East) at current location
           theta_d <- (extract(data$land.dir, rbind(X[i - 1, 1:2]), na.rm=TRUE) + 0.6 * pi) %% (2*pi)
           ## draw n proposal steps for move deflection (to avoid land)
@@ -113,11 +127,10 @@ sim_move <-
               b = mpar$b
             ) * max(c((1 - (rd[i-1] - mpar$mindist) / (mpar$buffer[1] - mpar$mindist)), 0))
           s <- s * min(c((rd[i-1] - mpar$mindist) / (mpar$buffer[1] - mpar$mindist), 1))
-          z <- cbind(0,0)
-          
-        } 
+
+         } 
+
         if(!is.na(mpar$buffer[2]) && rz[i-1] <= mpar$buffer[2]){
-#          cat(cbind(i, rd[i-1], rz[i-1]),"\n")
           ## direction opposite to -700 m isobath at current location
           theta_z <- (extract(data$b700.dir, rbind(X[i - 1, 1:2]), na.rm=TRUE) - 0.75 * pi) %% (2*pi)
           ## draw n proposal steps for move deflection to stay in water < 700 m deep (~ on shelf)
@@ -132,7 +145,7 @@ sim_move <-
         }
         
         if (is.null(data$uv)) {
-          ## no current advection
+          ## no current advection 
           tmp <- cbind(X[i - 1, 1] + d[, 1] + s[, 1] + z[, 1], X[i - 1, 2] + d[, 2] + s[, 2] + z[, 2])
           
         } else {
