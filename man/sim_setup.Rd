@@ -4,12 +4,12 @@
 \alias{sim_setup}
 \title{Pre-simulation setup}
 \usage{
-sim_setup(bathy = file.path("..", "simdata", "bathy.nc"),
-  land = file.path("..", "simdata", "d2land_xy.grd"),
-  land.dir = file.path("..", "simdata", "land_dir2.grd"),
-  b700.dist = file.path("..", "simdata", "b700_dist.grd"),
-  b700.dir = file.path("..", "simdata", "b700_dir.grd"), uv = NULL,
-  sst = NULL, rec = TRUE)
+sim_setup(bathy = file.path("..", "simdata", "bathy_xy.grd"),
+  land = file.path("..", "simdata", "d2landc_xy.grd"),
+  land.dir = file.path("..", "simdata", "land_dirc.grd"),
+  b900.dist = file.path("..", "simdata", "b900_dist.grd"),
+  b900.dir = file.path("..", "simdata", "b900_dir.grd"), uv = NULL,
+  sst = NULL, rspace = 10)
 }
 \arguments{
 \item{bathy}{- required bathymetry file}
@@ -18,19 +18,19 @@ sim_setup(bathy = file.path("..", "simdata", "bathy.nc"),
 
 \item{land.dir}{- required direction to nearest land}
 
-\item{b700.dist}{- required distance to 700 m isobath}
+\item{b900.dist}{- required distance to 900 m isobath}
 
-\item{b700.dir}{-  required direction to 700 m isobath}
+\item{b900.dir}{-  required direction to 900 m isobath}
 
 \item{uv}{- optional current layers, supplied as u and v components, velocity must be in m/s}
 
 \item{sst}{- optional sea surface temperature layer(s)}
 
-\item{rec}{- optional acoustic receiver locations}
-
 \item{tag}{- start location(s) of simulated animals}
 
 \item{coa}{- optional Centre-Of-Attraction location(s) to provide movement bias(es)}
+
+\item{rec}{- optional acoustic receiver locations}
 }
 \description{
 load required rasters, receiver locations

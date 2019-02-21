@@ -5,14 +5,18 @@
 \title{plot}
 \usage{
 \method{plot}{simsmolt}(s, data, xlim = NULL, ylim = NULL,
-  ca = FALSE, ...)
+  ca = FALSE, raster = TRUE, ...)
 }
 \arguments{
 \item{s}{a fitted object of class simsmolt}
 
+\item{data}{data object created by sim_setup}
+
 \item{xlim}{plot x limits}
 
 \item{ylim}{plot y limits}
+
+\item{ca}{plot centres of attraction}
 }
 \description{
 Map simulated track

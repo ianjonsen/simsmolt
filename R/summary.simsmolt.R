@@ -44,6 +44,24 @@ summary.simsmolt <- function(x, data = NULL, ...) {
     num.ind.smolt.dt.by.line <- all.dt %>% group_by(line, trns_id) %>% summarise(n = n())
     num.smolt.dt.by.line <-  num.ind.smolt.dt.by.line %>% summarise(n = n())
     
+    ## count mortalities between each line
+    dead <- lapply(x$rep, function(.) .$sim[nrow(.$sim), c("id","y","s")]) %>% 
+      do.call(rbind, .) %>%
+      filter(s == 0)
+    
+    which.line <- lapply(1:5, function(i) {
+      if(i==1) which(dead$y < yrec[1])
+      else if(i>1 & i<5) { which(dead$y >= yrec[i-1] & dead$y < yrec[i])}
+      else if(i==5) { which(dead$y >= yrec[i-1])}
+    })
+    
+    num.dead.by.line <- sapply(which.line, length)
+
+    ## record how many smolts get detected on 1,2,3, or 4 lines
+    tmp <- all.dt %>% group_by(trns_id) %>% summarise(n=n_distinct(line))
+    num.smolt.lines <- table(tmp$n)
+    whsm <- tmp$trns_id[which(tmp$n > 1)] 
+    
     lines <- paste0("l",1:length(yrec))
     if(nrow(dt.by.line != length(yrec))) {
       ex <- which(!lines %in% dt.by.line$line)
@@ -65,13 +83,21 @@ summary.simsmolt <- function(x, data = NULL, ...) {
       num.smolt.dt.by.line <- rbind(num.smolt.dt.by.line, data.frame(line = lines[ex], n = ex*0)) %>%
         arrange(line)
     }
+    if(length(num.smolt.lines) != length(yrec)) {
+      ex <- which(!lines %in% paste0("l", names(num.smolt.lines)))
+      num.smolt.lines <- as.numeric(c(num.smolt.lines, c(ex*0)))
+    }
   
   n <- c(num.cross, nrow(x))
   ndt <- c(num.smolt.dt.by.line$n, length(unique(num.ind.smolt.dt.by.line$trns_id)))
+  nsl <- c(num.smolt.lines, sum(num.smolt.lines[-1]))
 
   structure(list(
     n = n,
+    num.dead = c(num.dead.by.line[-5], sum(num.dead.by.line)),
     ndt = ndt,
+    nsl = nsl,
+    whsm = whsm,
     dt.num = c(dt.by.line$n, nrow(all.dt)),
     dt.by.recline = c(dt.by.recline$n, sum(dt.by.recline$n)),
     p.dt = c(dt.by.line$n, nrow(all.dt)) / c(tr.by.line$n, nrow(all.tr)),
@@ -88,17 +114,19 @@ print.summary.simsmolt <- function(x)
 {
 
   xx <- t(cbind(c(NA, x$n), 
+                c(NA, x$num.dead),
                 c(NA, x$ndt),
+                c(NA, ".", x$nsl[-1]),
                    c(NA, x$dt.num), 
                    c(NA, x$dt.by.recline),
                    c(NA, round(x$p.dt, 4)),
                    c(NA, round(x$p.smolt, 4))
                    ))
   
-  xx <- cbind(c("smolts", "smolts detected", "detections", "receivers with detections", "p(transmissions detected)", "p(smolts detected)"),
+  xx <- cbind(c("smolts", "mortalities","smolts detected", "smolts detected on > 1 line", "detections", "receivers with detections", "p(transmissions detected)", "p(smolts detected)"),
               xx)
 
-  dimnames(xx) <- list(rep("", 6), 
+  dimnames(xx) <- list(rep("", 8), 
                        c("", " ", paste0("line.", 1:(length(x$n) - 1)), "total")
                        )
   
