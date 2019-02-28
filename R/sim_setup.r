@@ -28,10 +28,11 @@ sim_setup <-
            land.dir = file.path("..", "simdata", "land_dirc.grd"),
            b900.dist = file.path("..", "simdata", "b900_dist.grd"),
            b900.dir = file.path("..", "simdata", "b900_dir.grd"),
-           u = file.path("..", "simdata", "ru.grd"),
-           v = file.path("..", "simdata", "rv.grd"),
+           u = file.path("..", "simdata", "riops_u.grd"),
+           v = file.path("..", "simdata", "riops_v.grd"),
            sst = NULL,
-           rspace = 10) {
+           rspace = 10,
+           uv = TRUE) {
     
     if (is.null(land) |
         is.null(land.dir) | is.null(b900.dist) | is.null(b900.dir))
@@ -103,7 +104,7 @@ sim_setup <-
       
       
 
-    if (all(!is.null(u), !is.null(v)))
+    if (uv)
       list(
         bathy = bathy,
         land = land,

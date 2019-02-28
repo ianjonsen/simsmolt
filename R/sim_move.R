@@ -18,7 +18,7 @@
 #' 
 sim_move <-
   function(id=1, 
-           N = 1800,
+           N = 2760,
            data = NULL,
            mpar = list(),
            pb = TRUE
@@ -44,9 +44,11 @@ sim_move <-
     if (is.null(data))
       stop("Can't find output from sim_setup()\n")
     if (class(data$land)[1] != "RasterLayer") stop("distance2land must be a RasterLayer")
-    if (!is.null(data$uv)) {
-      if (class(data$uv)[1] != "RasterBrick" || (!names(data$uv) %in% c("u","v"))) 
-        stop("current data must be supplied as a RasterBrick with u and v layers")
+    if (all(!is.null(data$u), !is.null(data$v))) {
+      if (class(data$u)[1] != "RasterBrick" || (!names(data$u) %in% c("jul","aug","sep","oct","nov"))) 
+        stop("zonal current (u) data must be supplied as a RasterBrick with `jul` to `nov` layers")
+      if (class(data$v)[1] != "RasterBrick" || (!names(data$v) %in% c("jul","aug","sep","oct","nov"))) 
+        stop("meridional current (v) data must be supplied as a RasterBrick with `jul` to `nov` layers")
     }
     
     if (length(mpar)) {
@@ -106,12 +108,12 @@ sim_move <-
       }
     }
     
-    ## define location/survivourship, s matrix & start position
+    ## define location/survivourship, sw matrix & start position
     X <- matrix(NA, N, 3)
-    s <- matrix(NA, N, 2)
+    sw <- matrix(NA, N, 2)
     X[1,] <- cbind(mpar$start[1], mpar$start[2], 1)
-    theta_s <- rd <- rz <- c()
-    theta_s[1] <- 0 / 180 * pi
+    theta_sw <- rd <- rz <- c()
+    theta_sw[1] <- 0 / 180 * pi
 
     ## recursion
     for (i in 2:N) {
@@ -134,50 +136,50 @@ sim_move <-
         if(X[i - 1, 2] <= mpar$coa[1,2]) {
           if(i == 2) mdist <- d2coa[1]
           wt <- d2coa[1]/mdist
-          theta_s[i] <- wt * theta[1] + (1 - wt) * theta[2]
+          theta_sw[i] <- wt * theta[1] + (1 - wt) * theta[2]
           j <- i
 
         } else if(X[i - 1, 2] > mpar$coa[1,2] & X[i - 1, 2] <= mpar$coa[2,2]) {
           if(i == j+1) mdist <- d2coa[2]
           wt <- d2coa[2]/mdist
-          theta_s[i] <- wt * theta[2] + (1 - wt) * theta[3]
+          theta_sw[i] <- wt * theta[2] + (1 - wt) * theta[3]
           k <- i
 
         }
         else if(X[i - 1, 2] > mpar$coa[2,2] & X[i - 1, 2] <= mpar$coa[3,2]) {
           if(i == k+1) mdist <- d2coa[3]
           wt <- d2coa[3]/mdist
-          theta_s[i] <- wt * theta[3] + (1 - wt) * theta[4]
+          theta_sw[i] <- wt * theta[3] + (1 - wt) * theta[4]
           q <- i
 
         } else if(X[i - 1, 2] > mpar$coa[3,2] & X[i - 1, 2] <= mpar$coa[4,2]) {
           if(i == q+1) mdist <- d2coa[4]
           wt <- d2coa[4]/mdist
-          theta_s[i] <- wt * theta[4] + (1 - wt) * theta[5]
+          theta_sw[i] <- wt * theta[4] + (1 - wt) * theta[5]
           h <- i
 
         } else if(X[i - 1, 2] > mpar$coa[4,2] & X[i - 1, 2] <= mpar$coa[5,2]) {
           if(i == h+1) mdist <- d2coa[5]
           wt <- d2coa[5]/mdist
-          theta_s[i] <- wt * theta[5] + (1 - wt) * 0/180*pi
+          theta_sw[i] <- wt * theta[5] + (1 - wt) * 0/180*pi
 
         } else if(X[i - 1, 2] > mpar$coa[5,2]) {
-          theta_s[i] <- 15/180*pi
+          theta_sw[i] <- 15/180*pi
         }
 
       } else {
         ## do this if no coa exists
-        theta_s[i] <- rwrpcauchy(1, theta_s[i-1], mpar$rho) %% (2*pi)
+        theta_sw[i] <- rwrpcauchy(1, theta_sw[i-1], mpar$rho) %% (2*pi)
       }
     
       
       switch(mpar$taxis, no = {
         ## biased RW, no taxis
         ## draw n proposal steps for active swimming
-        s <-
+        sw <-
           rw(
             n = mpar$ntries,
-            mu = theta_s[i],
+            mu = theta_sw[i],
             rho = mpar$rho,
             a = mpar$a,
             b = mpar$b
@@ -199,7 +201,7 @@ sim_move <-
               a = mpar$a,
               b = mpar$b
             ) * max(c((1 - (rd[i-1] - mpar$mindist) / (mpar$buffer[1] - mpar$mindist)), 0))
-          s <- s * min(c((rd[i-1] - mpar$mindist) / (mpar$buffer[1] - mpar$mindist), 1))
+          sw <- sw * min(c((rd[i-1] - mpar$mindist) / (mpar$buffer[1] - mpar$mindist), 1))
 
          } 
 
@@ -213,20 +215,21 @@ sim_move <-
                   a = mpar$a,
                   b = mpar$b
           ) #* (1 - rz[i-1] / mpar$buffer[2])
-          s <- s * 0
+          sw <- sw * 0
           
         }
         
-        if (is.null(data$uv)) {
+        if (is.null(data$u)) {
           ## no current advection 
-          tmp <- cbind(X[i - 1, 1] + d[, 1] + s[, 1] + z[, 1], X[i - 1, 2] + d[, 2] + s[, 2] + z[, 2])
+          tmp <- cbind(X[i - 1, 1] + d[, 1] + sw[, 1] + z[, 1], X[i - 1, 2] + d[, 2] + sw[, 2] + z[, 2])
           
         } else {
           ## add advection due to current, if raster is supplied
-          uv <-
-            extract(data$uv, rbind(X[i - 1, 1:2])) * 3600 / 1000 # to convert from m/s to km/h
+          m.i <- ifelse(i < 552, 1, ifelse(i >=552 && i < 1296, 2, ifelse(i >= 1296 && i < 2016, 3, 4)))
+          u <- extract(data$u[[m.i]], rbind(X[i - 1, 1:2])) * 3.6 # to convert from m/s to km/h
+          v <- extract(data$v[[m.i]], rbind(X[i - 1, 1:2])) * 3.6
           tmp <-
-            cbind(X[i - 1, 1] + d[, 1] + s[, 1] + uv[1], X[i - 1, 2] + d[, 2] + s[, 2] + uv[2])
+            cbind(X[i - 1, 1] + d[, 1] + sw[, 1] + z[, 1] + u, X[i - 1, 2] + d[, 2] + sw[, 2] + z[, 2] + v)
         }
       },
       
@@ -260,7 +263,7 @@ sim_move <-
       ## select first proposal that is > mindist (km) from land 
       idx <- which(dist > mpar$mindist)
       if(length(idx)==0) {
-        stop("\ntrack stuck at a coastal boundary")
+        stop("\ntrack stuck at a boundary")
         #X[i, 3] <- -1
         #break
         #stop("track stuck at a coastal boundary")

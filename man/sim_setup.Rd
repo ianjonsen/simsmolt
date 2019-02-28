@@ -8,8 +8,9 @@ sim_setup(bathy = file.path("..", "simdata", "bathy_xy.grd"),
   land = file.path("..", "simdata", "d2landc_xy.grd"),
   land.dir = file.path("..", "simdata", "land_dirc.grd"),
   b900.dist = file.path("..", "simdata", "b900_dist.grd"),
-  b900.dir = file.path("..", "simdata", "b900_dir.grd"), uv = NULL,
-  sst = NULL, rspace = 10)
+  b900.dir = file.path("..", "simdata", "b900_dir.grd"),
+  u = file.path("..", "simdata", "riops_u.grd"), v = file.path("..",
+  "simdata", "riops_v.grd"), sst = NULL, rspace = 10, uv = TRUE)
 }
 \arguments{
 \item{bathy}{- required bathymetry file}
@@ -22,7 +23,9 @@ sim_setup(bathy = file.path("..", "simdata", "bathy_xy.grd"),
 
 \item{b900.dir}{-  required direction to 900 m isobath}
 
-\item{uv}{- optional current layers, supplied as u and v components, velocity must be in m/s}
+\item{u}{- optional zonal current layers, velocity must be in m/s}
+
+\item{v}{- optional meridional current layers, velocity must be in m/s}
 
 \item{sst}{- optional sea surface temperature layer(s)}
 

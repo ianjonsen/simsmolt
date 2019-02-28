@@ -7,14 +7,16 @@
 ##' @param ylim plot y limits
 ##' @param ca plot centres of attraction
 ##'
-##' @importFrom ggplot2 ggplot coord_fixed geom_raster aes theme_minimal geom_point fortify
-##' @importFrom ggplot2 scale_color_brewer scale_fill_viridis_c geom_contour geom_path theme_dark
+##' @importFrom ggplot2 ggplot coord_fixed geom_raster aes theme_minimal 
+##' @importFrom ggplot2 scale_color_brewer scale_fill_viridis_c geom_contour 
+##' @importFrom ggplot2 geom_polygon geom_path theme_dark fortify geom_point
 ##' @importFrom raster rasterToPoints crop
 ##' @importFrom sp spTransform
 ##' @method plot simsmolt
 ##' @export
 
-plot.simsmolt <- function(s, data, xlim = NULL, ylim = NULL, ca = FALSE, raster = TRUE, ...) {
+plot.simsmolt <- function(s, data, xlim = NULL, ylim = NULL, ca = FALSE, 
+                          raster = TRUE, alpha = 0.25, lwd = 0.2, ...) {
   
   bathy.grd <- data$bathy
   bathy <- rasterToPoints(bathy.grd) %>% data.frame()
@@ -107,7 +109,7 @@ plot.simsmolt <- function(s, data, xlim = NULL, ylim = NULL, ca = FALSE, raster 
     geom_path(data = sim,
               aes(x, y, group=id),
               colour = "salmon",
-              alpha = 0.25, size = 0.2) +
+              alpha = alpha, size = lwd) +
     
     geom_point(data = subset(sim.last, s == 1), 
                aes(x, y),

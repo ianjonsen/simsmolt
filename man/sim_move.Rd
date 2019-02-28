@@ -4,7 +4,7 @@
 \alias{sim_move}
 \title{simulate movements & survival, using inputs from presim}
 \usage{
-sim_move(id = 1, N = 1800, data = NULL, mpar = list(), pb = TRUE)
+sim_move(id = 1, N = 2760, data = NULL, mpar = list(), pb = TRUE)
 }
 \arguments{
 \item{id}{- identifier for simulation run (individual animal)}
