@@ -12,7 +12,8 @@
 #' @param b900.dir -  required direction to 900 m isobath
 #' @param tag - start location(s) of simulated animals
 #' @param coa - optional Centre-Of-Attraction location(s) to provide movement bias(es)
-#' @param uv - optional current layers, supplied as u and v components, velocity must be in m/s
+#' @param u - optional zonal current layers, velocity must be in m/s
+#' @param v - optional meridional current layers, velocity must be in m/s
 #' @param sst - optional sea surface temperature layer(s)
 #' @param rec - optional acoustic receiver locations
 #' @importFrom raster raster brick projectRaster extract
@@ -27,7 +28,8 @@ sim_setup <-
            land.dir = file.path("..", "simdata", "land_dirc.grd"),
            b900.dist = file.path("..", "simdata", "b900_dist.grd"),
            b900.dir = file.path("..", "simdata", "b900_dir.grd"),
-           uv = NULL,
+           u = file.path("..", "simdata", "ru.grd"),
+           v = file.path("..", "simdata", "rv.grd"),
            sst = NULL,
            rspace = 10) {
     
@@ -50,8 +52,9 @@ sim_setup <-
     b900.dist <- raster(b900.dist)
     b900.dir <- raster(b900.dir)
     
-    if (!is.null(uv))
-      uv <- brick(uv)
+    if (all(!is.null(u), !is.null(v)))
+      u <- brick(u)
+      v <- brick(v)
     
     ## load receiver location data
 
@@ -59,38 +62,6 @@ sim_setup <-
       ## FIXME:  could generalize by accessing OTN server to pull requested receiver data from anywhere...
       ## FIXME:  prep code would prob require consistent receiver location / history format on OTN server
       
-      ## get ASF receiver locations
-      # asf <- read_csv(file.path("..", "simdata", "stations.csv")) %>%
-      #   select(-notes) %>%
-      #   filter(
-      #     collectioncode == "ASF",
-      #     grepl("Acoustic", station_type),
-      #     stationstatus == "active"
-      #   ) %>%
-      #   rename(lon = longitude, lat = latitude) %>%
-      #   select(-FID,
-      #          -collectioncode,
-      #          -station_type,
-      #          -stationclass,
-      #          -the_geom)
-      # 
-      # ## project from longlat to laea
-      # prj_ll <- "+proj=longlat +ellps=WGS84"
-      # prj_laea <-
-      #   "+proj=laea +datum=WGS84 +lat_0=45.00833 +lon_0=-66.99167 +ellps=WGS84 +units=km"
-      # loc <- data.frame(x = asf$lon, y = asf$lat)
-      # coordinates(loc) <- c("x", "y")
-      # proj4string(loc) <- CRS(prj_ll)
-      # locp <- spTransform(loc, CRS(prj_laea)) %>% data.frame()
-      # asf <- bind_cols(asf, locp) %>%
-      #   filter(x >= 0)
-      # ## get SoBI receiver locations
-      # sobi <- asf %>% filter(grepl("Strait", locality))
-      # ## set receiver locations in m
-      # Srecs <- sobi %>% select(x, y) * 1000
-      
-      ## Nain, NL - 56.542222, -61.692778
-      ## `place` receivers in Labrador Sea 
  
         ## 4 lines from just N of SoBI to Nain, NL
         ## 10 km spacing
@@ -132,14 +103,15 @@ sim_setup <-
       
       
 
-    if (!is.null(uv))
+    if (all(!is.null(u), !is.null(v)))
       list(
         bathy = bathy,
         land = land,
         land.dir = land.dir,
         b900.dist = b900.dist,
         b900.dir = b900.dir,
-        uv = uv,
+        u = u,
+        v = v,
         recs = recLines,
         prj = prj_laea
       )
