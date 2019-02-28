@@ -66,15 +66,16 @@ sim_move <-
     mpar <- mpar.full
     
     if (is.null(mpar$coa)) {
+      p <- runif(1)
       if (is.na(mpar$buffer[2])) {
         mpar$coa <-
           cbind(
             c(
-              runif(1, 625, 800),
-              runif(1, 480, 1200),
-              runif(1, 240, 1200),
-              runif(1, 120, 1200),
-              runif(1, 10, 1200)
+              625 + 275 * p,
+              480 + 520 * p,
+              240 + 760 * p,
+              120 + 880 * p,
+              10  + 990 * p
             ),
             c(
               runif(1, 155, 195),
@@ -88,11 +89,11 @@ sim_move <-
         mpar$coa <-
           cbind(
             c(
-              runif(1, 625, 800),
-              runif(1, 480, 760),
-              runif(1, 240, 460),
-              runif(1, 120, 290),
-              runif(1, 10, 220)
+              625 + 175 * p,
+              480 + 280 * p,
+              240 + 220 * p,
+              120 + 170 * p,
+              10  + 210 * p
             ),
             c(
               runif(1, 155, 195),
@@ -111,7 +112,7 @@ sim_move <-
     X[1,] <- cbind(mpar$start[1], mpar$start[2], 1)
     theta_s <- rd <- rz <- c()
     theta_s[1] <- 0 / 180 * pi
-    
+
     ## recursion
     for (i in 2:N) {
       if(i==2 && pb)  tpb <- txtProgressBar(min = 2, max = N, style = 3)
@@ -125,47 +126,50 @@ sim_move <-
       if(all(!is.na(mpar$coa))) {
         ## get dist & dir to all coa's
         d2coa <- sqrt((mpar$coa[,1] - X[i - 1, 1])^2 + (mpar$coa[,2] - X[i - 1, 2])^2)
+        if(i == 2) mdist <- c(d2coa[1], diff(d2coa))
         theta <- atan2(mpar$coa[, 1] - X[i - 1, 1], mpar$coa[, 2] - X[i - 1, 2])
       
+        
         ## calculate weighted swimming direction
         if(X[i - 1, 2] <= mpar$coa[1,2]) {
           if(i == 2) mdist <- d2coa[1]
           wt <- d2coa[1]/mdist
           theta_s[i] <- wt * theta[1] + (1 - wt) * theta[2]
           j <- i
-          
+
         } else if(X[i - 1, 2] > mpar$coa[1,2] & X[i - 1, 2] <= mpar$coa[2,2]) {
           if(i == j+1) mdist <- d2coa[2]
           wt <- d2coa[2]/mdist
           theta_s[i] <- wt * theta[2] + (1 - wt) * theta[3]
           k <- i
-          
+
         }
         else if(X[i - 1, 2] > mpar$coa[2,2] & X[i - 1, 2] <= mpar$coa[3,2]) {
           if(i == k+1) mdist <- d2coa[3]
           wt <- d2coa[3]/mdist
           theta_s[i] <- wt * theta[3] + (1 - wt) * theta[4]
           q <- i
-          
+
         } else if(X[i - 1, 2] > mpar$coa[3,2] & X[i - 1, 2] <= mpar$coa[4,2]) {
           if(i == q+1) mdist <- d2coa[4]
           wt <- d2coa[4]/mdist
           theta_s[i] <- wt * theta[4] + (1 - wt) * theta[5]
           h <- i
-          
+
         } else if(X[i - 1, 2] > mpar$coa[4,2] & X[i - 1, 2] <= mpar$coa[5,2]) {
           if(i == h+1) mdist <- d2coa[5]
           wt <- d2coa[5]/mdist
           theta_s[i] <- wt * theta[5] + (1 - wt) * 0/180*pi
-          
+
         } else if(X[i - 1, 2] > mpar$coa[5,2]) {
           theta_s[i] <- 15/180*pi
         }
-        
+
       } else {
         ## do this if no coa exists
         theta_s[i] <- rwrpcauchy(1, theta_s[i-1], mpar$rho) %% (2*pi)
       }
+    
       
       switch(mpar$taxis, no = {
         ## biased RW, no taxis
