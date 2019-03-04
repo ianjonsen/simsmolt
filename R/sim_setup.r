@@ -31,8 +31,9 @@ sim_setup <-
            u = file.path("..", "simdata", "riops_u.grd"),
            v = file.path("..", "simdata", "riops_v.grd"),
            sst = NULL,
+           rec = "lines",
            rspace = 10,
-           uv = TRUE) {
+           uv = FALSE) {
     
     if (is.null(land) |
         is.null(land.dir) | is.null(b900.dist) | is.null(b900.dir))
@@ -53,7 +54,7 @@ sim_setup <-
     b900.dist <- raster(b900.dist)
     b900.dir <- raster(b900.dir)
     
-    if (all(!is.null(u), !is.null(v)))
+    if (uv)
       u <- brick(u)
       v <- brick(v)
     
@@ -63,13 +64,13 @@ sim_setup <-
       ## FIXME:  could generalize by accessing OTN server to pull requested receiver data from anywhere...
       ## FIXME:  prep code would prob require consistent receiver location / history format on OTN server
       
- 
+      if(rec == "lines") {
         ## 4 lines from just N of SoBI to Nain, NL
         ## 10 km spacing
-        nain <- cbind(-61.692778,56.542222) %>% 
-          rgdal::project(., proj=prj_laea) %>%
-          as.data.frame()
-        names(nain) <- c("x","y")
+       # nain <- cbind(-61.692778,56.542222) %>% 
+          #rgdal::project(., proj=prj_laea) %>%
+          #as.data.frame()
+        #names(nain) <- c("x","y")
         x1 <- seq(615, 1015, by = rspace)
         x2 <- seq(595, 1000, by = rspace)
         x3 <- seq(440, 870, by = rspace)
@@ -87,21 +88,42 @@ sim_setup <-
           filter(z < -10, z > -600) # drop receivers at >= -10 m depth & < -600 m depth
         
         ## adjust depth, assuming receivers placed 100 m off seafloor
-        recLines <- recLines %>%
+        recLocs <- recLines %>%
+          mutate(z = ifelse(z < -120, z + 100, z)) %>%
+          mutate(id = rownames(.))
+        
+      } else if (rec == "rnd") {
+        ## 1 vlarge grid w random placement
+        poly <- Polygon(data.frame(x = c(615,595,440,320,220,180, 300,400,520,760,820,1015,615), 
+                           y = c(160,310,460,520,620,800, 800,620,520,480,310,160,160)))
+        recPoly_sf <- SpatialPolygons(list(Polygons(list(poly), ID = 1)), 
+                                   integer(1), proj4string = CRS(prj_laea)) %>%
+          st_as_sf()
+        
+        ## use same random sample each time (for now)
+        set.seed(10)
+        recLocs <- st_sample(recPoly_sf, size = 350) %>%
+          st_coordinates() %>%
+          as_tibble() %>%
+          rename(x = X, y = Y)
+        recLocs <- recLocs[1:350, ]
+        recLocs <- recLocs %>%
+          mutate(z = extract(bathy, recLocs[, c("x","y")])) %>%
+          filter(z > -600, z < -10)
+        
+        ## adjust depth, assuming receivers placed 100 m off seafloor
+        recLocs <- recLocs %>%
           mutate(z = ifelse(z < -120, z + 100, z)) %>%
           mutate(id = rownames(.))
         
         
-#      Lrecs <-
-#        expand.grid(x = seq(780, 830, l = 26), y = seq(850, 856, l = 4)) * 1000
-      
-      ## create SpatialPolygon around LabSea receivers (for summary & detection purposes)
-#      rec <- Polygon(Lrecs[chull(Lrecs), ] / 1000)
-#      rec.box <-
-#        SpatialPolygons(list(Polygons(list(rec), ID = 1)),
-#                        integer(1),
-#                        proj4string = CRS(prj_laea))
-      
+        dist <- recLocs %>%
+          st_as_sf(., coords = c("x","y"), crs = prj_laea) %>%
+          st_distance()
+        diag(dist) <- NA
+        min.dist <- apply(dist, 2, min, na.rm = TRUE)
+        
+      }
       
 
     if (uv)
@@ -113,7 +135,8 @@ sim_setup <-
         b900.dir = b900.dir,
         u = u,
         v = v,
-        recs = recLines,
+        recLocs = recLocs,
+        rec = rec,
         prj = prj_laea
       )
     else
@@ -123,7 +146,8 @@ sim_setup <-
         land.dir = land.dir,
         b900.dist = b900.dist,
         b900.dir = b900.dir,
-        recs = recLines,
+        recLocs = recLocs,
+        rec = rec,
         prj = prj_laea
       )
   }

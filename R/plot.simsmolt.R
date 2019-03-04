@@ -10,17 +10,38 @@
 ##' @importFrom ggplot2 ggplot coord_fixed geom_raster aes theme_minimal 
 ##' @importFrom ggplot2 scale_color_brewer scale_fill_viridis_c geom_contour 
 ##' @importFrom ggplot2 geom_polygon geom_path theme_dark fortify geom_point
+##' @importFrom ggplot2 aes_string
 ##' @importFrom raster rasterToPoints crop
 ##' @importFrom sp spTransform
 ##' @method plot simsmolt
 ##' @export
 
 plot.simsmolt <- function(s, data, xlim = NULL, ylim = NULL, ca = FALSE, 
-                          raster = TRUE, alpha = 0.25, lwd = 0.2, ...) {
+                          raster = NULL, m = 2, alpha = 0.25, lwd = 0.2, ...) {
+  
+  switch(raster, 
+         bathy = {
+           ras <- data$bathy
+           ras <- rasterToPoints(ras) %>% data.frame()
+           names(ras) <- c("x","y","z")
+         },
+         u = {
+           if(m==0) ras <- calc(data$u, mean)
+           else ras <- data$u[[m]]
+           ras <- rasterToPoints(ras) %>% data.frame()
+           names(ras) <- c("x","y","z")
+         },
+         v = {
+           if(m==0) ras <- calc(data$v, mean)
+           else ras <- data$v[[m]]
+           ras <- rasterToPoints(ras) %>% data.frame()
+           names(ras) <- c("x","y","z")
+         })
   
   bathy.grd <- data$bathy
   bathy <- rasterToPoints(bathy.grd) %>% data.frame()
-  
+  names(bathy) <- c("x","y","z")
+
   data(countriesLow, package = "rworldmap")
   coast <- spTransform(countriesLow, data$prj) %>%
     crop(., bathy.grd) %>%
@@ -77,8 +98,8 @@ plot.simsmolt <- function(s, data, xlim = NULL, ylim = NULL, ca = FALSE,
       expand = FALSE
     )
   
-  if(raster) {
-    m <- m + geom_raster(data = bathy, aes(x, y, fill = z)) +
+  if(!is.null(raster)) {
+    m <- m + geom_raster(data = ras, aes(x, y, fill = z)) +
       scale_fill_viridis_c(direction = 1) +
       theme_dark()
   }

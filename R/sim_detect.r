@@ -21,23 +21,32 @@ sim_detect <-
     ##  otherwise trap() output is far too big to generate along full track
     ##    - convert locs from km to m grid; vel in m/s
 
-    recs <- data$recs 
+    recLocs <- data$recLocs 
     trans <- tmp.tr <- dt <- tmp.dt <- NULL
-    yrec <- recs$y %>% unique()
-    b <- s$params$pdrf
+    
+    if(data$rec == "lines") {
+      yrec <- recLocs$y %>% unique()
     
     in.rng <- lapply(1:length(yrec), function(i) {
       which(abs(yrec[i] - s$sim[, "y"]) <= 1.5)
     })
-
+    } else if(data$rec == "rnd") {
+      
+    }
+    
+    b <- s$params$pdrf
+    
+    
     ## drop rec lines that smolt did not cross
     in.rng <- in.rng[which(sapply(in.rng, length) > 0 )]
     
     trans <- lapply(1:length(in.rng), function(i){
+      
         path <- s$sim[in.rng[[i]], c("id","date","x","y")]
         path[, c("x","y")] <- path[, c("x","y")] * 1000
         sim_transmit(path, delayRng = delay, burstDur = burst) %>%
         mutate(line = rep(paste0("l", i), nrow(.)))
+        
       }) %>% 
       do.call(rbind, .) 
       
@@ -47,11 +56,11 @@ sim_detect <-
     ## in July 2009 & July 2010 (see ~/Dropbox/collab/otn/fred/r/fn/sentinel.r)
 
     ## simulate detections given receiver locations & simulated transmission along track
-      recs <- recs %>%
+      recLocs <- recLocs %>%
         mutate(x = x * 1000, y = y * 1000)
      
       detect <- trans %>% 
-        pdet(trs = ., rec = recs[, c("id","x","y","z")], b = b)
+        pdet(trs = ., rec = recLocs[, c("id","x","y","z")], b = b)
       
       s$trans <- trans %>%
         select(id, date, line, x, y) %>%
