@@ -138,8 +138,12 @@ sim_setup <-
                                       integer(1), proj4string = CRS(prj_laea)) 
         
         if(rspace == 30) {
+          ## use same random sample each time b/c we want grid to always be in same place
+          set.seed(10)
           grid <- spsample(recPoly, n=165, type="regular", proj4string = prj_laea) %>% st_as_sf()
           } else if(rspace == 15) {
+            ## use same random sample each time b/c we want grid to always be in same place
+            set.seed(10)
             grid <- spsample(recPoly, n=650, type="regular", proj4string = prj_laea) %>% st_as_sf()
           }
         
