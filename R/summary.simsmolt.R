@@ -36,10 +36,8 @@ summary.simsmolt <- function(x, data = NULL, ...) {
     fn <- function(x) sapply(1:length(yrec), function(i) sum(sum((yrec[i] - x) < 0, na.rm = TRUE) > 0))
     num.cross <- apply(sm.y, 2, fn) %>% apply(., 1, sum)
 
-    all.tr <- lapply(x$rep, function(.) .$trans) %>% do.call(rbind, .)
     all.dt <- lapply(x$rep, function(.) .$detect) %>% do.call(rbind, .)
     dt.by.line <- all.dt %>% group_by(line) %>% summarise(n = n())
-    tr.by.line <- all.tr %>% group_by(line) %>% summarise(n = n())
     dt.by.recline <- all.dt %>% group_by(line,recv_id) %>% summarise(n = n()) %>% group_by(line) %>% summarise(n = n())
   
     ## count individual smolts detected at each line
@@ -70,11 +68,6 @@ summary.simsmolt <- function(x, data = NULL, ...) {
       dt.by.line <- rbind(dt.by.line, data.frame(line = lines[ex], n = ex*0)) %>%
         arrange(line)
     }
-    if(nrow(tr.by.line != length(yrec))) {
-      ex <- which(!lines %in% tr.by.line$line)
-      tr.by.line <- rbind(tr.by.line, data.frame(line = lines[ex], n = ex*0)) %>%
-        arrange(line)
-    }
     if(nrow(dt.by.recline != length(yrec))) {
       ex <- which(!lines %in% dt.by.recline$line)
       dt.by.recline <- rbind(dt.by.recline, data.frame(line = lines[ex], n = ex*0)) %>%
@@ -102,7 +95,6 @@ summary.simsmolt <- function(x, data = NULL, ...) {
     whsm = whsm,
     dt.num = c(dt.by.line$n, nrow(all.dt)),
     dt.by.recline = c(dt.by.recline$n, sum(dt.by.recline$n)),
-    p.dt = c(dt.by.line$n, nrow(all.dt)) / c(tr.by.line$n, nrow(all.tr)),
     p.smolt = ndt/n
   ),
   class = "summary.simsmolt"))
@@ -122,11 +114,10 @@ print.summary.simsmolt <- function(x)
                 c(NA, ".", x$nsl[-1]),
                    c(NA, x$dt.num), 
                    c(NA, x$dt.by.recline),
-                   c(NA, round(x$p.dt, 4)),
                    c(NA, round(x$p.smolt, 4))
                    ))
   
-  xx <- cbind(c("smolts", "mortalities","smolts detected", "smolts detected on > 1 line", "detections", "receivers with detections", "p(transmissions detected)", "p(smolts detected)"),
+  xx <- cbind(c("smolts", "mortalities","smolts detected", "smolts detected on > 1 line", "detections", "receivers with detections", "p(smolts detected)"),
               xx)
 
   dimnames(xx) <- list(rep("", 8), 
