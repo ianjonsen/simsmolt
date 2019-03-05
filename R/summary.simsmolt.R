@@ -1,4 +1,5 @@
 ##' @importFrom dplyr %>% summarise group_by n
+##' @importFrom sf st_coordinates
 ##' @method summary simsmolt
 ##' @export
 summary.simsmolt <- function(x, data = NULL, ...) {
@@ -15,6 +16,9 @@ summary.simsmolt <- function(x, data = NULL, ...) {
     cat(sprintf("dropping %i failed runs\n\n", sum(!compl)))
     x <- x[compl, ]
   
+  ## summarise multiple replicates
+  if(names(x)[2] != "rep") stop("expecting simulation output objects to be named 'rep'")
+    
     ## count smolts passing each receiver line/array (whether or not detected)
     r <- data$recs
     yrec <- unique(r$y)
@@ -32,8 +36,6 @@ summary.simsmolt <- function(x, data = NULL, ...) {
     fn <- function(x) sapply(1:length(yrec), function(i) sum(sum((yrec[i] - x) < 0, na.rm = TRUE) > 0))
     num.cross <- apply(sm.y, 2, fn) %>% apply(., 1, sum)
 
-    ## summarise multiple replicates
-    if(names(x)[2] != "rep") stop("expecting simulation output objects to be named 'rep'")
     all.tr <- lapply(x$rep, function(.) .$trans) %>% do.call(rbind, .)
     all.dt <- lapply(x$rep, function(.) .$detect) %>% do.call(rbind, .)
     dt.by.line <- all.dt %>% group_by(line) %>% summarise(n = n())
@@ -92,7 +94,7 @@ summary.simsmolt <- function(x, data = NULL, ...) {
   ndt <- c(num.smolt.dt.by.line$n, length(unique(num.ind.smolt.dt.by.line$trns_id)))
   nsl <- c(num.smolt.lines, sum(num.smolt.lines[-1]))
 
-  structure(list(
+  return(structure(list(
     n = n,
     num.dead = c(num.dead.by.line[-5], sum(num.dead.by.line)),
     ndt = ndt,
@@ -103,8 +105,9 @@ summary.simsmolt <- function(x, data = NULL, ...) {
     p.dt = c(dt.by.line$n, nrow(all.dt)) / c(tr.by.line$n, nrow(all.tr)),
     p.smolt = ndt/n
   ),
-  class = "summary.simsmolt")
-  }
+  class = "summary.simsmolt"))
+
+}
   
 }
 

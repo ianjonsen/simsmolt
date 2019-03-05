@@ -316,7 +316,7 @@ sim_move <-
     names(X) <- c("x", "y", "s")
 
     sim <- X %>% as_tibble() %>%
-      mutate(id = id) %>%
+      mutate(id = rep(id, N)) %>%
       mutate(date = seq(ISOdatetime(2018,07,09,00,00,00), by = 3600, length.out = N)) %>%
       select(id, date, x, y, s)
   

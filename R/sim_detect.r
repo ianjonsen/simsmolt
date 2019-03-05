@@ -8,6 +8,7 @@
 #' @param delay - min & max time intervals (s) between transmissions
 #' @param burst - duration of each transmission (s)
 #' @importFrom sp Polygon Polygons SpatialPolygons CRS
+#' @importFrom sf st_as_sf st_contains
 #' @importFrom raster buffer
 #' @importFrom prevR point.in.SpatialPolygons
 #' @importFrom dplyr %>% bind_rows mutate arrange desc
@@ -23,34 +24,35 @@ sim_detect <-
 
     recLocs <- data$recLocs 
     trans <- tmp.tr <- dt <- tmp.dt <- NULL
+    b <- s$params$pdrf
     
     if(data$rec == "lines") {
       yrec <- recLocs$y %>% unique()
     
-    in.rng <- lapply(1:length(yrec), function(i) {
-      which(abs(yrec[i] - s$sim[, "y"]) <= 1.5)
-    })
-    } else if(data$rec == "rnd") {
+      in.rng <- lapply(1:length(yrec), function(i) {
+        which(abs(yrec[i] - s$sim[, "y"]) <= 1.5)
+      })
+      ## drop rec lines that smolt did not cross
+      in.rng <- in.rng[which(sapply(in.rng, length) > 0 )]
       
-    }
-    
-    b <- s$params$pdrf
-    
-    
-    ## drop rec lines that smolt did not cross
-    in.rng <- in.rng[which(sapply(in.rng, length) > 0 )]
-    
-    trans <- lapply(1:length(in.rng), function(i){
-      
+      ## simulate transmissions
+      trans <- lapply(1:length(in.rng), function(i){
         path <- s$sim[in.rng[[i]], c("id","date","x","y")]
         path[, c("x","y")] <- path[, c("x","y")] * 1000
-        sim_transmit(path, delayRng = delay, burstDur = burst) %>%
-        mutate(line = rep(paste0("l", i), nrow(.)))
-        
+        sim_transmit(path, delayRng = delay, burstDur = burst) #%>%
+#          mutate(line = rep(paste0("l", i), nrow(.)))
       }) %>% 
-      do.call(rbind, .) 
+        do.call(rbind, .) 
       
-   
+    } else if(data$rec != "lines") {
+      sim_sf <- st_as_sf(s$sim, coords = c("x","y"), crs = data$prj)
+      in.rng <- st_contains(data$recPoly, sim_sf)[[1]] 
+      path <- s$sim[in.rng, c("id","date","x","y")]
+      path[, c("x","y")] <- path[, c("x","y")] * 1000
+        
+      trans <- sim_transmit(path, delayRng = delay, burstDur = burst)
+    }
+
     ## define logistic detection range (m) function
     ## parameterised from analysis of SoBI sentinel tag detections
     ## in July 2009 & July 2010 (see ~/Dropbox/collab/otn/fred/r/fn/sentinel.r)
@@ -58,16 +60,16 @@ sim_detect <-
     ## simulate detections given receiver locations & simulated transmission along track
       recLocs <- recLocs %>%
         mutate(x = x * 1000, y = y * 1000)
-     
+           
       detect <- trans %>% 
         pdet(trs = ., rec = recLocs[, c("id","x","y","z")], b = b)
       
       s$trans <- trans %>%
-        select(id, date, line, x, y) %>%
-        arrange(line, date)
+        select(id, date, x, y) %>%
+        arrange(date)
       
       s$detect <- detect %>%
-        arrange(line, date, recv_id, trns_id)
+        arrange(date, recv_id, trns_id)
  
     return(s)
   }

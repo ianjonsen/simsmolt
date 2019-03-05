@@ -48,8 +48,6 @@ plot.simsmolt <- function(s, data, xlim = NULL, ylim = NULL, ca = FALSE,
     fortify(.) %>%
     rename(x = long, y = lat)
   
-  recs <- data$recs
-  
   if (is.null(xlim))
     xlim <- c(0,1250)
   if (is.null(ylim))
@@ -122,7 +120,7 @@ plot.simsmolt <- function(s, data, xlim = NULL, ylim = NULL, ca = FALSE,
   
   m <-
     m + geom_point(
-      data = recs,
+      data = data$recLocs,
       aes(x, y),
       colour = "blue",
       size = 0.4

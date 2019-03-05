@@ -5,7 +5,7 @@
 \title{plot}
 \usage{
 \method{plot}{simsmolt}(s, data, xlim = NULL, ylim = NULL,
-  ca = FALSE, raster = TRUE, alpha = 0.25, lwd = 0.2, ...)
+  ca = FALSE, raster = NULL, m = 2, alpha = 0.25, lwd = 0.2, ...)
 }
 \arguments{
 \item{s}{a fitted object of class simsmolt}

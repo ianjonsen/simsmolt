@@ -17,7 +17,8 @@
 #' @param sst - optional sea surface temperature layer(s)
 #' @param rec - optional acoustic receiver locations
 #' @importFrom raster raster brick projectRaster extract
-#' @importFrom sp coordinates<- proj4string<- CRS spTransform SpatialPointsDataFrame
+#' @importFrom sp coordinates<- proj4string<- CRS spTransform SpatialPointsDataFrame spsample
+#' @importFrom sf st_as_sf st_sample st_coordinates st_distance
 #' @importFrom dplyr select filter rename bind_cols %>% tibble
 #' @importFrom readr read_csv
 #' @export
@@ -92,10 +93,12 @@ sim_setup <-
           mutate(z = ifelse(z < -120, z + 100, z)) %>%
           mutate(id = rownames(.))
         
+        recPoly_sf <- NULL
+        
       } else if (rec == "rnd") {
         ## 1 vlarge grid w random placement
-        poly <- Polygon(data.frame(x = c(615,595,440,320,220,180, 300,400,520,760,820,1015,615), 
-                           y = c(160,310,460,520,620,800, 800,620,520,480,310,160,160)))
+        poly <- Polygon(data.frame(x = c(615,595,440,320,220, 450,600,790,900,1015, 615), 
+                           y = c(145,299,453,520,607, 607,520,453,299,145, 145)))
         recPoly_sf <- SpatialPolygons(list(Polygons(list(poly), ID = 1)), 
                                    integer(1), proj4string = CRS(prj_laea)) %>%
           st_as_sf()
@@ -106,11 +109,15 @@ sim_setup <-
           st_coordinates() %>%
           as_tibble() %>%
           rename(x = X, y = Y)
+        ## equivalent # of recs to rpsace = 5
         recLocs <- recLocs[1:350, ]
         recLocs <- recLocs %>%
           mutate(z = extract(bathy, recLocs[, c("x","y")])) %>%
           filter(z > -600, z < -10)
-        
+        if (rspace == 10) {
+          n <- nrow(recLocs)
+          recLocs <- recLocs[sample(1:n, round(n * 0.5)), ]
+        }
         ## adjust depth, assuming receivers placed 100 m off seafloor
         recLocs <- recLocs %>%
           mutate(z = ifelse(z < -120, z + 100, z)) %>%
@@ -123,6 +130,31 @@ sim_setup <-
         diag(dist) <- NA
         min.dist <- apply(dist, 2, min, na.rm = TRUE)
         
+      } else if (rec == "grid") {
+        ## 1 vlarge grid w random placement
+        poly <- Polygon(data.frame(x = c(615,595,440,320,220, 450,600,790,900,1015, 615), 
+                                   y = c(145,299,453,520,607, 607,520,453,299,145, 145)))
+        recPoly <- SpatialPolygons(list(Polygons(list(poly), ID = 1)), 
+                                      integer(1), proj4string = CRS(prj_laea)) 
+        
+        if(rspace == 30) {
+          grid <- spsample(recPoly, n=165, type="regular", proj4string = prj_laea) %>% st_as_sf()
+          } else if(rspace == 15) {
+            grid <- spsample(recPoly, n=650, type="regular", proj4string = prj_laea) %>% st_as_sf()
+          }
+        
+        recPoly_sf <- st_as_sf(recPoly)
+        recLocs <- grid %>% st_coordinates() %>%
+          as_tibble() %>%
+          rename(x = X, y = Y)
+        ## aadd & filter on bathymetry
+        recLocs <- recLocs %>%
+          mutate(z = extract(bathy, recLocs[, c("x","y")])) %>%
+          filter(z > -600, z < -10)
+        ## adjust depth, assuming receivers placed 100 m off seafloor
+        recLocs <- recLocs %>%
+          mutate(z = ifelse(z < -120, z + 100, z)) %>%
+          mutate(id = rownames(.))
       }
       
 
@@ -136,6 +168,7 @@ sim_setup <-
         u = u,
         v = v,
         recLocs = recLocs,
+        recPoly = recPoly_sf,
         rec = rec,
         prj = prj_laea
       )
@@ -147,6 +180,7 @@ sim_setup <-
         b900.dist = b900.dist,
         b900.dir = b900.dir,
         recLocs = recLocs,
+        recPoly = recPoly_sf,
         rec = rec,
         prj = prj_laea
       )
