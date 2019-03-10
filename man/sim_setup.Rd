@@ -11,7 +11,7 @@ sim_setup(bathy = file.path("..", "simdata", "bathy_xy.grd"),
   b900.dir = file.path("..", "simdata", "b900_dir.grd"),
   u = file.path("..", "simdata", "riops_u.grd"), v = file.path("..",
   "simdata", "riops_v.grd"), sst = NULL, rec = "lines", rspace = 10,
-  uv = FALSE)
+  rnum = 135, uv = FALSE)
 }
 \arguments{
 \item{bathy}{- required bathymetry file}
@@ -31,6 +31,8 @@ sim_setup(bathy = file.path("..", "simdata", "bathy_xy.grd"),
 \item{sst}{- optional sea surface temperature layer(s)}
 
 \item{rec}{- optional acoustic receiver locations}
+
+\item{rnum}{- the number of receivers to be used on grid arrays (to approx. match to num used on lines)}
 
 \item{tag}{- start location(s) of simulated animals}
 

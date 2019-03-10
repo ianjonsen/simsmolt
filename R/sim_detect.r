@@ -49,8 +49,11 @@ sim_detect <-
       in.rng <- st_contains(data$recPoly, sim_sf)[[1]] 
       path <- s$sim[in.rng, c("id","date","x","y")]
       path[, c("x","y")] <- path[, c("x","y")] * 1000
-        
-      trans <- sim_transmit(path, delayRng = delay, burstDur = burst)
+      if(length(in.rng >= 1)) {
+        trans <- sim_transmit(path, delayRng = delay, burstDur = burst)
+      } else {
+        trans <- NULL
+      }
     }
 
     ## define logistic detection range (m) function
@@ -60,16 +63,24 @@ sim_detect <-
     ## simulate detections given receiver locations & simulated transmission along track
       recLocs <- recLocs %>%
         mutate(x = x * 1000, y = y * 1000)
-           
+      
+      if(!is.null(trans)) {     
       detect <- trans %>% 
         pdet(trs = ., rec = recLocs[, c("id","x","y","z")], b = b)
+      } else {
+        detect <- NULL
+      }
       
-      s$trans <- trans %>%
-        select(id, date, x, y) %>%
-        arrange(date)
+#      s$trans <- trans %>%
+#        select(id, date, x, y) %>%
+#        arrange(date)
       
+      if(!is.null(detect)) {
       s$detect <- detect %>%
         arrange(date, recv_id, trns_id)
+      } else {
+        s$detect <- detect
+      }
  
     return(s)
   }

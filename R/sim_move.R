@@ -31,7 +31,7 @@ sim_move <-
       a = 2,
       b = 0.864,
       rho = 0.8,
-      ntries = 100,
+      ntries = 500,
       surv = 0.9936,
       taxis = "no",
       buffer = c(10, 10),
@@ -271,7 +271,7 @@ sim_move <-
       ## check if proposed update is on land
       dist <- extract(data$land, tmp)
       if(all(is.na(dist))) {
-        if(taxis != "no" && i >= round(0.25 * N)) {
+        if(mpar$taxis != "no" && i >= round(0.25 * N)) {
         X[i, 3] <- -1
         break
         } else {
@@ -281,7 +281,7 @@ sim_move <-
       ## select first proposal that is > mindist (km) from land 
       idx <- which(dist > mpar$mindist)
       if(length(idx) == 0) {
-        if(taxis != "no" && i >= round(0.25 * N)) {
+        if(mpar$taxis != "no" && i >= round(0.25 * N)) {
         X[i, 3] <- -2
         break
         } else {

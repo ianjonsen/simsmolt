@@ -3,27 +3,37 @@
 ##' @title plot
 ##' @param s a fitted object of class simsmolt
 ##' @param data data object created by sim_setup
+##' @param raster select a raster (from data) to use as background (bathy, u, v, or NULL)
+##' @param rec should receiver locations be displayed (logical)
+##' @param track should smolt track(s) be displayed (logical)
+##' @param alpha translucence for smolt track(s)
+##' @param lwd width of smolt track(s)
+##' @param col colour for receiver locations
+##' @param size of smolt track end point(s)
 ##' @param xlim plot x limits
 ##' @param ylim plot y limits
 ##' @param ca plot centres of attraction
 ##'
-##' @importFrom ggplot2 ggplot coord_fixed geom_raster aes theme_minimal 
+##' @importFrom ggplot2 ggplot coord_fixed geom_raster aes theme_minimal
 ##' @importFrom ggplot2 scale_color_brewer scale_fill_viridis_c geom_contour 
 ##' @importFrom ggplot2 geom_polygon geom_path theme_dark fortify geom_point
-##' @importFrom ggplot2 aes_string
+##' @importFrom ggplot2 aes_string theme_classic theme element_rect ylab xlab
 ##' @importFrom raster rasterToPoints crop
 ##' @importFrom sp spTransform
 ##' @method plot simsmolt
 ##' @export
 
 plot.simsmolt <- function(s, data, xlim = NULL, ylim = NULL, ca = FALSE, 
-                          raster = NULL, m = 2, alpha = 0.25, lwd = 0.2, ...) {
+                          raster = NULL, rec = TRUE, track = TRUE, 
+                          alpha = 0.25, lwd = 0.2, size = 0.2, col = "blue", option = "D", ...) {
   
-  switch(raster, 
+  bathy.c <- rasterToPoints(data$bathy) %>% data.frame()
+  names(bathy.c) <- c("x","y","z")
+  
+  if(!is.null(raster)) {
+    switch(raster, 
          bathy = {
-           ras <- data$bathy
-           ras <- rasterToPoints(ras) %>% data.frame()
-           names(ras) <- c("x","y","z")
+           ras <- bathy.c
          },
          u = {
            if(m==0) ras <- calc(data$u, mean)
@@ -37,14 +47,12 @@ plot.simsmolt <- function(s, data, xlim = NULL, ylim = NULL, ca = FALSE,
            ras <- rasterToPoints(ras) %>% data.frame()
            names(ras) <- c("x","y","z")
          })
+}
   
-  bathy.grd <- data$bathy
-  bathy <- rasterToPoints(bathy.grd) %>% data.frame()
-  names(bathy) <- c("x","y","z")
-
+  
   data(countriesLow, package = "rworldmap")
   coast <- spTransform(countriesLow, data$prj) %>%
-    crop(., bathy.grd) %>%
+    crop(., data$bathy) %>%
     fortify(.) %>%
     rename(x = long, y = lat)
   
@@ -53,7 +61,7 @@ plot.simsmolt <- function(s, data, xlim = NULL, ylim = NULL, ca = FALSE,
   if (is.null(ylim))
     ylim <- c(0,1750)
   
-  if (!is.na(class(s)[2]) & (class(s)[2] == "rowwise_df" | class(s)[2] == "grouped_df")) {
+  if (!is.na(class(s)[2]) && (class(s)[2] == "rowwise_df" || class(s)[2] == "grouped_df")) {
     compl <- sapply(s$rep, function(.) !inherits(., "try-error"))
     cat(sprintf("dropping %i failed runs\n\n", sum(!compl)))
     s <- s[compl, ]
@@ -98,8 +106,33 @@ plot.simsmolt <- function(s, data, xlim = NULL, ylim = NULL, ca = FALSE,
   
   if(!is.null(raster)) {
     m <- m + geom_raster(data = ras, aes(x, y, fill = z)) +
-      scale_fill_viridis_c(direction = 1) +
-      theme_dark()
+      scale_fill_viridis_c(direction = 1, guide = "none", option=option) +
+      theme_dark() +
+      geom_contour(
+        data = bathy.c,
+        aes(x, y, z = z),
+        breaks = -900,
+        col = "white",
+        lwd = 0.25
+      )
+    
+  } else {
+    m <- m + theme_classic() + 
+      theme(panel.background = element_rect(grey(0.3))) + 
+      geom_contour(
+        data = bathy.c,
+        aes(x, y, z = z),
+        breaks = c(-500, -700, -900, -1100, -1500, -2000, -2500, -5000, -10000),
+        col = grey(0.8),
+        lwd = 0.05
+      ) +
+      geom_contour(
+        data = bathy.c,
+        aes(x, y, z = z),
+        breaks = -900,
+        col = "white",
+        lwd = 0.1
+      )
   }
 
   m <- m + geom_polygon(data = coast, aes_string(x="x", y="y", group="group"), fill = "black")
@@ -110,22 +143,20 @@ plot.simsmolt <- function(s, data, xlim = NULL, ylim = NULL, ca = FALSE,
                         colour = "green",
                         size = 2)
   }
-  m <- m + geom_contour(
-    data = bathy,
-    aes(x, y, z = z),
-    breaks = -900,
-    col = "white",
-    lwd = 0.25
-  )
   
+  
+  if(rec) {
   m <-
     m + geom_point(
       data = data$recLocs,
       aes(x, y),
-      colour = "blue",
+      colour = col,
       size = 0.4
-    ) +
-    geom_path(data = sim,
+    ) 
+  }
+  
+  if(track) {
+   m <- m + geom_path(data = sim,
               aes(x, y, group=id),
               colour = "salmon",
               alpha = alpha, size = lwd) +
@@ -133,21 +164,24 @@ plot.simsmolt <- function(s, data, xlim = NULL, ylim = NULL, ca = FALSE,
     geom_point(data = subset(sim.last, s == 1), 
                aes(x, y),
                colour = "dodgerblue",
-               size = 0.01) +
+               size = size) +
     
     geom_point(data = subset(sim.last, s == 0), 
                aes(x, y),
                colour = "black",
-               size = 0.01)
+               size = size)
+   }
   
-  if (!is.null(detect) && nrow(detect) > 0) {
+  if (rec && !is.null(detect) && nrow(detect) > 0) {
     m <-
       m + geom_point(data = detect, 
                      aes(recv_x, recv_y), 
                      colour = "red",
-                     size = 0.5)
+                     size = 0.6)
     
   }
+  
+  m <- m + ylab("") + xlab("")
   
   return(m) 
   

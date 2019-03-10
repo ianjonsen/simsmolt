@@ -1,4 +1,4 @@
-##' @importFrom dplyr %>% summarise group_by n
+##' @importFrom dplyr %>% summarise group_by n n_distinct
 ##' @importFrom sf st_coordinates
 ##' @method summary simsmolt
 ##' @export
@@ -20,7 +20,7 @@ summary.simsmolt <- function(x, data = NULL, ...) {
   if(names(x)[2] != "rep") stop("expecting simulation output objects to be named 'rep'")
     
     ## count smolts passing each receiver line/array (whether or not detected)
-    r <- data$recs
+    r <- data$recLoc
     yrec <- unique(r$y)
     maxy <- sapply(x$rep, function(.) nrow(.$sim)) %>% max()
     na.fill <- function(., maxy) {
@@ -82,7 +82,7 @@ summary.simsmolt <- function(x, data = NULL, ...) {
       ex <- which(!lines %in% paste0("l", names(num.smolt.lines)))
       num.smolt.lines <- as.numeric(c(num.smolt.lines, c(ex*0)))
     }
-  
+
   n <- c(num.cross, nrow(x))
   ndt <- c(num.smolt.dt.by.line$n, length(unique(num.ind.smolt.dt.by.line$trns_id)))
   nsl <- c(num.smolt.lines, sum(num.smolt.lines[-1]))
@@ -120,7 +120,7 @@ print.summary.simsmolt <- function(x)
   xx <- cbind(c("smolts", "mortalities","smolts detected", "smolts detected on > 1 line", "detections", "receivers with detections", "p(smolts detected)"),
               xx)
 
-  dimnames(xx) <- list(rep("", 8), 
+  dimnames(xx) <- list(rep("", 7), 
                        c("", " ", paste0("line.", 1:(length(x$n) - 1)), "total")
                        )
   

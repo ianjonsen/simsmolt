@@ -16,6 +16,7 @@
 #' @param v - optional meridional current layers, velocity must be in m/s
 #' @param sst - optional sea surface temperature layer(s)
 #' @param rec - optional acoustic receiver locations
+#' @param rnum - the number of receivers to be used on grid arrays (to approx. match to num used on lines)
 #' @importFrom raster raster brick projectRaster extract
 #' @importFrom sp coordinates<- proj4string<- CRS spTransform SpatialPointsDataFrame spsample
 #' @importFrom sf st_as_sf st_sample st_coordinates st_distance
@@ -34,6 +35,7 @@ sim_setup <-
            sst = NULL,
            rec = "lines",
            rspace = 10,
+           rnum = 135,
            uv = FALSE) {
     
     if (is.null(land) |
@@ -92,7 +94,7 @@ sim_setup <-
         recLocs <- recLines %>%
           mutate(z = ifelse(z < -120, z + 100, z)) %>%
           mutate(id = rownames(.))
-        
+
         recPoly_sf <- NULL
         
       } else if (rec == "rnd") {
@@ -137,15 +139,10 @@ sim_setup <-
         recPoly <- SpatialPolygons(list(Polygons(list(poly), ID = 1)), 
                                       integer(1), proj4string = CRS(prj_laea)) 
         
-        if(rspace == 30) {
-          ## use same random sample each time b/c we want grid to always be in same place
-          set.seed(10)
-          grid <- spsample(recPoly, n=165, type="regular", proj4string = prj_laea) %>% st_as_sf()
-          } else if(rspace == 15) {
-            ## use same random sample each time b/c we want grid to always be in same place
-            set.seed(10)
-            grid <- spsample(recPoly, n=650, type="regular", proj4string = prj_laea) %>% st_as_sf()
-          }
+        
+        ## use same random sample each time b/c we want grid to always be in same place
+        set.seed(pi)  #rnum = 165, 135
+        grid <- spsample(recPoly, n=rnum, type="regular", proj4string = prj_laea) %>% st_as_sf()
         
         recPoly_sf <- st_as_sf(recPoly)
         recLocs <- grid %>% st_coordinates() %>%
