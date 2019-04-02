@@ -18,7 +18,8 @@
 ##' @importFrom ggplot2 scale_color_brewer scale_fill_viridis_c geom_contour 
 ##' @importFrom ggplot2 geom_polygon geom_path theme_dark fortify geom_point
 ##' @importFrom ggplot2 aes_string theme_classic theme element_rect ylab xlab
-##' @importFrom raster rasterToPoints crop
+##' @importFrom raster rasterToPoints crop calc
+##' @importFrom dplyr "%>%"
 ##' @importFrom sp spTransform
 ##' @method plot simsmolt
 ##' @export
@@ -36,19 +37,23 @@ plot.simsmolt <- function(s, data, xlim = NULL, ylim = NULL, ca = FALSE,
            ras <- bathy.c
          },
          u = {
-           if(m==0) ras <- calc(data$u, mean)
-           else ras <- data$u[[m]]
+           
+          # if(m==0) ras <- calc(data$u, mean)
+          # else ras <- data$u[[m]]
+           ras <- calc(data$u, mean)
            ras <- rasterToPoints(ras) %>% data.frame()
            names(ras) <- c("x","y","z")
          },
          v = {
-           if(m==0) ras <- calc(data$v, mean)
-           else ras <- data$v[[m]]
+           #if(m==0) ras <- calc(data$v, mean)
+           #else ras <- data$v[[m]]
+           ras <- calc(data$v, mean)
            ras <- rasterToPoints(ras) %>% data.frame()
            names(ras) <- c("x","y","z")
          })
 }
   
+  browser() 
   
   data(countriesLow, package = "rworldmap")
   coast <- spTransform(countriesLow, data$prj) %>%
@@ -84,7 +89,7 @@ plot.simsmolt <- function(s, data, xlim = NULL, ylim = NULL, ca = FALSE,
       lapply(1:nrow(s), function(i)
         data.frame(id = i, s$rep[[i]]$sim)) %>% do.call(rbind, .)
     sim.last <- lapply(1:nrow(s), function(i)
-      data.frame(id = i, s$rep[[i]]$sim[nrow(s$rep[[i]]$sim), ])) %>%do.call(rbind, .)
+      data.frame(id = i, s$rep[[i]]$sim[nrow(s$rep[[i]]$sim), ])) %>% do.call(rbind, .)
     
     } else if(is.na(class(s)[2])){
   
@@ -94,6 +99,7 @@ plot.simsmolt <- function(s, data, xlim = NULL, ylim = NULL, ca = FALSE,
   
   if(ca) coa <- data.frame(x = s$params$coa[,1], y = s$params$coa[,2])
     }
+
   
   ## generate plot
   m <- ggplot() +
