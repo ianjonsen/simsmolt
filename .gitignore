@@ -51,3 +51,5 @@ rsconnect/
 # modified glatos sim fn
 fn/glatos/*.r
 
+# pause running travis until sim fn's have been generalised
+pause.travis.yml
