@@ -58,8 +58,8 @@ sim_setup <-
     b900.dir <- raster(b900.dir)
     
     if (uv)
-      u <- brick(u)
-      v <- brick(v)
+      u <- raster(u)
+      v <- raster(v)
     
     ## load receiver location data
 

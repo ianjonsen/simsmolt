@@ -44,12 +44,12 @@ sim_move <-
     if (is.null(data))
       stop("Can't find output from sim_setup()\n")
     if (class(data$land)[1] != "RasterLayer") stop("distance2land must be a RasterLayer")
-    if (all(!is.null(data$u), !is.null(data$v))) {
-      if (class(data$u)[1] != "RasterBrick" || (!names(data$u) %in% c("jul","aug","sep","oct","nov"))) 
-        stop("zonal current (u) data must be supplied as a RasterBrick with `jul` to `nov` layers")
-      if (class(data$v)[1] != "RasterBrick" || (!names(data$v) %in% c("jul","aug","sep","oct","nov"))) 
-        stop("meridional current (v) data must be supplied as a RasterBrick with `jul` to `nov` layers")
-    }
+#    if (all(!is.null(data$u), !is.null(data$v))) {
+#      if (class(data$u)[1] != "RasterBrick" || (!names(data$u) %in% c("jul","aug","sep","oct","nov"))) 
+#        stop("zonal current (u) data must be supplied as a RasterBrick with `jul` to `nov` layers")
+#      if (class(data$v)[1] != "RasterBrick" || (!names(data$v) %in% c("jul","aug","sep","oct","nov"))) 
+#        stop("meridional current (v) data must be supplied as a RasterBrick with `jul` to `nov` layers")
+#    }
     
     if (length(mpar)) {
       nms <- names(mpar)
@@ -232,8 +232,10 @@ sim_move <-
         } else {
           ## add advection due to current, if raster is supplied
          
-          u <- extract(data$u[[m.i]], rbind(X[i - 1, 1:2])) * 3.6 # to convert from m/s to km/h
-          v <- extract(data$v[[m.i]], rbind(X[i - 1, 1:2])) * 3.6
+ #         u <- extract(data$u[[m.i]], rbind(X[i - 1, 1:2])) * 3.6 # to convert from m/s to km/h
+ #         v <- extract(data$v[[m.i]], rbind(X[i - 1, 1:2])) * 3.6
+          u <- extract(data$u, rbind(X[i -  1, 1:2])) * 3.6
+          v <- extract(data$u, rbind(X[i -  1, 1:2])) * 3.6
           tmp <-
             cbind(X[i - 1, 1] + d_s[, 1] + d_c[, 1] + d_b[, 1] + u, 
                   X[i - 1, 2] + d_s[, 2] + d_c[, 2] + d_b[, 2] + v)
@@ -244,8 +246,10 @@ sim_move <-
         ## positive rheotaxis (swim against current)
         if (is.null(data$u) || is.null(data$v)) 
           stop("u & v current rasters must be supplied to simulate rheotaxis")
-        u <- extract(data$u[[m.i]], rbind(X[i - 1, 1:2])) * 3.6
-        v <- extract(data$v[[m.i]], rbind(X[i - 1, 1:2])) * 3.6
+#        u <- extract(data$u[[m.i]], rbind(X[i - 1, 1:2])) * 3.6
+#        v <- extract(data$v[[m.i]], rbind(X[i - 1, 1:2])) * 3.6
+        u <- extract(data$u, rbind(X[i -  1, 1:2])) * 3.6
+        v <- extract(data$u, rbind(X[i -  1, 1:2])) * 3.6
         mu <- (atan2(u, v) + pi) %% (2*pi) ## move dir is opposite current dir
         ## draw ntries proposal steps, after 15 d
         if(X[i - 1, 2] > 135)
@@ -258,8 +262,10 @@ sim_move <-
         ## negative rheotaxis (swim with current)
         if (is.null(data$u) || is.null(data$v)) 
           stop("u & v current rasters must be supplied to simulate rheotaxis")
-        u <- extract(data$u[[m.i]], rbind(X[i - 1, 1:2])) * 3.6
-        v <- extract(data$v[[m.i]], rbind(X[i - 1, 1:2])) * 3.6
+#        u <- extract(data$u[[m.i]], rbind(X[i - 1, 1:2])) * 3.6
+#        v <- extract(data$v[[m.i]], rbind(X[i - 1, 1:2])) * 3.6
+        u <- extract(data$u, rbind(X[i -  1, 1:2])) * 3.6
+        v <- extract(data$u, rbind(X[i -  1, 1:2])) * 3.6
         mu <- atan2(u, v) %% (2*pi) ## move dir is with current dir
         ## draw ntries proposal steps, after 15 d
         if(X[i - 1, 2] > 135)

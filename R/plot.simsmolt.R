@@ -40,26 +40,27 @@ plot.simsmolt <- function(s, data, xlim = NULL, ylim = NULL, ca = FALSE,
            
           # if(m==0) ras <- calc(data$u, mean)
           # else ras <- data$u[[m]]
-           ras <- calc(data$u, mean)
+#           ras <- calc(data$u, mean)
+           ras <- data$u
            ras <- rasterToPoints(ras) %>% data.frame()
            names(ras) <- c("x","y","z")
          },
          v = {
            #if(m==0) ras <- calc(data$v, mean)
            #else ras <- data$v[[m]]
-           ras <- calc(data$v, mean)
+#           ras <- calc(data$v, mean)
+           ras <- data$v
            ras <- rasterToPoints(ras) %>% data.frame()
            names(ras) <- c("x","y","z")
          })
 }
+
   
-  browser() 
-  
-  data(countriesLow, package = "rworldmap")
-  coast <- spTransform(countriesLow, data$prj) %>%
-    crop(., data$bathy) %>%
-    fortify(.) %>%
-    rename(x = long, y = lat)
+#  data(countriesLow, package = "rworldmap")
+#  coast <- spTransform(countriesLow, data$prj) %>%
+#    crop(., data$bathy) %>%
+#    fortify(.) %>%
+#    rename(x = long, y = lat)
   
   if (is.null(xlim))
     xlim <- c(0,1250)
@@ -141,7 +142,7 @@ plot.simsmolt <- function(s, data, xlim = NULL, ylim = NULL, ca = FALSE,
       )
   }
 
-  m <- m + geom_polygon(data = coast, aes_string(x="x", y="y", group="group"), fill = "black")
+#  m <- m + geom_polygon(data = coast, aes_string(x="x", y="y", group="group"), fill = "black")
   
   if (ca) {
     m <- m + geom_point(data = coa,
