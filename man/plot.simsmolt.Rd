@@ -5,14 +5,34 @@
 \title{plot}
 \usage{
 \method{plot}{simsmolt}(s, data, xlim = NULL, ylim = NULL,
-  ca = FALSE, ...)
+  ca = FALSE, raster = NULL, rec = TRUE, track = TRUE,
+  alpha = 0.25, lwd = 0.2, size = 0.2, col = "blue",
+  option = "D", ...)
 }
 \arguments{
 \item{s}{a fitted object of class simsmolt}
 
+\item{data}{data object created by sim_setup}
+
 \item{xlim}{plot x limits}
 
 \item{ylim}{plot y limits}
+
+\item{ca}{plot centres of attraction}
+
+\item{raster}{select a raster (from data) to use as background (bathy, u, v, or NULL)}
+
+\item{rec}{should receiver locations be displayed (logical)}
+
+\item{track}{should smolt track(s) be displayed (logical)}
+
+\item{alpha}{translucence for smolt track(s)}
+
+\item{lwd}{width of smolt track(s)}
+
+\item{size}{of smolt track end point(s)}
+
+\item{col}{colour for receiver locations}
 }
 \description{
 Map simulated track

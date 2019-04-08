@@ -2,185 +2,195 @@
 ##'
 ##' @title plot
 ##' @param s a fitted object of class simsmolt
+##' @param data data object created by sim_setup
+##' @param raster select a raster (from data) to use as background (bathy, u, v, or NULL)
+##' @param rec should receiver locations be displayed (logical)
+##' @param track should smolt track(s) be displayed (logical)
+##' @param alpha translucence for smolt track(s)
+##' @param lwd width of smolt track(s)
+##' @param col colour for receiver locations
+##' @param size of smolt track end point(s)
 ##' @param xlim plot x limits
 ##' @param ylim plot y limits
+##' @param ca plot centres of attraction
 ##'
-##' @importFrom ggplot2 ggplot coord_fixed geom_raster aes theme_minimal geom_point 
-##' @importFrom ggplot2 scale_color_brewer scale_fill_viridis_c geom_contour geom_path
-##' @importFrom raster rasterToPoints
+##' @importFrom ggplot2 ggplot coord_fixed geom_raster aes theme_minimal
+##' @importFrom ggplot2 scale_color_brewer scale_fill_viridis_c geom_contour 
+##' @importFrom ggplot2 geom_polygon geom_path theme_dark fortify geom_point
+##' @importFrom ggplot2 aes_string theme_classic theme element_rect ylab xlab
+##' @importFrom raster rasterToPoints crop calc
+##' @importFrom dplyr "%>%"
+##' @importFrom sp spTransform
 ##' @method plot simsmolt
 ##' @export
 
-plot.simsmolt <- function(s, data, xlim = NULL, ylim = NULL, ca = FALSE, ...) {
+plot.simsmolt <- function(s, data, xlim = NULL, ylim = NULL, ca = FALSE, 
+                          raster = NULL, rec = TRUE, track = TRUE, 
+                          alpha = 0.25, lwd = 0.2, size = 0.2, col = "blue", option = "D", ...) {
   
-  if (!is.na(class(s)[2]) & (class(s)[2] == "rowwise_df" | class(s)[2] == "grouped_df")) {
+  bathy.c <- rasterToPoints(data$bathy) %>% data.frame()
+  names(bathy.c) <- c("x","y","z")
+  
+  if(!is.null(raster)) {
+    switch(raster, 
+         bathy = {
+           ras <- bathy.c
+         },
+         u = {
+           
+          # if(m==0) ras <- calc(data$u, mean)
+          # else ras <- data$u[[m]]
+#           ras <- calc(data$u, mean)
+           ras <- data$u
+           ras <- rasterToPoints(ras) %>% data.frame()
+           names(ras) <- c("x","y","z")
+         },
+         v = {
+           #if(m==0) ras <- calc(data$v, mean)
+           #else ras <- data$v[[m]]
+#           ras <- calc(data$v, mean)
+           ras <- data$v
+           ras <- rasterToPoints(ras) %>% data.frame()
+           names(ras) <- c("x","y","z")
+         })
+}
+
+  
+#  data(countriesLow, package = "rworldmap")
+#  coast <- spTransform(countriesLow, data$prj) %>%
+#    crop(., data$bathy) %>%
+#    fortify(.) %>%
+#    rename(x = long, y = lat)
+  
+  if (is.null(xlim))
+    xlim <- c(0,1250)
+  if (is.null(ylim))
+    ylim <- c(0,1750)
+  
+  if (!is.na(class(s)[2]) && (class(s)[2] == "rowwise_df" || class(s)[2] == "grouped_df")) {
     compl <- sapply(s$rep, function(.) !inherits(., "try-error"))
     cat(sprintf("dropping %i failed runs\n\n", sum(!compl)))
     s <- s[compl, ]
     
-    bathy <- data$bathy
-    bathy[bathy > 0] <- NA
-    bathy <- rasterToPoints(bathy) %>% data.frame()
-    land <- data$land
-    land <- rasterToPoints(land) %>% data.frame()
-    names(land)[3] <- "d"
-    
-    if (is.null(xlim))
-      xlim <- extendrange(sapply(s$rep, function(.)
-        .$sim$x), f = 1)
-    if (is.null(ylim))
-      ylim <- extendrange(sapply(s$rep, function(.)
-        .$sim$y), f = 0.25)
-    
     if (ca) {
       coa <-
         data.frame(
-          x = sapply(s$rep, function(.)
-            .$params$coa[1]),
-          y = sapply(s$rep, function(.)
-            .$params$coa[2])
+          x = lapply(s$rep, function(.)
+            .$params$coa[,1]) %>% do.call(c, .),
+          y = lapply(s$rep, function(.)
+            .$params$coa[,2]) %>% do.call(c, .)
         )
-      coa$y <- ifelse(coa$y > ylim[2], ylim[2] - 0.5, coa$y)
     }
     
-    trans <-
-      lapply(s$rep, function(.)
-        .$trans) %>% do.call(rbind, .)
     detect <-
       lapply(s$rep, function(.)
         .$detect) %>% do.call(rbind, .)
-    recs <- data$recs
+   
     sim <-
       lapply(1:nrow(s), function(i)
         data.frame(id = i, s$rep[[i]]$sim)) %>% do.call(rbind, .)
-    
-    m <- ggplot() +
-      coord_fixed(
-        ratio = 1.84,
-        xlim = xlim,
-        ylim = ylim,
-        expand = TRUE
-      ) +
-      #  coord_quickmap(xlim = xrng, ylim = yrng) +
-      geom_raster(data = land, aes(x, y, fill = d)) +
-      #  scale_fill_gradient2(low = "#053061", mid = "#43a2ca", high = "#e0f3db", guide = "none") +
-      scale_fill_viridis_c(direction = -1) +
-      theme_minimal()
-    if (ca) {
-      m <- m + geom_point(data = coa,
-                          aes(x, y),
-                          colour = "red",
-                          size = 1)
-    }
-    m <- m + geom_contour(
-      data = bathy,
-      aes(x, y, z = z),
-      breaks = seq(-400, -700, by = -100),
-      col = "white",
-      lwd = 0.2
-    )
-    if (!is.null(trans) && nrow(trans) > 0) {
-      m <-
-        m + geom_point(
-          data = trans,
-          aes(x / 1000, y / 1000),
-          col = "lightblue",
-          alpha = 0.35,
-          size = 0.75
-        )
-    }
-    m <-
-      m + geom_point(
-        data = recs,
-        aes(x, y),
-        colour = "blue",
-        size = 0.4
-      ) +
-      geom_path(data = sim,
-                 aes(x, y, group=id),
-                 colour = "firebrick",
-                 size = 0.1, alpha = 0.25)
-    
-    if (!is.null(detect) && nrow(detect) > 0) {
-      m <-
-        m + geom_point(data = detect, aes(recv_x / 1000, recv_y / 1000, colour = line)) +
-        scale_color_brewer(type = "qual", palette = 1)
-    }
-    
-    return(m) 
+    sim.last <- lapply(1:nrow(s), function(i)
+      data.frame(id = i, s$rep[[i]]$sim[nrow(s$rep[[i]]$sim), ])) %>% do.call(rbind, .)
     
     } else if(is.na(class(s)[2])){
-      
-  bathy <- data$bathy
-  bathy[bathy > 0] <- NA
-  bathy <- rasterToPoints(bathy) %>% data.frame()
-  land <- rasterToPoints(data$land) %>% data.frame()
   
-  names(land)[3] <- "d"
+  sim <- s$sim
+  sim.last <- s$sim[nrow(s$sim), ] 
+  detect <- s$detect
   
-  if (is.null(xlim))
-    xlim <- extendrange(s$sim$x, f = 1)
-  if (is.null(ylim))
-    ylim <- extendrange(s$sim$y, f = 0.25)
-  if(ca) {
-  coa <- data.frame(x = s$params$coa[1], y = s$params$coa[2])
-  }
+  if(ca) coa <- data.frame(x = s$params$coa[,1], y = s$params$coa[,2])
+    }
+
   
+  ## generate plot
   m <- ggplot() +
     coord_fixed(
-      ratio = 1.84,
+      ratio = diff(ylim) / diff(xlim),
       xlim = xlim,
       ylim = ylim,
-      expand = TRUE
-    ) +
-    #  coord_quickmap(xlim = xrng, ylim = yrng) +
-    geom_raster(data = land, aes(x, y, fill = d)) +
-    #  scale_fill_gradient2(low = "#053061", mid = "#43a2ca", high = "#e0f3db", guide = "none") +
-    scale_fill_viridis_c(direction = -1) +
-    theme_minimal() 
-  
-  if(ca) {
-    m <- m + geom_point(data = coa,
-               aes(x, y),
-               colour = "red",
-               size = 1) 
-  }
-  
-    m <- m + geom_contour(
-      data = bathy,
-      aes(x, y, z = z),
-      breaks = seq(-700, -100, by = 100),
-      col = "white",
-      lwd = 0.25
+      expand = FALSE
     )
-  if (!is.null(s$trans) && nrow(s$trans) > 0) {
-    m <-
-      m + geom_point(
-        data = s$trans,
-        aes(x / 1000, y / 1000),
-        col = "lightblue",
-        alpha = 0.35,
-        size = 0.75
+  
+  if(!is.null(raster)) {
+    m <- m + geom_raster(data = ras, aes(x, y, fill = z)) +
+      scale_fill_viridis_c(direction = 1, guide = "none", option=option) +
+      theme_dark() +
+      geom_contour(
+        data = bathy.c,
+        aes(x, y, z = z),
+        breaks = -900,
+        col = "white",
+        lwd = 0.25
+      )
+    
+  } else {
+    m <- m + theme_classic() + 
+      theme(panel.background = element_rect(grey(0.3))) + 
+      geom_contour(
+        data = bathy.c,
+        aes(x, y, z = z),
+        breaks = c(-500, -700, -900, -1100, -1500, -2000, -2500, -5000, -10000),
+        col = grey(0.8),
+        lwd = 0.05
+      ) +
+      geom_contour(
+        data = bathy.c,
+        aes(x, y, z = z),
+        breaks = -900,
+        col = "white",
+        lwd = 0.1
       )
   }
-  m <-
-    m + geom_point(
-      data = data$recs,
-      aes(x, y),
-      colour = "blue",
-      size = 0.4
-    ) +
-    geom_point(data = s$sim,
-               aes(x, y),
-               colour = "firebrick",
-               size = 0.01)
+
+#  m <- m + geom_polygon(data = coast, aes_string(x="x", y="y", group="group"), fill = "black")
   
-  if (!is.null(s$detect) && nrow(s$detect) > 0) {
-    m <-
-      m + geom_point(data = s$detect, aes(recv_x / 1000, recv_y / 1000, colour = line)) +
-      scale_color_brewer(type = "qual", palette = 1)
+  if (ca) {
+    m <- m + geom_point(data = coa,
+                        aes(x, y),
+                        colour = "green",
+                        size = 2)
   }
   
-  return(m)
-    }
+  
+  if(rec) {
+  m <-
+    m + geom_point(
+      data = data$recLocs,
+      aes(x, y),
+      colour = col,
+      size = 0.4
+    ) 
+  }
+  
+  if(track) {
+   m <- m + geom_path(data = sim,
+              aes(x, y, group=id),
+              colour = "salmon",
+              alpha = alpha, size = lwd) +
+    
+    geom_point(data = subset(sim.last, s == 1), 
+               aes(x, y),
+               colour = "dodgerblue",
+               size = size) +
+    
+    geom_point(data = subset(sim.last, s == 0), 
+               aes(x, y),
+               colour = "black",
+               size = size)
+   }
+  
+  if (rec && !is.null(detect) && nrow(detect) > 0) {
+    m <-
+      m + geom_point(data = detect, 
+                     aes(recv_x, recv_y), 
+                     colour = "red",
+                     size = 0.6)
+    
+  }
+  
+  m <- m + ylab("") + xlab("")
+  
+  return(m) 
+  
+  
 }

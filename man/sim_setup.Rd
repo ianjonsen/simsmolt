@@ -4,12 +4,14 @@
 \alias{sim_setup}
 \title{Pre-simulation setup}
 \usage{
-sim_setup(bathy = file.path("..", "simdata", "bathy.nc"),
-  land = file.path("..", "simdata", "d2land_xy.grd"),
-  land.dir = file.path("..", "simdata", "land_dir2.grd"),
-  b700.dist = file.path("..", "simdata", "b700_dist.grd"),
-  b700.dir = file.path("..", "simdata", "b700_dir.grd"), uv = NULL,
-  sst = NULL, rec = TRUE)
+sim_setup(bathy = file.path("..", "simdata", "bathy_xy.grd"),
+  land = file.path("..", "simdata", "d2landc_xy.grd"),
+  land.dir = file.path("..", "simdata", "land_dirc.grd"),
+  b900.dist = file.path("..", "simdata", "b900_dist.grd"),
+  b900.dir = file.path("..", "simdata", "b900_dir.grd"),
+  u = file.path("..", "simdata", "riops_u.grd"), v = file.path("..",
+  "simdata", "riops_v.grd"), sst = NULL, rec = "lines", rspace = 10,
+  rnum = 135, uv = FALSE)
 }
 \arguments{
 \item{bathy}{- required bathymetry file}
@@ -18,15 +20,19 @@ sim_setup(bathy = file.path("..", "simdata", "bathy.nc"),
 
 \item{land.dir}{- required direction to nearest land}
 
-\item{b700.dist}{- required distance to 700 m isobath}
+\item{b900.dist}{- required distance to 900 m isobath}
 
-\item{b700.dir}{-  required direction to 700 m isobath}
+\item{b900.dir}{-  required direction to 900 m isobath}
 
-\item{uv}{- optional current layers, supplied as u and v components, velocity must be in m/s}
+\item{u}{- optional zonal current layers, velocity must be in m/s}
+
+\item{v}{- optional meridional current layers, velocity must be in m/s}
 
 \item{sst}{- optional sea surface temperature layer(s)}
 
 \item{rec}{- optional acoustic receiver locations}
+
+\item{rnum}{- the number of receivers to be used on grid arrays (to approx. match to num used on lines)}
 
 \item{tag}{- start location(s) of simulated animals}
 

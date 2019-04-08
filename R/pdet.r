@@ -32,7 +32,6 @@ pdet <- function(trs = NULL, rec = NULL, b = NULL){
     rename(
       trns_id = id,
       date = date,
-      line = line,
       recv_id = id.1,
       trns_x = x,
       trns_y = y,
@@ -49,7 +48,6 @@ pdet <- function(trs = NULL, rec = NULL, b = NULL){
     ) %>%
     select(trns_id,
            recv_id,
-           line,
            date,
            trns_x,
            trns_y,
@@ -57,7 +55,7 @@ pdet <- function(trs = NULL, rec = NULL, b = NULL){
            recv_y,
            recv_z, 
            dist) %>%
-    arrange(line, recv_id, date)
+    arrange(recv_id, date)
 
 out
 
