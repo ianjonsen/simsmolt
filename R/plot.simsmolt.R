@@ -3,7 +3,7 @@
 ##' @title plot
 ##' @param s a fitted object of class simsmolt
 ##' @param data data object created by sim_setup
-##' @param raster select a raster (from data) to use as background (bathy, u, v, or NULL)
+##' @param raster select a raster (from data) to use as background (bathy, uv, or NULL)
 ##' @param rec should receiver locations be displayed (logical)
 ##' @param track should smolt track(s) be displayed (logical)
 ##' @param alpha translucence for smolt track(s)
@@ -26,7 +26,7 @@
 
 plot.simsmolt <- function(s, data, xlim = NULL, ylim = NULL, ca = FALSE, 
                           raster = NULL, rec = TRUE, track = TRUE, 
-                          alpha = 0.25, lwd = 0.2, size = 0.2, col = "blue", option = "D", ...) {
+                          alpha = 0.9, lwd = 0.2, size = 0.2, col = "blue", option = "D", ...) {
   
   bathy.c <- rasterToPoints(data$bathy) %>% data.frame()
   names(bathy.c) <- c("x","y","z")
@@ -36,20 +36,12 @@ plot.simsmolt <- function(s, data, xlim = NULL, ylim = NULL, ca = FALSE,
          bathy = {
            ras <- bathy.c
          },
-         u = {
+         uv = {
            
           # if(m==0) ras <- calc(data$u, mean)
           # else ras <- data$u[[m]]
 #           ras <- calc(data$u, mean)
-           ras <- data$u
-           ras <- rasterToPoints(ras) %>% data.frame()
-           names(ras) <- c("x","y","z")
-         },
-         v = {
-           #if(m==0) ras <- calc(data$v, mean)
-           #else ras <- data$v[[m]]
-#           ras <- calc(data$v, mean)
-           ras <- data$v
+           ras <- sqrt(data$u^2 + data$v^2) * 3.6
            ras <- rasterToPoints(ras) %>% data.frame()
            names(ras) <- c("x","y","z")
          })
@@ -113,7 +105,7 @@ plot.simsmolt <- function(s, data, xlim = NULL, ylim = NULL, ca = FALSE,
   
   if(!is.null(raster)) {
     m <- m + geom_raster(data = ras, aes(x, y, fill = z)) +
-      scale_fill_viridis_c(direction = 1, guide = "none", option=option) +
+      scale_fill_viridis_c(direction = 1, option=option) +
       theme_dark() +
       geom_contour(
         data = bathy.c,

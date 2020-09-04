@@ -26,7 +26,7 @@ sim_move <-
     ## default move parameters
     
     mpar.full <- list(
-      start = c(560, 82.5),
+      start = "sobi", #"nf"
       coa = NULL,
       a = 2,
       b = 0.864,
@@ -107,11 +107,16 @@ sim_move <-
           )
       }
     }
+
+    sloc <- switch(mpar$start, 
+           sobi = c(560, 82.5),
+           nf = c(sample(seq(675, 725, l=50), 1), 82.5)
+    )
     
     ## define location/survivourship, sw matrix & start position
     X <- matrix(NA, N, 3)
     #sw <- matrix(NA, N, 2)
-    X[1,] <- cbind(mpar$start[1], mpar$start[2], 1)
+    X[1,] <- cbind(sloc[1], sloc[2], 1)
     theta_s <- rd <- rz <- c()
     theta_s[1] <- 0 / 180 * pi
 
@@ -235,7 +240,7 @@ sim_move <-
  #         u <- extract(data$u[[m.i]], rbind(X[i - 1, 1:2])) * 3.6 # to convert from m/s to km/h
  #         v <- extract(data$v[[m.i]], rbind(X[i - 1, 1:2])) * 3.6
           u <- extract(data$u, rbind(X[i -  1, 1:2])) * 3.6
-          v <- extract(data$u, rbind(X[i -  1, 1:2])) * 3.6
+          v <- extract(data$v, rbind(X[i -  1, 1:2])) * 3.6
           tmp <-
             cbind(X[i - 1, 1] + d_s[, 1] + d_c[, 1] + d_b[, 1] + u, 
                   X[i - 1, 2] + d_s[, 2] + d_c[, 2] + d_b[, 2] + v)
@@ -249,7 +254,7 @@ sim_move <-
 #        u <- extract(data$u[[m.i]], rbind(X[i - 1, 1:2])) * 3.6
 #        v <- extract(data$v[[m.i]], rbind(X[i - 1, 1:2])) * 3.6
         u <- extract(data$u, rbind(X[i -  1, 1:2])) * 3.6
-        v <- extract(data$u, rbind(X[i -  1, 1:2])) * 3.6
+        v <- extract(data$v, rbind(X[i -  1, 1:2])) * 3.6
         mu <- (atan2(u, v) + pi) %% (2*pi) ## move dir is opposite current dir
         ## draw ntries proposal steps, after 15 d
         if(X[i - 1, 2] > 135)
@@ -265,7 +270,7 @@ sim_move <-
 #        u <- extract(data$u[[m.i]], rbind(X[i - 1, 1:2])) * 3.6
 #        v <- extract(data$v[[m.i]], rbind(X[i - 1, 1:2])) * 3.6
         u <- extract(data$u, rbind(X[i -  1, 1:2])) * 3.6
-        v <- extract(data$u, rbind(X[i -  1, 1:2])) * 3.6
+        v <- extract(data$v, rbind(X[i -  1, 1:2])) * 3.6
         mu <- atan2(u, v) %% (2*pi) ## move dir is with current dir
         ## draw ntries proposal steps, after 15 d
         if(X[i - 1, 2] > 135)

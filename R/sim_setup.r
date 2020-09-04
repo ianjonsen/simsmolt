@@ -25,7 +25,7 @@
 #' @export
 #'
 sim_setup <-
-  function(bathy = file.path("..", "simdata", "bathy_xy.grd"),
+  function(bathy = file.path("..", "simdata", "bathyc_xy.grd"),
            land = file.path("..", "simdata", "d2landc_xy.grd"),
            land.dir = file.path("..", "simdata", "land_dirc.grd"),
            b900.dist = file.path("..", "simdata", "b900_dist.grd"),
@@ -44,9 +44,9 @@ sim_setup <-
     
     ## FIXME: this needs to be generalized - provide spatial extent for query to download ETOPO2 data?
     ## FIXME:   or rely on user supplying their own bathymetry data
+     
+    prj_laea <- "+proj=laea +lat_0=51.00833 +lon_0=-64.74167 +ellps=WGS84 +units=km"
     
-    prj_laea <-
-      "+proj=laea +datum=WGS84 +lat_0=51.00833 +lon_0=-64.74167 +ellps=WGS84 +units=km"
     ## load required raster layers
     bathy <- raster(bathy)
     
@@ -66,7 +66,7 @@ sim_setup <-
       ## FIXME: this needs to be generalized - do receiver data munging prior to using this function...
       ## FIXME:  could generalize by accessing OTN server to pull requested receiver data from anywhere...
       ## FIXME:  prep code would prob require consistent receiver location / history format on OTN server
-      
+   
       if(rec == "lines") {
         ## 4 lines from just N of SoBI to Nain, NL
         ## 10 km spacing
@@ -134,6 +134,7 @@ sim_setup <-
         
       } else if (rec == "grid") {
         ## 1 vlarge grid w random placement
+
         poly <- Polygon(data.frame(x = c(615,595,440,320,220, 450,600,790,900,1015, 615), 
                                    y = c(145,299,453,520,607, 607,520,453,299,145, 145)))
         recPoly <- SpatialPolygons(list(Polygons(list(poly), ID = 1)), 

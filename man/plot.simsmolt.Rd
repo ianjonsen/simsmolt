@@ -4,10 +4,22 @@
 \alias{plot.simsmolt}
 \title{plot}
 \usage{
-\method{plot}{simsmolt}(s, data, xlim = NULL, ylim = NULL,
-  ca = FALSE, raster = NULL, rec = TRUE, track = TRUE,
-  alpha = 0.25, lwd = 0.2, size = 0.2, col = "blue",
-  option = "D", ...)
+\method{plot}{simsmolt}(
+  s,
+  data,
+  xlim = NULL,
+  ylim = NULL,
+  ca = FALSE,
+  raster = NULL,
+  rec = TRUE,
+  track = TRUE,
+  alpha = 0.9,
+  lwd = 0.2,
+  size = 0.2,
+  col = "blue",
+  option = "D",
+  ...
+)
 }
 \arguments{
 \item{s}{a fitted object of class simsmolt}
@@ -20,7 +32,7 @@
 
 \item{ca}{plot centres of attraction}
 
-\item{raster}{select a raster (from data) to use as background (bathy, u, v, or NULL)}
+\item{raster}{select a raster (from data) to use as background (bathy, uv, or NULL)}
 
 \item{rec}{should receiver locations be displayed (logical)}
 
