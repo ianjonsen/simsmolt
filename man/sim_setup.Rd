@@ -5,44 +5,29 @@
 \title{Pre-simulation setup}
 \usage{
 sim_setup(
-  bathy = file.path("..", "simdata", "bathyc_xy.grd"),
-  land = file.path("..", "simdata", "d2landc_xy.grd"),
-  land.dir = file.path("..", "simdata", "land_dirc.grd"),
-  b900.dist = file.path("..", "simdata", "b900_dist.grd"),
-  b900.dir = file.path("..", "simdata", "b900_dir.grd"),
-  u = file.path("..", "simdata", "riops_u.grd"),
-  v = file.path("..", "simdata", "riops_v.grd"),
-  sst = NULL,
-  rec = "lines",
-  rspace = 10,
-  rnum = 135,
-  uv = FALSE
+  config = file.path("..", "simdata", "config.R"),
+  rec = "none",
+  ocean = "cl"
 )
 }
 \arguments{
-\item{bathy}{- required bathymetry file}
+\item{config}{- path to config.R script containing file.paths for required & optional environmental layers (see Details)}
 
-\item{land}{- required distance to land to define simulation domain}
+\item{rec}{- optional acoustic receiver locations (default is no receivers)}
 
-\item{land.dir}{- required direction to nearest land}
+\item{tag}{- start location(s) of simulated animals}
 
-\item{b900.dist}{- required distance to 900 m isobath}
-
-\item{b900.dir}{-  required direction to 900 m isobath}
+\item{coa}{- optional Centre-Of-Attraction location(s) to provide movement bias(es)}
 
 \item{u}{- optional zonal current layers, velocity must be in m/s}
 
 \item{v}{- optional meridional current layers, velocity must be in m/s}
 
-\item{sst}{- optional sea surface temperature layer(s)}
+\item{ts}{- optional sea surface temperature layer(s)}
 
-\item{rec}{- optional acoustic receiver locations}
+\item{rspace}{- nominal spacing (km) between receivers}
 
 \item{rnum}{- the number of receivers to be used on grid arrays (to approx. match to num used on lines)}
-
-\item{tag}{- start location(s) of simulated animals}
-
-\item{coa}{- optional Centre-Of-Attraction location(s) to provide movement bias(es)}
 }
 \description{
 load required rasters, receiver locations

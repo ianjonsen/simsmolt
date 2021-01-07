@@ -1,4 +1,4 @@
-#' @title random walk function
+#' @title biased random walk function
 #' 
 #' @description utility function not to be called by user
 #' 
@@ -7,7 +7,9 @@
 #' @importFrom raster extract cellFromXY adjacent xyFromCell
 #' @export
 #' 
-rw <- function(n = 1, data, xy = NULL, buffer = NULL, a, b){
+biased_rw <- function(n = 1, data, xy = NULL, coa = NULL, buffer = NULL, rho, a, b) {
+  
+  if(is.null(coa)) stop("Cannot implement a biased random walk without a centre of attraction")
   
   if (a > 0)
     st <- rweibull(n, a, b)
@@ -19,11 +21,9 @@ rw <- function(n = 1, data, xy = NULL, buffer = NULL, a, b){
   
   d2l <- extract(data$land, rbind(xy))
 
-  
   if(d2l > buffer[1] | xy[1] < 300) {
-    mu <- 0
-    rho <- 0 # for random walk
-
+    mu <- atan2(coa[1] - xy[1], coa[2] - xy[2]) 
+    
   } else if (xy[1] >= 300 & !all(xy[1] >= 950, 
                                  xy[1] <= 1065, 
                                  xy[2] >= 1200, 
@@ -32,23 +32,21 @@ rw <- function(n = 1, data, xy = NULL, buffer = NULL, a, b){
     
     ## direct smolt to move eastward & parallel to shore (avoid land) only after passing through most of GoM
     mu <- (extract(data$land_dir, rbind(xy)) + 0.5 * pi) %% (2*pi)
-    rho <- 0.5 # deviate from random walk when inside land buffer
     if(d2l <= 2) {
       mu <- mu + 0.5 * pi %% (2*pi) ## move in opposite direction of land if within 2km
       rho <- 0.95
+      }
+    } else if(xy[1] >= 300 & all(xy[1] >= 950, 
+                                  xy[1] <= 1065, 
+                                  xy[2] >= 1200, 
+                                  xy[2] <= 1305) & 
+              d2l <= buffer[1]) {
+      mu <- (extract(data$land_dir, rbind(xy))  + 0.5 * pi) %% (pi)
+      if(d2l <= 2) {
+        mu <- mu + 0.5 * pi %% (pi) ## move in opposite direction of land if within 2km
+        rho <- 0.95
+      }
     }
-  } else if(xy[1] >= 300 & all(xy[1] >= 950, 
-                               xy[1] <= 1065, 
-                               xy[2] >= 1200, 
-                               xy[2] <= 1305) & 
-            d2l <= buffer[1]) {
-    mu <- (extract(data$land_dir, rbind(xy))  + 0.5 * pi) %% (pi)
-    rho <- 0.5 # deviate from random walk when inside land buffer
-    if(d2l <= 2) {
-      mu <- mu + 0.5 * pi %% (pi) ## move in opposite direction of land if within 2km
-      rho <- 0.95
-    }
-  }
   
   phi <- rwrpcauchy(n, mu, rho)  
   

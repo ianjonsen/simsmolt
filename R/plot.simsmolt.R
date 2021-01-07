@@ -160,14 +160,9 @@ plot.simsmolt <- function(s, data, xlim = NULL, ylim = NULL, ca = FALSE,
               colour = "salmon",
               alpha = alpha, size = lwd) +
     
-    geom_point(data = subset(sim.last, s == 1), 
+    geom_point(data = sim.last, 
                aes(x, y),
                colour = "dodgerblue",
-               size = size) +
-    
-    geom_point(data = subset(sim.last, s == 0), 
-               aes(x, y),
-               colour = "black",
                size = size)
    }
   

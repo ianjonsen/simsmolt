@@ -17,7 +17,6 @@ Imports:
     readr,
     CircStats,
     stats,
-    glatos,
     sf
 License: AGPL-3
 Encoding: UTF-8

@@ -5,68 +5,37 @@
 #'
 #' @author Ian Jonsen \email{ian.jonsen@mq.edu.au}
 #'
-#' @param bathy - required bathymetry file
-#' @param land - required distance to land to define simulation domain
-#' @param land.dir - required direction to nearest land
-#' @param b900.dist - required distance to 900 m isobath
-#' @param b900.dir -  required direction to 900 m isobath
+#' @param config - path to config.R script containing file.paths for required & optional environmental layers (see Details)
 #' @param tag - start location(s) of simulated animals
 #' @param coa - optional Centre-Of-Attraction location(s) to provide movement bias(es)
 #' @param u - optional zonal current layers, velocity must be in m/s
 #' @param v - optional meridional current layers, velocity must be in m/s
-#' @param sst - optional sea surface temperature layer(s)
-#' @param rec - optional acoustic receiver locations
+#' @param ts - optional sea surface temperature layer(s)
+#' @param rec - optional acoustic receiver locations (default is no receivers)
+#' @param rspace - nominal spacing (km) between receivers
 #' @param rnum - the number of receivers to be used on grid arrays (to approx. match to num used on lines)
 #' @importFrom raster raster brick projectRaster extract
 #' @importFrom sp coordinates<- proj4string<- CRS spTransform SpatialPointsDataFrame spsample
 #' @importFrom sf st_as_sf st_sample st_coordinates st_distance
-#' @importFrom dplyr select filter rename bind_cols %>% tibble
+#' @importFrom dplyr select filter rename bind_cols %>% tibble distinct
 #' @importFrom readr read_csv
 #' @export
 #'
 sim_setup <-
-  function(bathy = file.path("..", "simdata", "bathyc_xy.grd"),
-           land = file.path("..", "simdata", "d2landc_xy.grd"),
-           land.dir = file.path("..", "simdata", "land_dirc.grd"),
-           b900.dist = file.path("..", "simdata", "b900_dist.grd"),
-           b900.dir = file.path("..", "simdata", "b900_dir.grd"),
-           u = file.path("..", "simdata", "riops_u.grd"),
-           v = file.path("..", "simdata", "riops_v.grd"),
-           sst = NULL,
-           rec = "lines",
-           rspace = 10,
-           rnum = 135,
-           uv = FALSE) {
-    
-    if (is.null(land) |
-        is.null(land.dir) | is.null(b900.dist) | is.null(b900.dir))
-      stop("path to required rasters must be supplied, see '?sim_setup'\n")
+  function(config = file.path("..", "simdata", "config.R"), rec = "none",
+           ocean = "cl") {
     
     ## FIXME: this needs to be generalized - provide spatial extent for query to download ETOPO2 data?
     ## FIXME:   or rely on user supplying their own bathymetry data
-     
-    prj_laea <- "+proj=laea +lat_0=51.00833 +lon_0=-64.74167 +ellps=WGS84 +units=km"
-    
-    ## load required raster layers
-    bathy <- raster(bathy)
-    
-    land <- raster(land)
-    #land[land < 1] <- NA
-    
-    land.dir <- raster(land.dir)
-    b900.dist <- raster(b900.dist)
-    b900.dir <- raster(b900.dir)
-    
-    if (uv)
-      u <- raster(u)
-      v <- raster(v)
-    
+       
     ## load receiver location data
 
       ## FIXME: this needs to be generalized - do receiver data munging prior to using this function...
       ## FIXME:  could generalize by accessing OTN server to pull requested receiver data from anywhere...
       ## FIXME:  prep code would prob require consistent receiver location / history format on OTN server
-   
+
+    source(config)  
+    
       if(rec == "lines") {
         ## 4 lines from just N of SoBI to Nain, NL
         ## 10 km spacing
@@ -157,33 +126,67 @@ sim_setup <-
         recLocs <- recLocs %>%
           mutate(z = ifelse(z < -120, z + 100, z)) %>%
           mutate(id = rownames(.))
-      }
       
+      } else if (rec == "real") {
+        stn <- read_csv(file.path(recs, "stations.csv")) %>%
+          filter(stationstatus == "active" & stationclass == "deployed") %>%
+          rename(lat = latitude, lon = longitude) %>%
+          filter(lat >= 41, lat <= 68, lon >= -71, lon <= -43) %>%
+          select(-notes, -the_geom)
+        stn <- stn[grep("Acoustic", stn$station_type), ]
+        stn <- stn %>%
+          sf::st_as_sf(coords = c("lon","lat"), crs = 4326) %>%
+          sf::st_transform(., crs = "+proj=laea +lat_0=41 +lon_0=-71 +units=km +ellps=WGS84")
+        recLocs <- sf::st_coordinates(stn) %>% as.data.frame()
+        names(recLocs) <- c("x","y")
+        sf::st_geometry(stn) <- NULL
+        stn <- cbind(stn, recLocs)
+        
+        ## grab ASF - PHS/SOBI receiver details
+        phs <- read_csv(file.path(recs, "ASF_2017-2020_Tx_SOBIandPHS.csv")) 
+        names(phs) <- tolower(names(phs))
+        phs_stn <- phs %>%
+          select(date, receiver, year, otn_array, station_name, locality, region, lat, long) %>%
+          rename(lon = long) %>%
+          distinct(receiver, year, .keep_all = TRUE) %>%
+          sf::st_as_sf(coords = c("lon","lat"), crs = 4326) %>%
+          sf::st_transform(., crs = "+proj=laea +lat_0=41 +lon_0=-71 +units=km +ellps=WGS84")
+        recLocs_asf <- sf::st_coordinates(phs_stn) %>% as.data.frame()
+        names(recLocs_asf) <- c("x","y")
+        sf::st_geometry(phs_stn) <- NULL
+        phs_stn <- cbind(phs_stn, recLocs_asf)
+      }
+    
+    out <- list(
+      bathy = raster(bathy),
+      land = raster(d2land),
+      land_dir = raster(land_dir),
+      d2b900 = raster(d2b900)
+    )
 
-    if (uv)
-      list(
-        bathy = bathy,
-        land = land,
-        land.dir = land.dir,
-        b900.dist = b900.dist,
-        b900.dir = b900.dir,
-        u = u,
-        v = v,
-        recLocs = recLocs,
-        recPoly = recPoly_sf,
-        rec = rec,
-        prj = prj_laea
-      )
-    else
-      list(
-        bathy = bathy,
-        land = land,
-        land.dir = land.dir,
-        b900.dist = b900.dist,
-        b900.dir = b900.dir,
-        recLocs = recLocs,
-        recPoly = recPoly_sf,
-        rec = rec,
-        prj = prj_laea
-      )
+    if (!is.null(ocean)) {
+      switch(ocean, 
+             cl = {
+               out[["u"]] <- raster(file.path(cl, "riops_u.grd"))
+               out[["v"]] <- raster(file.path(cl, "riops_v.grd"))
+               out[["ts"]] <- raster(file.path(cl, "riops_t.grd"))
+             },
+             m = {
+              out[["u"]] <- raster(file.path(m, "riops_u.grd"))
+              out[["v"]] <- raster(file.path(m, "riops_v.grd"))
+              out[["ts"]] <- raster(file.path(m, "riops_t.grd"))
+             })
+    }
+    
+    if(!rec %in% c("none", "real")) {
+      out[["recLocs"]] <- recLocs
+      out[["recPoly"]] <- recPoly_sf
+      out[["rec"]] <- rec
+    } else if (rec == "real") {
+      out[["recLocs"]] <- stn
+      out[["recLocs_asf"]] <- phs_stn
+    }
+    
+    
+    return(out)
   }
