@@ -99,8 +99,7 @@ summary.simsmolt <- function(x, data = NULL, ...) {
   ),
   class = "summary.simsmolt"))
 
-}
-  
+  }
 }
 
 ##' @method print summary.simsmolt
@@ -126,5 +125,6 @@ print.summary.simsmolt <- function(x)
   
   print(xx, justify="right", right=TRUE, quote=FALSE, na.print="")
 
- # invisible(x)
-}## print.summary.simsmolt
+  invisible(xx)
+  
+} 

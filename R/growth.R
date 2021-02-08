@@ -81,7 +81,7 @@ growth <- function(w, ts, s) {
   
   
   ############## NOT USED
-  ## define starting mass (mpar$sm) as 47
+  ## define starting mass (mpar$sm) as 185 g (@ SoBI) - assuming avg forklength = 27 cm (based on Jon Carr's email of 07/10/2020 re: size rng of postsmolts at SoBI: 24 - 30 cm)
   ## use 47.35 g as avg mass of smolts at tagging - based on 17 cm forklength and L - W power relationship of fL = (m/8987.9)^(1/2.9639)
   ## from Byron et al. 2014 Fish Oceanogr
   

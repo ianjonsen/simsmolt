@@ -6,15 +6,13 @@
 #' @author Ian Jonsen \email{ian.jonsen@mq.edu.au}
 #'
 #' @param config - path to config.R script containing file.paths for required & optional environmental layers (see Details)
-#' @param tag - start location(s) of simulated animals
-#' @param coa - optional Centre-Of-Attraction location(s) to provide movement bias(es)
-#' @param u - optional zonal current layers, velocity must be in m/s
-#' @param v - optional meridional current layers, velocity must be in m/s
-#' @param ts - optional sea surface temperature layer(s)
 #' @param rec - optional acoustic receiver locations (default is no receivers)
 #' @param rspace - nominal spacing (km) between receivers
 #' @param rnum - the number of receivers to be used on grid arrays (to approx. match to num used on lines)
-#' @importFrom raster raster brick projectRaster extract
+#' @param ocean - temporal form of environmental data layers: "cl" = climatological; "m" = monthly means; "wk" = weekly means
+#' @param doy.rng - rnage of days of year to be loaded from disk as a rasterStack (default = 1:365)
+#' @param uv - are current velocity data to be loaded from disk
+#' @importFrom raster raster stack brick projectRaster extract
 #' @importFrom sp coordinates<- proj4string<- CRS spTransform SpatialPointsDataFrame spsample
 #' @importFrom sf st_as_sf st_sample st_coordinates st_distance
 #' @importFrom dplyr select filter rename bind_cols %>% tibble distinct
@@ -22,8 +20,8 @@
 #' @export
 #'
 sim_setup <-
-  function(config = file.path("..", "simdata", "config.R"), rec = "none",
-           ocean = "cl") {
+  function(config = file.path("..", "simdata", "config.R"), rec = "none", rspace = NULL, rnum = NULL,
+           ocean = "doy", doy.rng = NULL, uv = FALSE) {
     
     ## FIXME: this needs to be generalized - provide spatial extent for query to download ETOPO2 data?
     ## FIXME:   or rely on user supplying their own bathymetry data
@@ -160,22 +158,27 @@ sim_setup <-
     out <- list(
       bathy = raster(bathy),
       land = raster(d2land),
-      land_dir = raster(land_dir),
-      d2b900 = raster(d2b900)
+      land_dir = raster(land_dir)
     )
 
     if (!is.null(ocean)) {
       switch(ocean, 
              cl = {
-               out[["u"]] <- raster(file.path(cl, "riops_u.grd"))
-               out[["v"]] <- raster(file.path(cl, "riops_v.grd"))
-               out[["ts"]] <- raster(file.path(cl, "riops_t.grd"))
+               if(uv) {
+                out[["u"]] <- raster(file.path(riops, "riops_cl0611_u.grd"))
+                out[["v"]] <- raster(file.path(riops, "riops_cl0611_v.grd"))
+               }
+               out[["ts"]] <- raster(file.path(riops, "riops_cl0611_t.grd"))
              },
-             m = {
-              out[["u"]] <- raster(file.path(m, "riops_u.grd"))
-              out[["v"]] <- raster(file.path(m, "riops_v.grd"))
-              out[["ts"]] <- raster(file.path(m, "riops_t.grd"))
-             })
+          doy = {
+            if(is.null(doy.rng)) doy.rng <- 1:365
+            if(uv) {
+              out[["u"]] <- stack(file.path(riops, "riops_doy_u.grd"))[[doy.rng]] 
+              out[["v"]] <- stack(file.path(riops, "riops_doy_v.grd"))[[doy.rng]] 
+            }
+            out[["ts"]] <- stack(file.path(riops, "riops_doy_t.grd"))[[doy.rng]]
+            
+          })
     }
     
     if(!rec %in% c("none", "real")) {
@@ -187,6 +190,6 @@ sim_setup <-
       out[["recLocs_asf"]] <- phs_stn
     }
     
-    
+    out$ocean <- ocean
     return(out)
   }

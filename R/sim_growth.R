@@ -9,11 +9,13 @@
 #' @param data - a list of required data from \code{presim}
 #' @param mpar - simulation control parameters supplied as a list, see details
 #' @param pb - use progress bar (logical)
-#' @importFrom raster extract cellStats adjacent cellFromXY xyFromCell
+#' @importFrom raster extract xyFromCell
 #' @importFrom CircStats rwrpcauchy
 #' @importFrom dplyr %>%
 #' @importFrom tibble as_tibble
 #' @importFrom stats runif rbinom
+#' @importFrom lubridate week yday
+#' @importFrom stringr str_split
 #' @export
 #' 
 sim_growth <-
@@ -27,24 +29,31 @@ sim_growth <-
     
     mpar.full <- list(
       move = "brw",
+      start.dt = ISOdatetime(2018,07,09,00,00,00, tz="UTC"),
       start = c(990, 1245),    #c(750, 200)
-      coa = c(400, 2390),      #c(610, 394),
+      coa = NULL, #c(400, 2390),      #c(610, 394),
+      mdir = -20,
       rho = 0.8,
       ntries = 1,
+      temp = TRUE,
       advect = TRUE,
       shelf = TRUE,
       growth = TRUE,
-      buffer = c(5, 50),
+      buffer = 5,
       b = 1.6, ## assumed sustained travel speed of body-lengths / s
       a = 0, ## scale parameter of Weibull dist for move steps; bigger = less variable step lengths; 0 = no variability
-      w0 = 47 ## starting mass g
+      w0 = 185 ## starting mass g
     )
     pnms <- names(mpar.full)
     
     if (is.null(data))
       stop("Can't find output from sim_setup()\n")
     if (class(data$land)[1] != "RasterLayer") stop("distance2land must be a RasterLayer")
-    
+
+    if(mpar.full$advect & !all(c("u","v") %in% names(data))) {
+      cat("Turning off current-advected movement as input data do not contain currents\n")
+      mpar$advect <- FALSE
+    }
     if (length(mpar)) {
       nms <- names(mpar)
       if (!is.list(mpar) || is.null(nms))
@@ -71,19 +80,15 @@ sim_growth <-
     ## dl - displacements to deflect away from land
     xy <- matrix(NA, N, 2)
     xy[1,] <- cbind(mpar$start)       #cbind(sloc[1], sloc[2])
-    ds <- matrix(NA, N, 4)
-    ds[1,] <- c(NA, NA, 45/180*pi, NA)
+    ds <- matrix(NA, N, 2)
+    ds[1,] <- c(NA, NA)
     
     ## define other vectors
     u <- v <- vector("numeric", N)
     
-    if(mpar$shelf) {
-      rdb <- vector("numeric", N)
-      rdb[1] <- extract(data$d2b900, rbind(mpar$start))
-    }
-    
     if(mpar$growth) {
       s <- ts <- w <- fl <- vector("numeric", N)
+      move_dir <- rep(NA, N)
       w[1] <- mpar$w0
       fl[1] <- (w[1] / 8987.9) ^ (1 / 2.9639)
       s[1] <- fl[1] * mpar$b * 3.6 ## initial swim speed (fl * b body-lengths / s) - in km/h
@@ -91,21 +96,50 @@ sim_growth <-
       fl <- (mpar$w0 / 8987.9) ^ (1 / 2.9639)
       s <- rep(fl * mpar$b * 3.6, N)
     }
-    
-    ## recursion
+    ## what is start week in env data
+    if(data$ocean == "doy") {
+      d1 <- as.numeric(str_split(names(data$ts)[1], "d", simplify = TRUE)[,2]) - 1
+    }
+      
+    ## iterate movement
     for (i in 2:N) {
       if(i==2 && pb)  tpb <- txtProgressBar(min = 2, max = N, style = 3)
       
       ### Apply Energetics
       if(mpar$growth) {
       ## extract Temperature
-      ts[i-1] <- extract(data$ts, rbind(xy[i - 1, ]))
-      if(is.na(ts[i - 1])) ts[i - 1] <- ts[i - 2] #cellStats(data$ts, mean, na.rm = TRUE)
+        switch(data$ocean, 
+               cl = {
+                 ts[i-1] <- extract(data$ts, rbind(xy[i - 1, ])) - 273
+                 if(is.na(ts[i-1])){
+                   ts[i-1] <- extract(data$ts, rbind(xy[i - 1, ]), buffer = 2) %>%
+                     mean(., na.rm = TRUE) - 273
+                 }
+               },
+               doy = {
+                 ts[i-1] <- extract(data$ts[[yday(mpar$start.dt + i * 3600) - d1]], rbind(xy[i - 1, ])) - 273
+                 if(is.na(ts[i-1])) {
+                   ## calc mean Temp within 2 km buffer of location @ time i-1
+                   ts[i-1] <- extract(data$ts[[yday(mpar$start.dt + i * 3600) - d1]], rbind(xy[i - 1, ]), buffer = 2) %>%
+                     mean(., na.rm = TRUE) - 273
+                 }
+               })
       
       ## calculate growth in current time step based on water temp at previous location, etc...
-      w[i] <- growth(w[i-1], ts[i-1], s[i-1])
+      if(ts[i-1] <= 0) {
+        cat("\n stopping simulation: smolt has entered water <= 0 deg C")  
+        break
+      } else if(ts[i-1] > 0) {
+        w[i] <- growth(w[i-1], ts[i-1], s[i-1])
+      } else if(is.na(ts[i-1])) {
+        browser()
+      }
+        
       ## convert W to fL - based on Byron et al 2014 (fig A1 in S1)
       fl[i] <- (w[i] / 8987.9) ^ (1 / 2.9639)
+      ## smolts can't shrink their length... (this would unrealistically affect swim speed & energetics), so
+      ## if change in weight implies reduction in forklength, then stick with last forklength  - mimics loss of condition
+      if(fl[i] < fl[i-1]) fl[i] <- fl[i-1] 
       
       ## determine size-based average move step for current time step
       ## assume avg swim speed of b bL/s
@@ -116,50 +150,85 @@ sim_growth <-
       if (mpar$advect) {
         ## determine envt'l forcing
         ## determine advection due to current, convert from m/s to km/h
-        u[i] <- extract(data$u, rbind(xy[i -  1,])) * 3.6 
-        v[i] <- extract(data$v, rbind(xy[i -  1,])) * 3.6
+        if(data$ocean == "doy") {
+          u[i] <- extract(data$u[[yday(mpar$start.dt + i * 3600) - d1]], rbind(xy[i - 1, ])) * 3.6 
+          v[i] <- extract(data$v[[yday(mpar$start.dt + i * 3600) - d1]], rbind(xy[i - 1, ])) * 3.6
+          } else if(data$ocean == "cl") {
+          u[i] <- extract(data$u, rbind(xy[i - 1, ])) * 3.6 
+          v[i] <- extract(data$v, rbind(xy[i - 1, ])) * 3.6
+          }
+        
         u[i] <- ifelse(is.na(u[i]), 0, u[i])
         v[i] <- ifelse(is.na(v[i]), 0, v[i])
         
-      } else {
+      } else if(!mpar$advect) {
         u[i] <- v[i] <- 0
       }
 
-      ## Move Vectors
-      ds[i, ] <- switch(mpar$move,
-                        brw = {
-                          biased_rw(n=1, 
-                                    data, 
-                                    xy = xy[i-1,], 
-                                    coa = mpar$coa, 
-                                    buffer = mpar$buffer, 
-                                    rho = mpar$rho,
-                                    a = mpar$a,
-                                    b = s[i])
-                        },
-                        rw = {
-                          rw(n=1,
-                             data,
-                             xy = xy[i-1,],
-                             buffer = mpar$buffer,
-                             a = mpar$a,
-                             b = s[i])
-                        },
-                        crw = {
-                          crw(n=1,
-                              data,
-                              xy = xy[i-1,],
-                              buffer = mpar$buffer,
-                              mu = ds[i-1, 3],
-                              rho = mpar$rho,
-                              a = mpar$a,
-                              b = s[i])
-                        })
+      ### Temperature-dependent movement
+      if (mpar$temp) {
+        ## movement direction influenced by ts spatial gradient if current ts 
+        ##  implies 0 or -ve growth, for current mass(w[i]) and speed (s[i])
+        g.rng <- growth(w[i], seq(4, 25, by=0.25), s[i])
+        ts.rng <- seq(4, 25, by=0.25)[which(g.rng >= w[i]) %>% range()]
+      
+        ds[i, ] <- temp_brw(
+            n = 1,
+            i = i,
+            mpar = mpar,
+            d1 = d1,
+            data = data,
+            xy = xy[i - 1,],
+            buffer = mpar$buffer,
+            ts = ts[i-1],
+            ts.rng = ts.rng,
+            dir = mpar$dir / 180*pi,
+            a = mpar$a,
+            b = s[i]
+          )
+      } else if(!mpar$temp) {
+        
+        ## Temperature-independent movement
+        ds[i, ] <- switch(mpar$move,
+                          brw = {
+                            biased_rw(n=1, 
+                                      data, 
+                                      xy = xy[i-1,], 
+                                      coa = NULL, 
+                                      dir = mpar$mdir / 180*pi,
+                                      buffer = mpar$buffer, 
+                                      rho = mpar$rho,
+                                      a = mpar$a,
+                                      b = s[i])
+                          },
+                          rw = {
+                            rw(n=1,
+                               data,
+                               xy = xy[i-1,],
+                               buffer = mpar$buffer,
+                               a = mpar$a,
+                               b = s[i])
+                          },
+                          crw = {
+                            crw(n=1,
+                                data,
+                                xy = xy[i-1,],
+                                buffer = mpar$buffer,
+                                mu = ds[i-1, 3],
+                                rho = mpar$rho,
+                                a = mpar$a,
+                                b = s[i])
+                          },
+                          drift = {
+                            ds[i, ] <- rbind(xy[i-1, 1:2])
+                          })
+      }
       
       xy[i, 1:2] <- cbind(ds[i, 1] + u[i], 
                           ds[i, 2] + v[i])
+
       
-      if(ds[i, 4] == 0) {
+      if(extract(data$land, rbind(xy[i, ])) == 0) {
         mpar$land <- TRUE
         cat("\n stopping simulation: stuck on land")
         break
@@ -181,28 +250,29 @@ sim_growth <-
       data.frame(
         x = xy[, 1],
         y = xy[, 2],
-        d2l = ds[, 4],
         u = u,
         v = v,
         ts = ts,
         w = w,
-        fl = fl
+        fl = fl,
+        s = s
       )
     } else if(!mpar$growth) {
       X <-
         data.frame(
           x = xy[, 1],
           y = xy[, 2],
-          d2l = ds[, 4],
           u = u,
-          v = v
+          v = v, 
+          ts = ts
         )
-    }
+    } 
+    X$ts[nrow(X)] <- X$ts[nrow(X) - 1]
     
     sim <- X %>% as_tibble() 
     sim <- sim %>%
       mutate(id = rep(id, nrow(sim))) %>%
-      mutate(date = seq(ISOdatetime(2018,07,09,00,00,00), by = 3600, length.out = nrow(sim))) %>%
+      mutate(date = seq(mpar$start.dt, by = 3600, length.out = nrow(sim))) %>%
       select(id, date, everything())
     
     param <- mpar  

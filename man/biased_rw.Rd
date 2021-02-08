@@ -4,7 +4,17 @@
 \alias{biased_rw}
 \title{biased random walk function}
 \usage{
-biased_rw(n = 1, data, xy = NULL, coa = NULL, buffer = NULL, rho, a, b)
+biased_rw(
+  n = 1,
+  data,
+  xy = NULL,
+  coa = NULL,
+  dir = NULL,
+  buffer = NULL,
+  rho,
+  a,
+  b
+)
 }
 \description{
 utility function not to be called by user

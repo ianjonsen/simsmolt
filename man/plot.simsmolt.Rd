@@ -9,15 +9,18 @@
   data,
   xlim = NULL,
   ylim = NULL,
-  ca = FALSE,
-  raster = NULL,
-  rec = TRUE,
+  raster = "ts",
+  fast = TRUE,
+  layer = NULL,
+  rec = FALSE,
   track = TRUE,
   alpha = 0.9,
   lwd = 0.2,
   size = 0.2,
   col = "blue",
-  option = "D",
+  pal = "Temps",
+  maxp = 50000,
+  crs = "+proj=laea +lat_0=41 +lon_0=-71 +units=km +ellps=WGS84",
   ...
 )
 }
@@ -30,9 +33,9 @@
 
 \item{ylim}{plot y limits}
 
-\item{ca}{plot centres of attraction}
-
 \item{raster}{select a raster (from data) to use as background (bathy, uv, or NULL)}
+
+\item{fast}{generate plot quickly (poorer resolution; default = TRUE)}
 
 \item{rec}{should receiver locations be displayed (logical)}
 

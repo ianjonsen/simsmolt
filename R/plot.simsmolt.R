@@ -4,6 +4,7 @@
 ##' @param s a fitted object of class simsmolt
 ##' @param data data object created by sim_setup
 ##' @param raster select a raster (from data) to use as background (bathy, uv, or NULL)
+##' @param fast generate plot quickly (poorer resolution; default = TRUE)
 ##' @param rec should receiver locations be displayed (logical)
 ##' @param track should smolt track(s) be displayed (logical)
 ##' @param alpha translucence for smolt track(s)
@@ -12,40 +13,71 @@
 ##' @param size of smolt track end point(s)
 ##' @param xlim plot x limits
 ##' @param ylim plot y limits
-##' @param ca plot centres of attraction
 ##'
 ##' @importFrom ggplot2 ggplot coord_fixed geom_raster aes theme_minimal
-##' @importFrom ggplot2 scale_color_brewer scale_fill_viridis_c geom_contour 
+##' @importFrom ggplot2 scale_color_brewer scale_fill_gradientn geom_contour 
 ##' @importFrom ggplot2 geom_polygon geom_path theme_dark fortify geom_point
 ##' @importFrom ggplot2 aes_string theme_classic theme element_rect ylab xlab
-##' @importFrom raster rasterToPoints crop calc
+##' @importFrom raster rasterToPoints crop nlayers
+##' @importFrom rasterVis gplot
 ##' @importFrom dplyr "%>%"
 ##' @importFrom sp spTransform
 ##' @method plot simsmolt
 ##' @export
 
-plot.simsmolt <- function(s, data, xlim = NULL, ylim = NULL, ca = FALSE, 
-                          raster = NULL, rec = TRUE, track = TRUE, 
-                          alpha = 0.9, lwd = 0.2, size = 0.2, col = "blue", option = "D", ...) {
-  
-  bathy.c <- rasterToPoints(data$bathy) %>% data.frame()
-  names(bathy.c) <- c("x","y","z")
-  
-  if(!is.null(raster)) {
-    switch(raster, 
-         bathy = {
-           ras <- bathy.c
-         },
-         uv = {
-           
-          # if(m==0) ras <- calc(data$u, mean)
-          # else ras <- data$u[[m]]
-#           ras <- calc(data$u, mean)
-           ras <- sqrt(data$u^2 + data$v^2) * 3.6
-           ras <- rasterToPoints(ras) %>% data.frame()
-           names(ras) <- c("x","y","z")
-         })
-}
+plot.simsmolt <- function(s, data, xlim = NULL, ylim = NULL, 
+                          raster = "ts", fast = TRUE, layer = NULL, rec = FALSE, track = TRUE, 
+                          alpha = 0.9, lwd = 0.2, size = 0.2, col = "blue", pal = "Temps", maxp = 5e4,
+                          crs = "+proj=laea +lat_0=41 +lon_0=-71 +units=km +ellps=WGS84",
+                          ...) {
+
+#    bathy.c <- rasterToPoints(data$bathy) %>% data.frame()
+#    names(bathy.c) <- c("x", "y", "z")
+    
+    if(!fast) {
+    if (!is.null(raster)) {
+      switch(raster,
+             bathy = {
+               ras <- bathy.c
+             },
+             uv = {
+               if (nlayers(data$u) > 1) {
+                 u <- data$u[[floor(nlayers(data$u) / 2)]]
+                 v <- data$v[[floor(nlayers(data$v) / 2)]]
+                 ras <- sqrt(u ^ 2 + v ^ 2) * 3.6
+               } else {
+                 ras <- sqrt(data$u ^ 2 + data$v ^ 2) * 3.6
+               }
+               
+             },
+             ts = {
+               if (nlayers(data$ts) > 1) {
+                 if (is.null(layer))
+                   ras <- data$ts[[nlayers(data$ts)]] - 273
+                 else
+                   ras <- data$ts[[layer]] - 273
+                 
+               } else {
+                 ras <- data$ts - 273
+               }
+             })
+      if (inherits(ras, "RasterLayer")) {
+        ras <- rasterToPoints(ras) %>% data.frame()
+        names(ras) <- c("x", "y", "z")
+      }
+    }
+  } else {
+    if(nlayers(data$ts) > 1) {
+      if (is.null(layer))
+        ras <- data$ts[[nlayers(data$ts)]] - 273
+      else
+        ras <- data$ts[[layer]] - 273
+    } else {
+      ras <- data$ts - 273
+    }
+    ras.cont <- rasterToPoints(ras) %>% data.frame()
+    names(ras.cont) <- c("x", "y", "z")
+  }
 
   
 #  data(countriesLow, package = "rworldmap")
@@ -55,24 +87,14 @@ plot.simsmolt <- function(s, data, xlim = NULL, ylim = NULL, ca = FALSE,
 #    rename(x = long, y = lat)
   
   if (is.null(xlim))
-    xlim <- c(0,1250)
+    xlim <- c(0, 2307)
   if (is.null(ylim))
-    ylim <- c(0,1750)
+    ylim <- c(0, 3198)
   
   if (!is.na(class(s)[2]) && (class(s)[2] == "rowwise_df" || class(s)[2] == "grouped_df")) {
     compl <- sapply(s$rep, function(.) !inherits(., "try-error"))
     cat(sprintf("dropping %i failed runs\n\n", sum(!compl)))
     s <- s[compl, ]
-    
-    if (ca) {
-      coa <-
-        data.frame(
-          x = lapply(s$rep, function(.)
-            .$params$coa[,1]) %>% do.call(c, .),
-          y = lapply(s$rep, function(.)
-            .$params$coa[,2]) %>% do.call(c, .)
-        )
-    }
     
     detect <-
       lapply(s$rep, function(.)
@@ -89,60 +111,24 @@ plot.simsmolt <- function(s, data, xlim = NULL, ylim = NULL, ca = FALSE,
   sim <- s$sim
   sim.last <- s$sim[nrow(s$sim), ] 
   detect <- s$detect
-  
-  if(ca) coa <- data.frame(x = s$params$coa[,1], y = s$params$coa[,2])
-    }
 
+    }
   
   ## generate plot
-  m <- ggplot() +
-    coord_fixed(
-      ratio = diff(ylim) / diff(xlim),
-      xlim = xlim,
-      ylim = ylim,
-      expand = FALSE
-    )
-  
-  if(!is.null(raster)) {
-    m <- m + geom_raster(data = ras, aes(x, y, fill = z)) +
-      scale_fill_viridis_c(direction = 1, option=option) +
-      theme_dark() +
+    m <- gplot(ras, maxpixels = maxp) +
+      geom_raster(aes(fill = value)) +
       geom_contour(
-        data = bathy.c,
+        data = ras.cont,
         aes(x, y, z = z),
-        breaks = -900,
-        col = "white",
-        lwd = 0.25
-      )
-    
-  } else {
-    m <- m + theme_classic() + 
-      theme(panel.background = element_rect(grey(0.3))) + 
-      geom_contour(
-        data = bathy.c,
-        aes(x, y, z = z),
-        breaks = c(-500, -700, -900, -1100, -1500, -2000, -2500, -5000, -10000),
-        col = grey(0.8),
-        lwd = 0.05
+        breaks = 4, 
+        col = "steelblue",
+        lwd = 0.4
       ) +
-      geom_contour(
-        data = bathy.c,
-        aes(x, y, z = z),
-        breaks = -900,
-        col = "white",
-        lwd = 0.1
-      )
-  }
-
+      scale_fill_gradientn(colours = hcl.colors(n=100, pal)) +
+      theme_dark()
+    
+  
 #  m <- m + geom_polygon(data = coast, aes_string(x="x", y="y", group="group"), fill = "black")
-  
-  if (ca) {
-    m <- m + geom_point(data = coa,
-                        aes(x, y),
-                        colour = "green",
-                        size = 2)
-  }
-  
   
   if(rec) {
   m <-
@@ -174,7 +160,9 @@ plot.simsmolt <- function(s, data, xlim = NULL, ylim = NULL, ca = FALSE,
                      size = 0.6)
     
   }
-  
+  if(!is.null(crs)) {
+    m <- m + coord_sf(crs = crs)
+  }
   m <- m + ylab("") + xlab("")
   
   return(m) 

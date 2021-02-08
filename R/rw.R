@@ -4,7 +4,7 @@
 #' 
 #' @importFrom CircStats rwrpcauchy
 #' @importFrom stats rweibull
-#' @importFrom raster extract cellFromXY adjacent xyFromCell
+#' @importFrom raster extract xyFromCell
 #' @export
 #' 
 rw <- function(n = 1, data, xy = NULL, buffer = NULL, a, b){
@@ -57,16 +57,11 @@ rw <- function(n = 1, data, xy = NULL, buffer = NULL, a, b){
   
   ## if new location on land (0) then adjust so it's in water
   if(new.d2l == 0) {
-    ## find all nearby cells (16) & select the one furthest from land
-    adj.cells <- adjacent(data$land, 
-                          cellFromXY(data$land, new.xy), 
-                          directions = 16, 
-                          pairs = FALSE)
-    the.cell <- adj.cells[which(data$land[adj.cells] == max(data$land[adj.cells]))][1]
-    new.xy <- xyFromCell(data$land, the.cell)
-    ## get final distance from land
-    new.d2l <- extract(data$land, rbind(new.xy))
+    ## find all nearby cells within 3 km & select the one farthest from land
+    cells <- extract(data$land, rbind(new.xy), buffer = 3, cellnumbers = TRUE, df = TRUE)
+    cell.max <- cells[cells[, "layer"] == max(cells[, "layer"]), "cells"][1]
+    new.xy <- xyFromCell(data$land, cell.max)
   }
   
-  return(c(new.xy, phi, new.d2l))
+  return(new.xy)
 }

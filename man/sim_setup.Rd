@@ -7,7 +7,11 @@
 sim_setup(
   config = file.path("..", "simdata", "config.R"),
   rec = "none",
-  ocean = "cl"
+  rspace = NULL,
+  rnum = NULL,
+  ocean = "doy",
+  doy.rng = NULL,
+  uv = FALSE
 )
 }
 \arguments{
@@ -15,19 +19,15 @@ sim_setup(
 
 \item{rec}{- optional acoustic receiver locations (default is no receivers)}
 
-\item{tag}{- start location(s) of simulated animals}
-
-\item{coa}{- optional Centre-Of-Attraction location(s) to provide movement bias(es)}
-
-\item{u}{- optional zonal current layers, velocity must be in m/s}
-
-\item{v}{- optional meridional current layers, velocity must be in m/s}
-
-\item{ts}{- optional sea surface temperature layer(s)}
-
 \item{rspace}{- nominal spacing (km) between receivers}
 
 \item{rnum}{- the number of receivers to be used on grid arrays (to approx. match to num used on lines)}
+
+\item{ocean}{- temporal form of environmental data layers: "cl" = climatological; "m" = monthly means; "wk" = weekly means}
+
+\item{doy.rng}{- rnage of days of year to be loaded from disk as a rasterStack (default = 1:365)}
+
+\item{uv}{- are current velocity data to be loaded from disk}
 }
 \description{
 load required rasters, receiver locations
