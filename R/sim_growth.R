@@ -172,18 +172,15 @@ sim_growth <-
         g.rng <- growth(w[i], seq(4, 25, by=0.25), s[i])
         ts.rng <- seq(4, 25, by=0.25)[which(g.rng >= w[i]) %>% range()]
       
-        ds[i, ] <- brw(
+        ds[i, ] <- temp_brw(
             n = 1,
             i = i,
             mpar = mpar,
             d1 = d1,
             data = data,
-            xy = xy[i-1,],
-            buffer = mpar$buffer,
+            xy = xy[i - 1,],
             ts = ts[i-1],
             ts.rng = ts.rng,
-            dir = mpar$dir / 180*pi,
-            a = mpar$a,
             b = s[i]
           )
       } else if(!mpar$temp) {
