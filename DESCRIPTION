@@ -1,7 +1,7 @@
 Package: simsmolt
 Type: Package
 Title: simulate Atlantic salmon smolt migration and detections on acoustic arrays
-Version: 0.1.0.9201
+Version: 0.1.0.9202
 Date: 2021-02-09
 Author: Ian Jonsen
 Maintainer: Ian Jonsen <ian.jonsen@mq.edu.au>
