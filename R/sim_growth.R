@@ -11,7 +11,7 @@
 #' @param pb - use progress bar (logical)
 #' @importFrom raster extract xyFromCell
 #' @importFrom CircStats rwrpcauchy
-#' @importFrom dplyr %>%
+#' @importFrom dplyr %>% mutate
 #' @importFrom tibble as_tibble
 #' @importFrom stats runif rbinom
 #' @importFrom lubridate week yday
