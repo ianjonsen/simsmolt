@@ -90,8 +90,8 @@ plot.simsmolt <- function(s, data, xlim = NULL, ylim = NULL,
     xlim <- c(0, 2307)
   if (is.null(ylim))
     ylim <- c(0, 3198)
-  
-  if (!is.na(class(s)[2]) && (class(s)[2] == "rowwise_df" || class(s)[2] == "grouped_df")) {
+
+  if (!is.na(class(s)[2]) && (class(s)[2] == "tbl_df")) {
     compl <- sapply(s$rep, function(.) !inherits(., "try-error"))
     cat(sprintf("dropping %i failed runs\n\n", sum(!compl)))
     s <- s[compl, ]
@@ -100,12 +100,9 @@ plot.simsmolt <- function(s, data, xlim = NULL, ylim = NULL,
       lapply(s$rep, function(.)
         .$detect) %>% do.call(rbind, .)
    
-    sim <-
-      lapply(1:nrow(s), function(i)
-        data.frame(id = i, s$rep[[i]]$sim)) %>% do.call(rbind, .)
-    sim.last <- lapply(1:nrow(s), function(i)
-      data.frame(id = i, s$rep[[i]]$sim[nrow(s$rep[[i]]$sim), ])) %>% do.call(rbind, .)
-    
+    sim <- lapply(s$rep, function(.) .$sim) %>% do.call(rbind, .)
+    sim.last <- lapply(s$rep, function(.) .$sim[nrow(.$sim), ]) %>% do.call(rbind, .)
+
     } else if(is.na(class(s)[2])){
   
   sim <- s$sim

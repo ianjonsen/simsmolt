@@ -39,9 +39,9 @@ temp_brw <- function(n = 1, i = NULL, mpar = NULL, d1 = NULL, data, xy = NULL, t
     ## Temperature-dependent if outside `SoBi box`
     ## move direction becomes more concentrated around mu as ts declines below lower limit for growth
     rho.l <-
-      exp(ts.rng[1] - 1.25 * ts) / (1 + exp(ts.rng[1] - 1.25 * ts))
+      exp(ts.rng[1] - 1 * ts) / (1 + exp(ts.rng[1] - 1 * ts))
     rho.u <-
-      exp(-ts.rng[2] + 1.25 * ts) / (1 + exp(-ts.rng[2] + 1.25 * ts))
+      exp(-ts.rng[2] + 1 * ts) / (1 + exp(-ts.rng[2] + 1 * ts))
     
     if (rho.l > rho.u) {
       ## move toward warmer water
