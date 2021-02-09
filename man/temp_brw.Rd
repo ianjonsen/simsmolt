@@ -11,11 +11,8 @@ temp_brw(
   d1 = NULL,
   data,
   xy = NULL,
-  buffer = NULL,
   ts = NULL,
   ts.rng = NULL,
-  dir = NULL,
-  a,
   b
 )
 }

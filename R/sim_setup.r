@@ -21,7 +21,7 @@
 #'
 sim_setup <-
   function(config = file.path("..", "simdata", "config.R"), rec = "none", rspace = NULL, rnum = NULL,
-           ocean = "doy", doy.rng = NULL, uv = FALSE) {
+           ocean = "doy", doy.rng = NULL, uv = FALSE, crs = NULL) {
     
     ## FIXME: this needs to be generalized - provide spatial extent for query to download ETOPO2 data?
     ## FIXME:   or rely on user supplying their own bathymetry data
@@ -33,6 +33,7 @@ sim_setup <-
       ## FIXME:  prep code would prob require consistent receiver location / history format on OTN server
 
     source(config)  
+    if(is.null(crs)) prj <- "+proj=laea +lat_0=41 +lon_0=-71 +units=km +datum=WGS84"
     
       if(rec == "lines") {
         ## 4 lines from just N of SoBI to Nain, NL
@@ -69,7 +70,7 @@ sim_setup <-
         poly <- Polygon(data.frame(x = c(615,595,440,320,220, 450,600,790,900,1015, 615), 
                            y = c(145,299,453,520,607, 607,520,453,299,145, 145)))
         recPoly_sf <- SpatialPolygons(list(Polygons(list(poly), ID = 1)), 
-                                   integer(1), proj4string = CRS(prj_laea)) %>%
+                                   integer(1), proj4string = CRS(prj)) %>%
           st_as_sf()
         
         ## use same random sample each time (for now)
@@ -94,7 +95,7 @@ sim_setup <-
         
         
         dist <- recLocs %>%
-          st_as_sf(., coords = c("x","y"), crs = prj_laea) %>%
+          st_as_sf(., coords = c("x","y"), crs = prj) %>%
           st_distance()
         diag(dist) <- NA
         min.dist <- apply(dist, 2, min, na.rm = TRUE)
@@ -105,12 +106,12 @@ sim_setup <-
         poly <- Polygon(data.frame(x = c(615,595,440,320,220, 450,600,790,900,1015, 615), 
                                    y = c(145,299,453,520,607, 607,520,453,299,145, 145)))
         recPoly <- SpatialPolygons(list(Polygons(list(poly), ID = 1)), 
-                                      integer(1), proj4string = CRS(prj_laea)) 
+                                      integer(1), proj4string = CRS(prj)) 
         
         
         ## use same random sample each time b/c we want grid to always be in same place
         set.seed(pi)  #rnum = 165, 135
-        grid <- spsample(recPoly, n=rnum, type="regular", proj4string = prj_laea) %>% st_as_sf()
+        grid <- spsample(recPoly, n=rnum, type="regular", proj4string = prj) %>% st_as_sf()
         
         recPoly_sf <- st_as_sf(recPoly)
         recLocs <- grid %>% st_coordinates() %>%
@@ -134,7 +135,7 @@ sim_setup <-
         stn <- stn[grep("Acoustic", stn$station_type), ]
         stn <- stn %>%
           sf::st_as_sf(coords = c("lon","lat"), crs = 4326) %>%
-          sf::st_transform(., crs = "+proj=laea +lat_0=41 +lon_0=-71 +units=km +ellps=WGS84")
+          sf::st_transform(., crs = prj)
         recLocs <- sf::st_coordinates(stn) %>% as.data.frame()
         names(recLocs) <- c("x","y")
         sf::st_geometry(stn) <- NULL
@@ -148,7 +149,7 @@ sim_setup <-
           rename(lon = long) %>%
           distinct(receiver, year, .keep_all = TRUE) %>%
           sf::st_as_sf(coords = c("lon","lat"), crs = 4326) %>%
-          sf::st_transform(., crs = "+proj=laea +lat_0=41 +lon_0=-71 +units=km +ellps=WGS84")
+          sf::st_transform(., crs = prj)
         recLocs_asf <- sf::st_coordinates(phs_stn) %>% as.data.frame()
         names(recLocs_asf) <- c("x","y")
         sf::st_geometry(phs_stn) <- NULL

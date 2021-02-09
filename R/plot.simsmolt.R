@@ -14,7 +14,7 @@
 ##' @param xlim plot x limits
 ##' @param ylim plot y limits
 ##'
-##' @importFrom ggplot2 ggplot coord_fixed geom_raster aes theme_minimal
+##' @importFrom ggplot2 ggplot coord_fixed geom_raster aes theme_minimal coord_sf
 ##' @importFrom ggplot2 scale_color_brewer scale_fill_gradientn geom_contour 
 ##' @importFrom ggplot2 geom_polygon geom_path theme_dark fortify geom_point
 ##' @importFrom ggplot2 aes_string theme_classic theme element_rect ylab xlab

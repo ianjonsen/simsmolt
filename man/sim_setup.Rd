@@ -11,7 +11,8 @@ sim_setup(
   rnum = NULL,
   ocean = "doy",
   doy.rng = NULL,
-  uv = FALSE
+  uv = FALSE,
+  crs = NULL
 )
 }
 \arguments{

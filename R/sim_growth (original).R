@@ -39,7 +39,7 @@ sim_growth <-
       advect = TRUE,
       shelf = TRUE,
       growth = TRUE,
-      buffer = 5,
+      buffer = c(5, 50),
       b = 1.6, ## assumed sustained travel speed of body-lengths / s
       a = 0, ## scale parameter of Weibull dist for move steps; bigger = less variable step lengths; 0 = no variability
       w0 = 185 ## starting mass g
@@ -101,6 +101,7 @@ sim_growth <-
       d1 <- as.numeric(str_split(names(data$ts)[1], "d", simplify = TRUE)[,2]) - 1
     }
       
+  
     ## iterate movement
     for (i in 2:N) {
       if(i==2 && pb)  tpb <- txtProgressBar(min = 2, max = N, style = 3)
@@ -167,25 +168,42 @@ sim_growth <-
 
       ### Temperature-dependent movement
       if (mpar$temp) {
-        ## movement direction influenced by ts spatial gradient if current ts 
-        ##  implies 0 or -ve growth, for current mass(w[i]) and speed (s[i])
+        ## movement direction influenced by ts spatial gradient if current ts implies 0 or -ve growth, for current mass(w[i]) and speed (s[i])
         g.rng <- growth(w[i], seq(4, 25, by=0.25), s[i])
         ts.rng <- seq(4, 25, by=0.25)[which(g.rng >= w[i]) %>% range()]
-      
-        ds[i, ] <- brw(
+        
+        if(ts[i-1] < ts.rng[1] | ts[i-1] > ts.rng[2]) {
+          switch(data$ocean, 
+                 cl = {
+                     ## choose cell with highest ts, within 10 km 
+                     cells <- extract(data$ts, rbind(xy[i-1, ]), buffer = 10, cellnumbers = TRUE, df = TRUE)
+                     cell.max <- cells[cells[, 3] %in% max(cells[, 3], na.rm = TRUE), 2][1]
+                     cell.xy <- xyFromCell(data$ts, cell.max)
+                 },
+                 doy = {
+                   cells <- extract(data$ts[[yday(mpar$start.dt + i * 3600) - d1]], 
+                                    rbind(xy[i-1, ]), buffer = 10, cellnumbers = TRUE, df = TRUE)
+                   cell.max <- cells[cells[, 3] %in% max(cells[, 3], na.rm = TRUE), 2][1]
+                   cell.xy <- xyFromCell(data$ts[[yday(mpar$start.dt + i * 3600) - d1]], cell.max)
+                 })
+          
+          move_dir[i] <- atan2(cell.xy[1] - xy[i-1, 1], cell.xy[2] - xy[i-1, 2])
+          if(is.na(move_dir[i])) {
+            print("\n NA in move_dir, pausing...")
+            browser()
+          }
+          ds[i, ] <- biased_rw(
             n = 1,
-            i = i,
-            mpar = mpar,
-            d1 = d1,
-            data = data,
-            xy = xy[i-1,],
+            data,
+            xy = xy[i - 1,],
+            coa = NULL,
+            dir = move_dir[i],
             buffer = mpar$buffer,
-            ts = ts[i-1],
-            ts.rng = ts.rng,
-            dir = mpar$dir / 180*pi,
+            rho = 0.99,
             a = mpar$a,
             b = s[i]
           )
+        }
       } else if(!mpar$temp) {
         
         ## Temperature-independent movement
@@ -224,9 +242,9 @@ sim_growth <-
                           })
       }
       
+
       xy[i, 1:2] <- cbind(ds[i, 1] + u[i], 
                           ds[i, 2] + v[i])
-
       
       if(extract(data$land, rbind(xy[i, ])) == 0) {
         mpar$land <- TRUE
@@ -255,7 +273,8 @@ sim_growth <-
         ts = ts,
         w = w,
         fl = fl,
-        s = s
+        s = s,
+        md = move_dir
       )
     } else if(!mpar$growth) {
       X <-
