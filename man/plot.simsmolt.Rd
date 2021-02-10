@@ -4,10 +4,22 @@
 \alias{plot.simsmolt}
 \title{plot}
 \usage{
-\method{plot}{simsmolt}(s, data, xlim = NULL, ylim = NULL,
-  ca = FALSE, raster = NULL, rec = TRUE, track = TRUE,
-  alpha = 0.25, lwd = 0.2, size = 0.2, col = "blue",
-  option = "D", ...)
+\method{plot}{simsmolt}(
+  s,
+  data,
+  xlim = NULL,
+  ylim = NULL,
+  ca = FALSE,
+  raster = NULL,
+  rec = TRUE,
+  track = TRUE,
+  alpha = 0.25,
+  lwd = 0.2,
+  size = 0.2,
+  col = "blue",
+  option = "D",
+  ...
+)
 }
 \arguments{
 \item{s}{a fitted object of class simsmolt}
