@@ -32,10 +32,11 @@ sim_growth <-
       start.dt = ISOdatetime(2018,07,09,00,00,00, tz="UTC"),
       start = c(990, 1245),    #c(750, 200)
       coa = NULL, #c(400, 2390),      #c(610, 394),
-      mdir = -20,
+      mdir = -20/180*pi,
       rho = 0.8,
       ntries = 1,
       temp = TRUE,
+      ts.q = 0.75,
       advect = TRUE,
       shelf = TRUE,
       growth = TRUE,
@@ -50,8 +51,8 @@ sim_growth <-
       stop("Can't find output from sim_setup()\n")
     if (class(data$land)[1] != "RasterLayer") stop("distance2land must be a RasterLayer")
 
-    if(mpar.full$advect & !all(c("u","v") %in% names(data))) {
-      cat("Turning off current-advected movement as input data do not contain currents\n")
+    if(mpar$advect & !all(c("u","v") %in% names(data))) {
+      cat("Turning off current-advected movement as ocean data do not contain currents\n")
       mpar$advect <- FALSE
     }
     if (length(mpar)) {
@@ -88,7 +89,7 @@ sim_growth <-
     
     if(mpar$growth) {
       s <- ts <- w <- fl <- vector("numeric", N)
-      move_dir <- rep(NA, N)
+     # move_dir <- rep(NA, N)
       w[1] <- mpar$w0
       fl[1] <- (w[1] / 8987.9) ^ (1 / 2.9639)
       s[1] <- fl[1] * mpar$b * 3.6 ## initial swim speed (fl * b body-lengths / s) - in km/h
@@ -112,25 +113,27 @@ sim_growth <-
                cl = {
                  ts[i-1] <- extract(data$ts, rbind(xy[i - 1, ])) - 273
                  if(is.na(ts[i-1])){
-                   ts[i-1] <- extract(data$ts, rbind(xy[i - 1, ]), buffer = 2) %>%
+                   ## calc mean Temp within 2 km buffer of location @ time i-1
+                   ts[i-1] <- extract(data$ts, rbind(xy[i - 1, ]), buffer = 2, df = TRUE)[,2] %>%
                      mean(., na.rm = TRUE) - 273
                  }
                },
                doy = {
-                 ts[i-1] <- extract(data$ts[[yday(mpar$start.dt + i * 3600) - d1]], rbind(xy[i - 1, ])) - 273
+                 ts[i-1] <- extract(data$ts[[(yday(mpar$start.dt + i * 3600) - d1)]], rbind(xy[i - 1, ])) - 273
                  if(is.na(ts[i-1])) {
                    ## calc mean Temp within 2 km buffer of location @ time i-1
-                   ts[i-1] <- extract(data$ts[[yday(mpar$start.dt + i * 3600) - d1]], rbind(xy[i - 1, ]), buffer = 2) %>%
+                   ts[i-1] <- extract(data$ts[[(yday(mpar$start.dt + i * 3600) - d1)]], rbind(xy[i - 1, ]), buffer = 2, df = TRUE)[,2] %>%
                      mean(., na.rm = TRUE) - 273
                  }
                })
       
       ## calculate growth in current time step based on water temp at previous location, etc...
-      if(ts[i-1] <= 0) {
+      if(ts[i-1] <= 0 & !is.na(ts[i-1])) {
         cat("\n stopping simulation: smolt has entered water <= 0 deg C")  
         break
-      } else if(ts[i-1] > 0) {
+      } else if(ts[i-1] > 0 & !is.na(ts[i-1])) {
         w[i] <- growth(w[i-1], ts[i-1], s[i-1])
+        
       } else if(is.na(ts[i-1])) {
         browser()
       }
@@ -151,8 +154,8 @@ sim_growth <-
         ## determine envt'l forcing
         ## determine advection due to current, convert from m/s to km/h
         if(data$ocean == "doy") {
-          u[i] <- extract(data$u[[yday(mpar$start.dt + i * 3600) - d1]], rbind(xy[i - 1, ])) * 3.6 
-          v[i] <- extract(data$v[[yday(mpar$start.dt + i * 3600) - d1]], rbind(xy[i - 1, ])) * 3.6
+          u[i] <- extract(data$u[[(yday(mpar$start.dt + i * 3600) - d1)]], rbind(xy[i - 1, ])) * 3.6 
+          v[i] <- extract(data$v[[(yday(mpar$start.dt + i * 3600) - d1)]], rbind(xy[i - 1, ])) * 3.6
           } else if(data$ocean == "cl") {
           u[i] <- extract(data$u, rbind(xy[i - 1, ])) * 3.6 
           v[i] <- extract(data$v, rbind(xy[i - 1, ])) * 3.6
@@ -167,51 +170,61 @@ sim_growth <-
 
       ### Temperature-dependent movement
       if (mpar$temp) {
-        ## movement direction influenced by ts spatial gradient if current ts 
-        ##  implies 0 or -ve growth, for current mass(w[i]) and speed (s[i])
-        g.rng <- growth(w[i], seq(4, 25, by=0.25), s[i])
-        ts.rng <- seq(4, 25, by=0.25)[which(g.rng >= w[i]) %>% range()]
+        
+        ## reverse migration bias from -20 deg (~magnetic N) to 160 deg (S), if smolt in < 5 C water for 12 h
+        if(i > 12) { 
+          
+          ## movement direction influenced by ts spatial gradient of current ts 
+          ##  implies 0 or -ve growth, for current mass(w[i]) and speed (s[i])
+          g.rng <- growth(w[i], seq(6, 20, l = 100), s[i])
+          ts.mig <- seq(6, 20, l=100)[which(g.rng >= w[i])] %>% min()
+          ts.rng <- seq(6, 20, l = 100)[which(g.rng >= quantile(g.rng, mpar$ts.q))]  %>% range()
+          
+          dir <- ifelse(all(ts[i - 1:12] <= ts.mig), (mpar$mdir + pi) %% (pi), mpar$mdir)
+          move <- ifelse(ts[i-1] >= ts.rng[1] & ts[i-1] <= ts.rng[2], "rw", mpar$move)
+            
+        } else {
+          dir <- mpar$mdir
+          move <- mpar$move
+        }
       
-        ds[i, ] <- temp_brw(
-            n = 1,
-            i = i,
-            mpar = mpar,
-            d1 = d1,
-            data = data,
-            xy = xy[i - 1,],
-            ts = ts[i-1],
-            ts.rng = ts.rng,
-            b = s[i]
-          )
-      } else if(!mpar$temp) {
+      #   ds[i, ] <- temp_brw(
+      #       n = 1,
+      #       i = i,
+      #       mpar = mpar,
+      #       d1 = d1,
+      #       data = data,
+      #       xy = xy[i - 1,],
+      #       ts = ts[i-1],
+      #       ts.rng = ts.rng,
+      #       b = s[i]
+      #     )
+      # } else if(!mpar$temp) {
+      } else {
+        dir <- mpar$mdir
+        move <- mpar$move
+      }
         
         ## Temperature-independent movement
-        ds[i, ] <- switch(mpar$move,
+        ds[i, ] <- switch(move,
                           brw = {
+                            
                             biased_rw(n=1, 
                                       data, 
                                       xy = xy[i-1,], 
                                       coa = NULL, 
-                                      dir = mpar$mdir / 180*pi,
+                                      dir = dir,
                                       buffer = mpar$buffer, 
                                       rho = mpar$rho,
                                       a = mpar$a,
                                       b = s[i])
                           },
                           rw = {
+                            
                             rw(n=1,
-                               data,
-                               xy = xy[i-1,],
-                               buffer = mpar$buffer,
-                               a = mpar$a,
-                               b = s[i])
-                          },
-                          crw = {
-                            crw(n=1,
                                 data,
                                 xy = xy[i-1,],
                                 buffer = mpar$buffer,
-                                mu = ds[i-1, 3],
                                 rho = mpar$rho,
                                 a = mpar$a,
                                 b = s[i])
@@ -219,13 +232,13 @@ sim_growth <-
                           drift = {
                             ds[i, ] <- rbind(xy[i-1, 1:2])
                           })
-      }
-      
+ #     }
+        
       xy[i, 1:2] <- cbind(ds[i, 1] + u[i], 
                           ds[i, 2] + v[i])
 
       
-      if(extract(data$land, rbind(xy[i, ])) == 0) {
+      if((extract(data$land, rbind(xy[i, ])) == 0 | is.na(extract(data$land, rbind(xy[i, ]))))  & any(!is.na(xy[i,]))) {
         mpar$land <- TRUE
         cat("\n stopping simulation: stuck on land")
         break
@@ -242,6 +255,7 @@ sim_growth <-
         if(i==N) close(tpb)
       }
     }
+    
     if(mpar$growth) {
     X <-
       data.frame(
@@ -267,10 +281,14 @@ sim_growth <-
     X$ts[nrow(X)] <- X$ts[nrow(X) - 1]
     
     sim <- X %>% as_tibble() 
+    ## remove records after sim is stopped for being stuck on land, etc...
     sim <- sim %>%
-      filter(!is.na(x) & !is.na(y) & w != 0 & fl != 0 & s != 0) %>%  # remove records after sim is stopped for being stuck on land, etc...
-      mutate(id = rep(id, nrow(sim))) %>%
-      mutate(date = seq(mpar$start.dt, by = 3600, length.out = nrow(sim))) %>%
+      filter(!is.na(x) & !is.na(y) & w != 0 & fl != 0 & s != 0)
+    nsim <- nrow(sim)
+    
+    sim <- sim %>%
+      mutate(id = id) %>%
+      mutate(date = seq(mpar$start.dt, by = 3600, length.out = nsim)) %>%
       select(id, date, everything())
     
     param <- mpar  

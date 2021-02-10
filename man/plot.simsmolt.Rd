@@ -10,6 +10,7 @@
   xlim = NULL,
   ylim = NULL,
   raster = "ts",
+  bathy = FALSE,
   fast = TRUE,
   layer = NULL,
   rec = FALSE,
@@ -17,8 +18,8 @@
   alpha = 0.9,
   lwd = 0.2,
   size = 0.2,
-  col = "blue",
-  pal = "Temps",
+  col = "red",
+  pal = "Cividis",
   maxp = 50000,
   crs = "+proj=laea +lat_0=41 +lon_0=-71 +units=km +ellps=WGS84",
   ...

@@ -166,10 +166,10 @@ sim_setup <-
       switch(ocean, 
              cl = {
                if(uv) {
-                out[["u"]] <- raster(file.path(riops, "riops_cl0611_u.grd"))
-                out[["v"]] <- raster(file.path(riops, "riops_cl0611_v.grd"))
+                out[["u"]] <- raster(file.path(riops, "riops_365_u.grd"))
+                out[["v"]] <- raster(file.path(riops, "riops_365_v.grd"))
                }
-               out[["ts"]] <- raster(file.path(riops, "riops_cl0611_t.grd"))
+               out[["ts"]] <- raster(file.path(riops, "riops_365_t.grd"))
              },
           doy = {
             if(is.null(doy.rng)) doy.rng <- 1:365
@@ -187,10 +187,11 @@ sim_setup <-
       out[["recPoly"]] <- recPoly_sf
       out[["rec"]] <- rec
     } else if (rec == "real") {
-      out[["recLocs"]] <- stn
+      #out[["recLocs"]] <- stn
       out[["recLocs_asf"]] <- phs_stn
     }
     
     out$ocean <- ocean
+    out$prj <- prj
     return(out)
   }

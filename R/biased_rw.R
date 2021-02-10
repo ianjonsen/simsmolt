@@ -57,14 +57,22 @@ biased_rw <- function(n = 1, data, xy = NULL, coa = NULL, dir = NULL, buffer = N
   
   new.xy <- c(xy[1] + sin(phi) * st, xy[2] + cos(phi) * st)
   new.d2l <- extract(data$land, rbind(new.xy))
-  
+
   ## if new location on land (0) then adjust so it's in water
-  if(new.d2l == 0) {
+  if(new.d2l == 0 & !is.na(new.d2l)) {
     ## find all nearby cells within 3 km & select the one farthest from land
     cells <- extract(data$land, rbind(new.xy), buffer = 3, cellnumbers = TRUE, df = TRUE)
     cell.max <- cells[cells[, 3] == max(cells[, 3], na.rm = TRUE), 2][1]
     new.xy <- xyFromCell(data$land, cell.max)
+    
+    return(new.xy)
+    
+  } else if(is.na(new.d2l)) {
+    return(cbind(NA,NA))
+    
+  } else if(new.d2l > 0 & !is.na(new.d2l)) {
+    return(new.xy)
   }
   
-  return(new.xy)
+  
 }

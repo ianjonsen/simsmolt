@@ -26,13 +26,15 @@
 ##' @export
 
 plot.simsmolt <- function(s, data, xlim = NULL, ylim = NULL, 
-                          raster = "ts", fast = TRUE, layer = NULL, rec = FALSE, track = TRUE, 
-                          alpha = 0.9, lwd = 0.2, size = 0.2, col = "blue", pal = "Temps", maxp = 5e4,
+                          raster = "ts", bathy = FALSE, fast = TRUE, layer = NULL, rec = FALSE, track = TRUE, 
+                          alpha = 0.9, lwd = 0.2, size = 0.2, col = "red", pal = "Cividis", maxp = 5e4,
                           crs = "+proj=laea +lat_0=41 +lon_0=-71 +units=km +ellps=WGS84",
                           ...) {
 
-#    bathy.c <- rasterToPoints(data$bathy) %>% data.frame()
-#    names(bathy.c) <- c("x", "y", "z")
+  if(bathy) {
+    bathy.c <- rasterToPoints(data$bathy) %>% data.frame()
+    names(bathy.c) <- c("x", "y", "z")
+  }
     
     if(!fast) {
     if (!is.null(raster)) {
@@ -117,20 +119,31 @@ plot.simsmolt <- function(s, data, xlim = NULL, ylim = NULL,
       geom_contour(
         data = ras.cont,
         aes(x, y, z = z),
-        breaks = 4, 
-        col = "steelblue",
+        breaks = 6, 
+        col = "steelblue1",
         lwd = 0.4
       ) +
       scale_fill_gradientn(colours = hcl.colors(n=100, pal)) +
       theme_dark()
     
+    if(bathy) {
+      m <- m + 
+        geom_contour(
+          data = bathy.c,
+          aes(x, y, z = z),
+          breaks = -900,
+          col = "white",
+          alpha = 0.5,
+          lwd = 0.4
+        )
+    }
   
-#  m <- m + geom_polygon(data = coast, aes_string(x="x", y="y", group="group"), fill = "black")
+  #m <- m + geom_polygon(data = coast, aes_string(x="x", y="y", group="group"), fill = "black")
   
   if(rec) {
   m <-
     m + geom_point(
-      data = data$recLocs,
+      data = data$recLocs_asf,
       aes(x, y),
       colour = col,
       size = 0.4
@@ -140,7 +153,7 @@ plot.simsmolt <- function(s, data, xlim = NULL, ylim = NULL,
   if(track) {
    m <- m + geom_path(data = sim,
               aes(x, y, group=id),
-              colour = "salmon",
+              colour = "pink",
               alpha = alpha, size = lwd) +
     
     geom_point(data = sim.last, 

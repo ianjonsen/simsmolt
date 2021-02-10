@@ -7,7 +7,7 @@
 #' @importFrom raster extract xyFromCell
 #' @export
 #' 
-rw <- function(n = 1, data, xy = NULL, buffer = NULL, a, b){
+rw <- function(n = 1, data, xy = NULL, buffer = NULL, rho, a, b){
   
   if (a > 0)
     st <- rweibull(n, a, b)
@@ -18,12 +18,11 @@ rw <- function(n = 1, data, xy = NULL, buffer = NULL, a, b){
   }
   
   d2l <- extract(data$land, rbind(xy))
-
+  
   
   if(d2l > buffer[1] | xy[1] < 300) {
-    mu <- 0
-    rho <- 0 # for random walk
-
+    mu <- runif(1, -pi, pi)
+    
   } else if (xy[1] >= 300 & !all(xy[1] >= 950, 
                                  xy[1] <= 1065, 
                                  xy[2] >= 1200, 
@@ -32,7 +31,7 @@ rw <- function(n = 1, data, xy = NULL, buffer = NULL, a, b){
     
     ## direct smolt to move eastward & parallel to shore (avoid land) only after passing through most of GoM
     mu <- (extract(data$land_dir, rbind(xy)) + 0.5 * pi) %% (2*pi)
-    rho <- 0.5 # deviate from random walk when inside land buffer
+    rho <- 0.9 # deviate from random walk when inside land buffer
     if(d2l <= 2) {
       mu <- mu + 0.5 * pi %% (2*pi) ## move in opposite direction of land if within 2km
       rho <- 0.95
@@ -43,7 +42,7 @@ rw <- function(n = 1, data, xy = NULL, buffer = NULL, a, b){
                                xy[2] <= 1305) & 
             d2l <= buffer[1]) {
     mu <- (extract(data$land_dir, rbind(xy))  + 0.5 * pi) %% (pi)
-    rho <- 0.5 # deviate from random walk when inside land buffer
+    rho <- 0.9 # deviate from random walk when inside land buffer
     if(d2l <= 2) {
       mu <- mu + 0.5 * pi %% (pi) ## move in opposite direction of land if within 2km
       rho <- 0.95

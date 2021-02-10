@@ -4,7 +4,7 @@
 \alias{rw}
 \title{random walk function}
 \usage{
-rw(n = 1, data, xy = NULL, buffer = NULL, a, b)
+rw(n = 1, data, xy = NULL, buffer = NULL, rho, a, b)
 }
 \description{
 utility function not to be called by user

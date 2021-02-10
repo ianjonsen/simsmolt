@@ -51,7 +51,7 @@ temp_brw <- function(n = 1, i = NULL, mpar = NULL, d1 = NULL, data, xy = NULL, t
                ## choose cell with highest ts, within 1 move step (km)
                cells <-
                  extract(
-                   data$ts[[yday(mpar$start.dt + i * 3600) - d1]],
+                   data$ts,
                    rbind(xy),
                    buffer = st,
                    cellnumbers = TRUE,
@@ -59,7 +59,7 @@ temp_brw <- function(n = 1, i = NULL, mpar = NULL, d1 = NULL, data, xy = NULL, t
                  )
                cell.max <-
                  cells[cells[, 3] %in% max(cells[, 3], na.rm = TRUE), 2][1]
-               cell.xy <- xyFromCell(data$ts[[yday(mpar$start.dt + i * 3600) - d1]], cell.max)
+               cell.xy <- xyFromCell(data$ts, cell.max)
              },
              doy = {
                cells <- extract(
@@ -83,7 +83,7 @@ temp_brw <- function(n = 1, i = NULL, mpar = NULL, d1 = NULL, data, xy = NULL, t
                ## choose cell with lowest ts, within 1 move step (km)
                cells <-
                  extract(
-                   data$ts[[yday(mpar$start.dt + i * 3600) - d1]],
+                   data$ts,
                    rbind(xy),
                    buffer = st,
                    cellnumbers = TRUE,
@@ -91,7 +91,7 @@ temp_brw <- function(n = 1, i = NULL, mpar = NULL, d1 = NULL, data, xy = NULL, t
                  )
                cell.min <-
                  cells[cells[, 3] %in% min(cells[, 3], na.rm = TRUE), 2][1]
-               cell.xy <- xyFromCell(data$ts[[yday(mpar$start.dt + i * 3600) - d1]], cell.min)
+               cell.xy <- xyFromCell(data$ts, cell.min)
              },
              doy = {
                cells <- extract(
