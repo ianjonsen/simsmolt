@@ -268,13 +268,10 @@ sim_growth <-
     
     sim <- X %>% as_tibble() 
     sim <- sim %>%
+      filter(!is.na(x) & !is.na(y) & w != 0 & fl != 0 & s != 0) %>%  # remove records after sim is stopped for being stuck on land, etc...
       mutate(id = rep(id, nrow(sim))) %>%
       mutate(date = seq(mpar$start.dt, by = 3600, length.out = nrow(sim))) %>%
       select(id, date, everything())
-    
-    ## remove records after sim is stopped for being stuck on land
-    sim <- sim %>%
-      filter(!is.na(x) & !is.na(y) & w != 0 & fl != 0 & s != 0)
     
     param <- mpar  
     out <- list(sim = sim, params = param)  
