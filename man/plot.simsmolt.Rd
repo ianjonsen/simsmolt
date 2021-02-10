@@ -9,7 +9,6 @@
   data,
   xlim = NULL,
   ylim = NULL,
-<<<<<<< HEAD
   raster = "ts",
   fast = TRUE,
   layer = NULL,
@@ -22,17 +21,6 @@
   pal = "Temps",
   maxp = 50000,
   crs = "+proj=laea +lat_0=41 +lon_0=-71 +units=km +ellps=WGS84",
-=======
-  ca = FALSE,
-  raster = NULL,
-  rec = TRUE,
-  track = TRUE,
-  alpha = 0.25,
-  lwd = 0.2,
-  size = 0.2,
-  col = "blue",
-  option = "D",
->>>>>>> master
   ...
 )
 }

@@ -5,7 +5,6 @@
 \title{Pre-simulation setup}
 \usage{
 sim_setup(
-<<<<<<< HEAD
   config = file.path("..", "simdata", "config.R"),
   rec = "none",
   rspace = NULL,
@@ -14,20 +13,6 @@ sim_setup(
   doy.rng = NULL,
   uv = FALSE,
   crs = NULL
-=======
-  bathy = file.path("..", "simdata", "bathy_xy.grd"),
-  land = file.path("..", "simdata", "d2landc_xy.grd"),
-  land.dir = file.path("..", "simdata", "land_dirc.grd"),
-  b900.dist = file.path("..", "simdata", "b900_dist.grd"),
-  b900.dir = file.path("..", "simdata", "b900_dir.grd"),
-  u = file.path("..", "simdata", "riops_u.grd"),
-  v = file.path("..", "simdata", "riops_v.grd"),
-  sst = NULL,
-  rec = "lines",
-  rspace = 10,
-  rnum = 135,
-  uv = FALSE
->>>>>>> master
 )
 }
 \arguments{
