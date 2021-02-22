@@ -5,13 +5,13 @@
 \title{plot}
 \usage{
 \method{plot}{simsmolt}(
-  s,
-  data,
+  x,
+  data = NULL,
   xlim = NULL,
   ylim = NULL,
   raster = "ts",
-  bathy = FALSE,
-  fast = TRUE,
+  res = 5,
+  NLpoly = TRUE,
   layer = NULL,
   rec = FALSE,
   track = TRUE,
@@ -26,7 +26,7 @@
 )
 }
 \arguments{
-\item{s}{a fitted object of class simsmolt}
+\item{x}{a fitted object of class simsmolt}
 
 \item{data}{data object created by sim_setup}
 
@@ -36,7 +36,7 @@
 
 \item{raster}{select a raster (from data) to use as background (bathy, uv, or NULL)}
 
-\item{fast}{generate plot quickly (poorer resolution; default = TRUE)}
+\item{res}{downsampling factor to product a plot faster (default = 5)}
 
 \item{rec}{should receiver locations be displayed (logical)}
 

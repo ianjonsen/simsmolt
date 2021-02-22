@@ -1,6 +1,6 @@
-#' @title simulate movements with or without current advection, using inputs from sim_setup
+#' @title simulate smolt migration 
 #' 
-#' @description simulates movement
+#' @description simulates smolt migration with or without: 1) temperature-dependent growth; 2) temperature-dependent migration; 3) current advection, using inputs from sim_setup. Movements are simulated as either a biased random walk (brw) or a random walk (rw)
 #' 
 #' @author Ian Jonsen \email{ian.jonsen@mq.edu.au}
 #' 
@@ -18,7 +18,7 @@
 #' @importFrom stringr str_split
 #' @export
 #' 
-sim_growth <-
+simulate <-
   function(id=1, 
            N = 2760,
            data = NULL,
@@ -188,28 +188,29 @@ sim_growth <-
           move <- mpar$move
         }
       
-      #   ds[i, ] <- temp_brw(
-      #       n = 1,
-      #       i = i,
-      #       mpar = mpar,
-      #       d1 = d1,
-      #       data = data,
-      #       xy = xy[i - 1,],
-      #       ts = ts[i-1],
-      #       ts.rng = ts.rng,
-      #       b = s[i]
-      #     )
-      # } else if(!mpar$temp) {
-      } else {
+      } else if(!mpar$temp) {
         dir <- mpar$mdir
         move <- mpar$move
       }
         
-        ## Temperature-independent movement
+        ## Movement
+        ## First check if smolt is in SoBI & within 25 km of land, if so then move toward Lab Sea after which movement rules can be applied
+      d2l <- extract(data$land, rbind(xy[i-1,]))
+        if(all(xy[i-1,1] >= 950, 
+               xy[i-1,1] <= 1065, 
+               xy[i-1,2] >= 1200, 
+               xy[i-1,2] <= 1305) & d2l < 25) {
+
+          phi <- rwrpcauchy(1, 0.28 * pi, 0.9)
+          ds[i, 1] <- xy[i-1, 1] + s[i] * sin(phi)
+          ds[i, 2] <- xy[i-1, 2] + s[i] * cos(phi)
+          
+        } else {
+          
         ds[i, ] <- switch(move,
                           brw = {
                             
-                            biased_rw(n=1, 
+                            brw(n=1, 
                                       data, 
                                       xy = xy[i-1,], 
                                       coa = NULL, 
@@ -232,8 +233,8 @@ sim_growth <-
                           drift = {
                             ds[i, ] <- rbind(xy[i-1, 1:2])
                           })
- #     }
-        
+        }
+      
       xy[i, 1:2] <- cbind(ds[i, 1] + u[i], 
                           ds[i, 2] + v[i])
 
@@ -285,7 +286,7 @@ sim_growth <-
     sim <- sim %>%
       filter(!is.na(x) & !is.na(y) & w != 0 & fl != 0 & s != 0)
     nsim <- nrow(sim)
-    
+
     sim <- sim %>%
       mutate(id = id) %>%
       mutate(date = seq(mpar$start.dt, by = 3600, length.out = nsim)) %>%

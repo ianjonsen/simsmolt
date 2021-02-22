@@ -7,7 +7,7 @@
 #' @importFrom raster extract xyFromCell
 #' @export
 #' 
-biased_rw <- function(n = 1, data, xy = NULL, coa = NULL, dir = NULL, buffer = NULL, rho, a, b) {
+brw <- function(n = 1, data, xy = NULL, coa = NULL, dir = NULL, buffer = NULL, rho, a, b) {
   
   if(is.null(coa) & is.null(dir)) stop("Cannot implement a biased random walk without a centre of attraction or direction")
   if(!is.null(coa) & !is.null(dir)) stop("Only one of a centre of attraction or direction may be specified, not both")

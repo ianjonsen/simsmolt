@@ -1,8 +1,8 @@
 Package: simsmolt
 Type: Package
 Title: simulate Atlantic salmon smolt migration and detections on acoustic arrays
-Version: 0.1.0.9210
-Date: 2021-02-10
+Version: 0.2.0.9500
+Date: 2021-02-22
 Author: Ian Jonsen
 Maintainer: Ian Jonsen <ian.jonsen@mq.edu.au>
 Description: simulate salmon smolt migration as compound biased random walks with or without advection, simulate acoustic tag transimissons and detections along migration paths, conditional on real or simulated accoustic reciver arrays
@@ -24,4 +24,5 @@ Encoding: UTF-8
 LazyData: true
 RoxygenNote: 7.1.1
 Suggests: 
-    rgeos
+    rgeos,
+    stars
