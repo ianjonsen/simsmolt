@@ -11,17 +11,19 @@
   ylim = NULL,
   raster = "ts",
   res = 5,
-  NLpoly = TRUE,
+  esrf = TRUE,
   layer = NULL,
   rec = FALSE,
   track = TRUE,
-  alpha = 0.9,
+  last = FALSE,
+  alpha = 0.5,
   lwd = 0.2,
   size = 0.2,
-  col = "red",
+  col = c("salmon", "red", "dodgerblue"),
   pal = "Cividis",
   maxp = 50000,
-  crs = "+proj=laea +lat_0=41 +lon_0=-71 +units=km +ellps=WGS84",
+  landfill = grey(0.6),
+  crs = "+proj=laea +lat_0=41 +lon_0=-71 +units=km +datum=WGS84",
   ...
 )
 }
@@ -36,11 +38,13 @@
 
 \item{raster}{select a raster (from data) to use as background (bathy, uv, or NULL)}
 
-\item{res}{downsampling factor to product a plot faster (default = 5)}
+\item{res}{downsampling factor to product a plot faster (default = 5, full-resolution = 0)}
 
 \item{rec}{should receiver locations be displayed (logical)}
 
 \item{track}{should smolt track(s) be displayed (logical)}
+
+\item{last}{display position at end of simulation only (logical; if T then track forced to be F)}
 
 \item{alpha}{translucence for smolt track(s)}
 

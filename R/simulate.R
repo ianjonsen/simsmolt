@@ -11,7 +11,7 @@
 #' @param pb - use progress bar (logical)
 #' @importFrom raster extract xyFromCell
 #' @importFrom CircStats rwrpcauchy
-#' @importFrom dplyr %>% mutate
+#' @importFrom dplyr %>% mutate lag
 #' @importFrom tibble as_tibble
 #' @importFrom stats runif rbinom
 #' @importFrom lubridate week yday
@@ -30,17 +30,19 @@ simulate <-
     mpar.full <- list(
       move = "brw",
       start.dt = ISOdatetime(2018,07,09,00,00,00, tz="UTC"),
-      start = c(990, 1245),    #c(750, 200)
+      start = c(995, 1240),    #c(750, 200)
       coa = NULL, #c(400, 2390),      #c(610, 394),
       mdir = -20/180*pi,
-      rho = 0.8,
+      rho = c(0.7, 0.33), # directional persistence for brw [1] and rw [2]
       ntries = 1,
       temp = TRUE,
       ts.q = 0.75,
       advect = TRUE,
+      psi = 1, 
+      taxis = NA, ## NA = no rheotaxis; "p" = positive; "n" = negative
       shelf = TRUE,
       growth = TRUE,
-      buffer = 5,
+      buffer = 10,
       b = 1.6, ## assumed sustained travel speed of body-lengths / s
       a = 0, ## scale parameter of Weibull dist for move steps; bigger = less variable step lengths; 0 = no variability
       w0 = 185 ## starting mass g
@@ -135,7 +137,8 @@ simulate <-
         w[i] <- growth(w[i-1], ts[i-1], s[i-1])
         
       } else if(is.na(ts[i-1])) {
-        browser()
+        cat("\n stopping simulation: NA value for temperature")
+        break
       }
         
       ## convert W to fL - based on Byron et al 2014 (fig A1 in S1)
@@ -161,17 +164,21 @@ simulate <-
           v[i] <- extract(data$v, rbind(xy[i - 1, ])) * 3.6
           }
         
-        u[i] <- ifelse(is.na(u[i]), 0, u[i])
-        v[i] <- ifelse(is.na(v[i]), 0, v[i])
+        # downscale advection effect over first 21 d then increase to 1 over 7 d
+        u[i] <- ifelse(is.na(u[i]), 0, u[i]) * ifelse(i < 500, mpar$psi, ifelse(i < 668, -2 + i * 0.004491, 1))
+        v[i] <- ifelse(is.na(v[i]), 0, v[i]) * ifelse(i < 500, mpar$psi, ifelse(i < 668, -2 + i * 0.004491, 1))
         
-      } else if(!mpar$advect) {
+      } else if(!mpar$advect | all(xy[1] >= data$sobi.box[1], 
+                                   xy[1] <= data$sobi.box[2], 
+                                   xy[2] >= data$sobi.box[3], 
+                                   xy[2] <= data$sobi.box[4])) {
         u[i] <- v[i] <- 0
       }
 
       ### Temperature-dependent movement
       if (mpar$temp) {
         
-        ## reverse migration bias from -20 deg (~magnetic N) to 160 deg (S), if smolt in < 5 C water for 12 h
+        ## reverse migration bias from mpar$mdir to mpar$mdir - pi, if smolt in < 5 C water for 12 h
         if(i > 12) { 
           
           ## movement direction influenced by ts spatial gradient of current ts 
@@ -180,7 +187,8 @@ simulate <-
           ts.mig <- seq(6, 20, l=100)[which(g.rng >= w[i])] %>% min()
           ts.rng <- seq(6, 20, l = 100)[which(g.rng >= quantile(g.rng, mpar$ts.q))]  %>% range()
           
-          dir <- ifelse(all(ts[i - 1:12] <= ts.mig), (mpar$mdir + pi) %% (pi), mpar$mdir)
+          ## if smolt in optimal T range for growth then switch from biased RW to simple RW
+          dir <- ifelse(all(ts[i - 1:12] <= ts.mig), (mpar$mdir + pi) %% (2*pi), mpar$mdir)
           move <- ifelse(ts[i-1] >= ts.rng[1] & ts[i-1] <= ts.rng[2], "rw", mpar$move)
             
         } else {
@@ -196,12 +204,12 @@ simulate <-
         ## Movement
         ## First check if smolt is in SoBI & within 25 km of land, if so then move toward Lab Sea after which movement rules can be applied
       d2l <- extract(data$land, rbind(xy[i-1,]))
-        if(all(xy[i-1,1] >= 950, 
-               xy[i-1,1] <= 1065, 
-               xy[i-1,2] >= 1200, 
-               xy[i-1,2] <= 1305) & d2l < 25) {
+        if(all(xy[i-1,1] >= data$sobi.box[1], 
+               xy[i-1,1] <= data$sobi.box[2], 
+               xy[i-1,2] >= data$sobi.box[3], 
+               xy[i-1,2] <= data$sobi.box[4]) & d2l < 15) {
 
-          phi <- rwrpcauchy(1, 0.28 * pi, 0.9)
+          phi <- rwrpcauchy(1, ifelse(mpar$psi< 0.5, 0.28, 0.35) * pi, 0.8)
           ds[i, 1] <- xy[i-1, 1] + s[i] * sin(phi)
           ds[i, 2] <- xy[i-1, 2] + s[i] * cos(phi)
           
@@ -216,9 +224,12 @@ simulate <-
                                       coa = NULL, 
                                       dir = dir,
                                       buffer = mpar$buffer, 
-                                      rho = mpar$rho,
+                                      rho = mpar$rho[1],
                                       a = mpar$a,
-                                      b = s[i])
+                                      b = s[i], 
+                                      taxis = mpar$taxis,
+                                      u = u[i],
+                                      v = v[i])
                           },
                           rw = {
                             
@@ -226,9 +237,12 @@ simulate <-
                                 data,
                                 xy = xy[i-1,],
                                 buffer = mpar$buffer,
-                                rho = mpar$rho,
+                                rho = mpar$rho[2],
                                 a = mpar$a,
-                                b = s[i])
+                                b = s[i],
+                                taxis = mpar$taxis,
+                                u = u[i],
+                                v = v[i])
                           },
                           drift = {
                             ds[i, ] <- rbind(xy[i-1, 1:2])
@@ -262,6 +276,8 @@ simulate <-
       data.frame(
         x = xy[, 1],
         y = xy[, 2],
+        dx = ds[, 1] - lag(xy[, 1]),
+        dy = ds[, 2] - lag(xy[, 2]),
         u = u,
         v = v,
         ts = ts,
@@ -274,6 +290,8 @@ simulate <-
         data.frame(
           x = xy[, 1],
           y = xy[, 2],
+          dx = ds[, 1] - lag(xy[, 1]),
+          dy = ds[, 2] - lag(xy[, 2]),
           u = u,
           v = v, 
           ts = ts

@@ -4,7 +4,20 @@
 \alias{brw}
 \title{biased random walk function}
 \usage{
-brw(n = 1, data, xy = NULL, coa = NULL, dir = NULL, buffer = NULL, rho, a, b)
+brw(
+  n = 1,
+  data,
+  xy = NULL,
+  coa = NULL,
+  dir = NULL,
+  buffer = NULL,
+  rho,
+  a,
+  b,
+  taxis,
+  u,
+  v
+)
 }
 \description{
 utility function not to be called by user

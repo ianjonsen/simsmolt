@@ -191,6 +191,9 @@ sim_setup <-
       out[["recLocs_asf"]] <- phs_stn
     }
     
+    out[["sobi.box"]] <- c(980,1030,1230,1275)
+    if(esrf) out[["esrf"]] <- readRDS("../simdata/ESRF_regions/NLpoly.RDS")
+    
     out$ocean <- ocean
     out$prj <- prj
     return(out)
