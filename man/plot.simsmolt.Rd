@@ -20,7 +20,7 @@
   lwd = 0.2,
   size = 0.2,
   col = c("salmon", "red", "dodgerblue"),
-  pal = "Cividis",
+  pal = "Light Grays",
   maxp = 50000,
   landfill = grey(0.6),
   crs = "+proj=laea +lat_0=41 +lon_0=-71 +units=km +datum=WGS84",

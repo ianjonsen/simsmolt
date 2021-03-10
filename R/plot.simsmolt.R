@@ -22,15 +22,16 @@
 ##' @importFrom ggplot2 aes_string theme ylab xlab guides guide_legend
 ##' @importFrom raster extent crop nlayers
 ##' @importFrom dplyr "%>%"
-##' @importFrom patchwork wrap_plots
+##' @importFrom patchwork wrap_plots area
 ##' @importFrom sf st_transform st_as_sf st_crop st_bbox
 ##' @importFrom stars geom_stars st_as_stars st_contour
+##' @importFrom wesanderson wes_palette
 ##' @method plot simsmolt
 ##' @export
 
 plot.simsmolt <- function(x, data = NULL, xlim = NULL, ylim = NULL, 
                           raster = "ts", res = 5, esrf = TRUE, layer = NULL, rec = FALSE, track = TRUE, last = FALSE,
-                          alpha = 0.5, lwd = 0.2, size = 0.2, col = c("salmon", "red", "dodgerblue"), pal = "Cividis", maxp = 5e4,
+                          alpha = 0.5, lwd = 0.2, size = 0.2, col = c("salmon", "red", "dodgerblue"), pal = "Light Grays", maxp = 5e4,
                           landfill = grey(0.6),
                           crs = "+proj=laea +lat_0=41 +lon_0=-71 +units=km +datum=WGS84",
                           ...) {
@@ -49,6 +50,12 @@ plot.simsmolt <- function(x, data = NULL, xlim = NULL, ylim = NULL,
     
     sim <- lapply(x$rep, function(.) .$sim) %>% do.call(rbind, .)
     sim.last <- lapply(x$rep, function(.) .$sim[nrow(.$sim), ]) %>% do.call(rbind, .)
+    hg.ids <- which(sim.last$fl > quantile(sim.last$fl, 0.85))
+    lg.ids <- which(sim.last$fl < quantile(sim.last$fl, 0.15))
+    sim <- sim %>% 
+      mutate(growth = ifelse(id %in% hg.ids, "high", ifelse(id %in% lg.ids, "low", "intermediate")))
+    
+    wespal <- wes_palette("Darjeeling2", type = "discrete")
     
   } else if(is.na(class(x)[2])){
     
@@ -95,8 +102,7 @@ plot.simsmolt <- function(x, data = NULL, xlim = NULL, ylim = NULL,
   
   ## get coastline
 #  coast <- sf::st_as_sf(rworldmap::countriesLow) %>%
-#    st_transform(crs = crs) #%>%
-    #st_crop(., c("xmin" = xlim[1], "xmax" = xlim[2], "ymin" = ylim[1], "ymax" = ylim[2]))
+#    st_transform(crs = crs)
   
   ## generate plot
     m <- ggplot() +
@@ -112,7 +118,7 @@ plot.simsmolt <- function(x, data = NULL, xlim = NULL, ylim = NULL,
       guides(fill = guide_legend(title = ifelse(raster == "ts", "T ºC", "||uv|| km/h")))
   
       if(esrf) {
-        m <- m + geom_sf(data = data$esrf, col = NA, fill = "orange", alpha = 0.25)
+        m <- m + geom_sf(data = data$esrf, col = NA, fill = "white", alpha = 0.25)
       }
     
   ## add land  
@@ -123,15 +129,16 @@ plot.simsmolt <- function(x, data = NULL, xlim = NULL, ylim = NULL,
   
   if(track & !last) {
    m <- m + geom_path(data = sim,
-              aes(x, y, group=id),
-              colour = col[1],
+              aes(x, y, group=id, colour = growth),
               alpha = alpha, 
               size = lwd) +
     geom_point(data = sim.last, 
                aes(x, y),
                colour = col[2],
                size = size,
-               alpha = 1)
+               alpha = 1) +
+    scale_colour_manual(values = wespal[c(4,3,2)])
+    
   } else if(last) {
      m <- m + geom_point(data = sim.last, 
                          aes(x, y),
@@ -143,7 +150,7 @@ plot.simsmolt <- function(x, data = NULL, xlim = NULL, ylim = NULL,
   if(rec) {
       m <-
         m + geom_point(
-          data = data$recLocs_asf,
+          data = data$recLocs,
           aes(x, y),
           colour = col[3],
           size = 0.4
@@ -171,46 +178,80 @@ plot.simsmolt <- function(x, data = NULL, xlim = NULL, ylim = NULL,
     axis.title = element_blank(),
     legend.justification = c(1, 0),
     legend.position = c(1, 0.8)
-  )
+  ) +
+    guides(colour = "none")
   
-  sim24 <- lapply(x$rep, function(.) {
+  env24 <- lapply(x$rep, function(.) {
     .$sim[seq(1, nrow(.$sim), by = 24), ]
     }) %>%
     do.call(rbind, .)
+
+  env24 <- env24 %>% 
+    mutate(growth = ifelse(id %in% hg.ids, "high", ifelse(id %in% lg.ids, "low", "intermediate")))
   
   ### Generate time-series plots
   ## Mass gain/loss daily time-series
-  wp <- ggplot(sim24, aes(date, w, group = id)) +
-    geom_line(lwd = 0.25,
-              col = grey(0.6),
-              alpha = 0.25) +
+  wp <- ggplot(env24, aes(date, w, group = id, colour = growth)) +
+    geom_line(lwd = 0.5,
+              alpha = 0.6) +
     theme_minimal() +
     labs(title = "Mass (g)") +
-    theme(axis.title = element_blank())
+    theme(axis.title = element_blank()) +
+    scale_colour_manual(values = wespal[c(4,3,2)])
   
   ## Fork-length daily time-series
-  fp <- ggplot(sim24, aes(date, fl, group = id)) +
-    geom_line(lwd = 0.25,
-              col = grey(0.6),
-              alpha = 0.25) +
+  fp <- ggplot(env24, aes(date, fl, group = id, colour = growth)) +
+    geom_line(lwd = 0.5,
+              alpha = 0.6) +
     theme_minimal() +
     labs(title = "Fork-length (m)") +
-    theme(axis.title = element_blank())
+    theme(axis.title = element_blank()) +
+    scale_colour_manual(values = wespal[c(4,3,2)])
   
   ## Temperature daily time-series
-  tp <- ggplot(sim24, aes(date, ts, group = id)) +
-    geom_line(lwd = 0.25,
-              col = grey(0.6),
-              alpha = 0.25) +
+  tp <- ggplot(env24, aes(date, ts, group = id, colour = growth)) +
+    geom_line(lwd = 0.5,
+              alpha = 0.6) +
     theme_minimal() +
     labs(title = "Temperature (ºC)") +
+    theme(axis.title = element_blank()) +
+    scale_colour_manual(values = wespal[c(4,3,2)])
+
+  
+  ## daily displacement time-series
+  sim24 <- lapply(x$rep, function(.) {
+    .$sim %>% 
+      mutate(yday = yday(date)) %>%
+      group_by(id, yday) %>%
+      summarise("swimming" = sqrt(sum(dx)^2 + sum(dy)^2),
+                "current" = sqrt(sum(u)^2 + sum(v)^2),
+                "total" = sqrt(sum(dx+u)^2 + sum(dy + v)^2),
+                .groups = "drop") 
+  }) %>%
+    do.call(rbind,. ) %>%
+    mutate(date = as.POSIXct(as.Date("2018-01-01") + yday)) %>%
+    pivot_longer(., cols = 3:5, names_to = "disp")
+  
+  ## combined displacement plots
+  dp <- ggplot(sim24, aes(date, value, group = id, col = disp)) + 
+    geom_point(size=0.2, alpha = 0.3) + 
+    geom_smooth(aes(group = disp), 
+                method = "gam", 
+                formula=y~s(x), 
+                alpha = 0.3) + 
+    theme_minimal() + 
+    scale_colour_manual(values = wespal[c(3,4,2)], 
+                        name = element_blank()) +
+    labs(title = "Daily displacement (km)") +
     theme(axis.title = element_blank())
   
-  design <- "AAAAAA
-             AAAAAA
-             AAAAAA
-             AAAAAA
-             BBCCDD"
-  wrap_plots(m, wp, fp, tp, design = design)
+  layout <- c(area(t=1,l=1,b=4,r=4),
+              area(t=1,l=5,b=2,r=6),
+              area(t=3,l=5,b=4,r=6),
+              area(t=5,l=5,b=6,r=6),
+              area(t=5,l=1,b=6,r=4)
+              )
+  
+  wrap_plots(m, wp, fp, tp, dp, design = layout)
   
 }

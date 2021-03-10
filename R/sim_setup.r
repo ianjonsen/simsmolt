@@ -21,7 +21,7 @@
 #'
 sim_setup <-
   function(config = file.path("..", "simdata", "config.R"), rec = "none", rspace = NULL, rnum = NULL,
-           ocean = "doy", doy.rng = NULL, uv = FALSE, crs = NULL) {
+           ocean = "doy", doy.rng = NULL, uv = FALSE, crs = NULL, esrf = TRUE) {
     
     ## FIXME: this needs to be generalized - provide spatial extent for query to download ETOPO2 data?
     ## FIXME:   or rely on user supplying their own bathymetry data
@@ -188,7 +188,7 @@ sim_setup <-
       out[["rec"]] <- rec
     } else if (rec == "real") {
       #out[["recLocs"]] <- stn
-      out[["recLocs_asf"]] <- phs_stn
+      out[["recLocs"]] <- phs_stn
     }
     
     out[["sobi.box"]] <- c(980,1030,1230,1275)

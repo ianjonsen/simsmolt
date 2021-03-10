@@ -32,7 +32,7 @@ simulate <-
       start.dt = ISOdatetime(2018,07,09,00,00,00, tz="UTC"),
       start = c(995, 1240),    #c(750, 200)
       coa = NULL, #c(400, 2390),      #c(610, 394),
-      mdir = -20/180*pi,
+      mdir = c(0, pi), # bias direction for N and S migrations
       rho = c(0.7, 0.33), # directional persistence for brw [1] and rw [2]
       ntries = 1,
       temp = TRUE,
@@ -45,7 +45,8 @@ simulate <-
       buffer = 10,
       b = 1.6, ## assumed sustained travel speed of body-lengths / s
       a = 0, ## scale parameter of Weibull dist for move steps; bigger = less variable step lengths; 0 = no variability
-      w0 = 185 ## starting mass g
+      w0 = 185, ## starting mass g
+      pdrf = c(3.017, -0.0139) #c(4.865, -0.0139) = p(0.5) @ 350 m (~ consistent w HFX line V9 @ high power) 
     )
     pnms <- names(mpar.full)
     
@@ -188,16 +189,16 @@ simulate <-
           ts.rng <- seq(6, 20, l = 100)[which(g.rng >= quantile(g.rng, mpar$ts.q))]  %>% range()
           
           ## if smolt in optimal T range for growth then switch from biased RW to simple RW
-          dir <- ifelse(all(ts[i - 1:12] <= ts.mig), (mpar$mdir + pi) %% (2*pi), mpar$mdir)
+          dir <- ifelse(all(ts[i - 1:12] <= ts.mig), mpar$mdir[2], mpar$mdir[1])
           move <- ifelse(ts[i-1] >= ts.rng[1] & ts[i-1] <= ts.rng[2], "rw", mpar$move)
             
         } else {
-          dir <- mpar$mdir
+          dir <- mpar$mdir[1]
           move <- mpar$move
         }
       
       } else if(!mpar$temp) {
-        dir <- mpar$mdir
+        dir <- mpar$mdir[1]
         move <- mpar$move
       }
         
@@ -297,7 +298,7 @@ simulate <-
           ts = ts
         )
     } 
-    X$ts[nrow(X)] <- X$ts[nrow(X) - 1]
+    X$ts[nrow(X)] <- ifelse(X$ts[nrow(X)] == 0, NA, X$ts[nrow(X)])
     
     sim <- X %>% as_tibble() 
     ## remove records after sim is stopped for being stuck on land, etc...
