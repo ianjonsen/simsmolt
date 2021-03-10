@@ -69,14 +69,14 @@ mapsim <- function(x, data = NULL, xlim = NULL, ylim = NULL,
   
   ## generate plot
   m <- ggplot() +
-    suppressWarnings(geom_stars(data = bathy, downsample = res)) + 
+    geom_stars(data = bathy, downsample = res) + 
     # geom_sf(
     #   data = bathy.c,
     #   col = "white",
     #   alpha = 0.75,
     #   lwd = 0.4
     # ) +
-    scale_fill_gradientn(colours = hcl.colors(n=100, pal), na.value = "transparent") +
+    scale_fill_gradientn(colours = hcl.colors(n=100, pal), na.value = grey(0.8)) +
     theme_minimal()
   
   if(esrf) {
@@ -117,7 +117,7 @@ mapsim <- function(x, data = NULL, xlim = NULL, ylim = NULL,
     legend.position = "none"
   )
   
-  m
+  suppressWarnings(m)
 }
     
   
