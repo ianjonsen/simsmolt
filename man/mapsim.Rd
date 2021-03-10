@@ -12,6 +12,8 @@ mapsim(
   res = 5,
   esrf = FALSE,
   rec = TRUE,
+  track = TRUE,
+  last = FALSE,
   alpha = 0.5,
   lwd = 0.25,
   size = 0.2,

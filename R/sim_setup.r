@@ -16,7 +16,6 @@
 #' @importFrom sp coordinates<- proj4string<- CRS spTransform SpatialPointsDataFrame spsample
 #' @importFrom sf st_as_sf st_sample st_coordinates st_distance
 #' @importFrom dplyr select filter rename bind_cols %>% tibble distinct
-#' @importFrom readr read_csv
 #' @export
 #'
 sim_setup <-
@@ -128,7 +127,7 @@ sim_setup <-
           mutate(id = rownames(.))
       
       } else if (rec == "asf") {
-        # stn <- read_csv(file.path(recs, "stations.csv")) %>%
+        # stn <- read.csv(file.path(recs, "stations.csv")) %>%
         #   filter(stationstatus == "active" & stationclass == "deployed") %>%
         #   rename(lat = latitude, lon = longitude) %>%
         #   filter(lat >= 41, lat <= 68, lon >= -71, lon <= -43) %>%
@@ -143,7 +142,7 @@ sim_setup <-
         # stn <- cbind(stn, recLocs)
         
         ## grab ASF - PHS/SOBI receiver details
-        asf <- read_csv(file.path(recs, "ASF_2017-2020_Tx_SOBIandPHS.csv")) 
+        asf <- read.csv(file.path(recs, "ASF_2017-2020_Tx_SOBIandPHS.csv")) 
         names(asf) <- tolower(names(asf))
         asf_stn <- asf %>%
           select(date, receiver, year, otn_array, station_name, locality, region, lat, long) %>%
@@ -160,10 +159,10 @@ sim_setup <-
 
         switch(rec,
                esrf_g = {
-                 recs <- read_csv(file.path(recs, "esrf_grid.csv"))
+                 recs <- read.csv(file.path(recs, "esrf_grid.csv"))
                },
                esrf_l = {
-                 recs <- read_csv(file.path(recs, "esrf_lines.csv"))
+                 recs <- read.csv(file.path(recs, "esrf_lines.csv"))
                })
 
         recs <- recs %>%
