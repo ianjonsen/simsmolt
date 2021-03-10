@@ -120,7 +120,7 @@ sim_setup <-
           rename(x = X, y = Y)
         ## aadd & filter on bathymetry
         recLocs <- recLocs %>%
-          mutate(z = extract(bathy, recLocs[, c("x","y")])) %>%
+          mutate(z = extract(raster(bathy), recLocs[, c("x","y")])) %>%
           filter(z > -600, z < -10)
         ## adjust depth, assuming receivers placed 100 m off seafloor
         recLocs <- recLocs %>%
@@ -156,25 +156,29 @@ sim_setup <-
         sf::st_geometry(asf_stn) <- NULL
         asf_stn <- cbind(asf_stn, recLocs_asf)
         
-      } else if (rec == "esrf_g") {
-        esrf_grid <- read_csv(file.path(recs, "esrf_grid.csv")) %>%
-          select(3,2) %>%
+      } else if(rec %in% c("esrf_g", "esrf_l")) {
+
+        switch(rec,
+               esrf_g = {
+                 recs <- read_csv(file.path(recs, "esrf_grid.csv"))
+               },
+               esrf_l = {
+                 recs <- read_csv(file.path(recs, "esrf_lines.csv"))
+               })
+
+        recs <- recs %>%
           rename(lon=LONG, lat=LAT) %>%
           sf::st_as_sf(., coords = c("lon","lat"), crs = 4326) %>% 
           sf::st_transform(., crs = prj) %>% 
           sf::st_coordinates() %>% 
           as_tibble() %>% 
-          rename(x=X, y=Y)
-      } else if (rec == "esrf_l") {
-        esrf_lines <- read_csv(file.path(recs, "esrf_lines.csv")) %>%
-          select(3,2) %>%
-          rename(lon=LONG, lat=LAT) %>%
-          sf::st_as_sf(., coords = c("lon","lat"), crs = 4326) %>% 
-          sf::st_transform(., crs = prj) %>% 
-          sf::st_coordinates() %>% 
-          as_tibble() %>% 
-          rename(x=X, y=Y)
-      }
+          rename(x=X, y=Y) 
+        recs <- recs %>%
+          mutate(z = extract(raster(bathy), recs[, c("x","y")])) %>%
+          mutate(id = rownames(.))
+        
+        browser()
+    }
     
     out <- list(
       bathy = raster(bathy),
@@ -209,11 +213,9 @@ sim_setup <-
     } else if (rec == "asf") {
       #out[["recLocs"]] <- stn
       out[["recLocs"]] <- asf_stn
-    } else if (rec == "esrf_g") {
-      out[["recLocs"]] <- esrf_grid
-    } else if (rec == "esrf_l") {
-      out[["recLocs"]] <- esrf_lines
-    }
+    } else if (rec %in% c("esrf_g","esrf_l")) {
+      out[["recLocs"]] <- recs
+    } 
     
     out[["sobi.box"]] <- c(980,1030,1230,1275)
     if(esrf) out[["esrf"]] <- readRDS(file.path(polygons, "NLpoly.RDS"))

@@ -22,34 +22,48 @@ sim_detect <-
     ##  otherwise trap() output is far too big to generate along full track
     ##    - convert locs from km to m grid; vel in m/s
 
+    if(!exists("recLocs", data)) stop("no receiver locations present in data")
+    
     recLocs <- data$recLocs 
     trans <- tmp.tr <- dt <- tmp.dt <- NULL
     b <- s$params$pdrf
     
-    if(data$rec == "lines") {
-      yrec <- recLocs$y %>% unique()
-    
-      in.rng <- lapply(1:length(yrec), function(i) {
-        which(abs(yrec[i] - s$sim[, "y"]) <= 1.5)
-      })
-      ## drop rec lines that smolt did not cross
-      in.rng <- in.rng[which(sapply(in.rng, length) > 0 )]
+    if(exists("rec", data)) {
+      if (data$rec == "lines") {
+        yrec <- recLocs$y %>% unique()
+        
+        in.rng <- lapply(1:length(yrec), function(i) {
+          which(abs(yrec[i] - s$sim[, "y"]) <= 1.5)
+        })
+        ## drop rec lines that smolt did not cross
+        in.rng <- in.rng[which(sapply(in.rng, length) > 0)]
+        
+        ## simulate transmissions
+        trans <- lapply(1:length(in.rng), function(i) {
+          path <- s$sim[in.rng[[i]], c("id", "date", "x", "y")]
+          path[, c("x", "y")] <- path[, c("x", "y")] * 1000
+          sim_transmit(path, delayRng = delay, burstDur = burst) #%>%
+          #          mutate(line = rep(paste0("l", i), nrow(.)))
+        }) %>%
+          do.call(rbind, .)
+        
+      } else if (data$rec != "lines") {
+        sim_sf <- st_as_sf(s$sim, coords = c("x", "y"), crs = data$prj)
+        in.rng <- st_contains(data$recPoly, sim_sf)[[1]]
+        path <- s$sim[in.rng, c("id", "date", "x", "y")]
+        path[, c("x", "y")] <- path[, c("x", "y")] * 1000
+        if (length(in.rng >= 1)) {
+          trans <- sim_transmit(path, delayRng = delay, burstDur = burst)
+        } else {
+          trans <- NULL
+        }
+    }
+    } else if(!exists("rec", data)) {
       
-      ## simulate transmissions
-      trans <- lapply(1:length(in.rng), function(i){
-        path <- s$sim[in.rng[[i]], c("id","date","x","y")]
-        path[, c("x","y")] <- path[, c("x","y")] * 1000
-        sim_transmit(path, delayRng = delay, burstDur = burst) #%>%
-#          mutate(line = rep(paste0("l", i), nrow(.)))
-      }) %>% 
-        do.call(rbind, .) 
-      
-    } else if(data$rec != "lines") {
-      sim_sf <- st_as_sf(s$sim, coords = c("x","y"), crs = data$prj)
-      in.rng <- st_contains(data$recPoly, sim_sf)[[1]] 
+      in.rng <- rep(TRUE, nrow(s$sim))
       path <- s$sim[in.rng, c("id","date","x","y")]
       path[, c("x","y")] <- path[, c("x","y")] * 1000
-      if(length(in.rng >= 1)) {
+      if(length(in.rng) >= 1) {
         trans <- sim_transmit(path, delayRng = delay, burstDur = burst)
       } else {
         trans <- NULL
