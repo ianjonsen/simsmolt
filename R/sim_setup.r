@@ -9,7 +9,7 @@
 #' @param rec - optional acoustic receiver locations (default is no receivers)
 #' @param rspace - nominal spacing (km) between receivers
 #' @param rnum - the number of receivers to be used on grid arrays (to approx. match to num used on lines)
-#' @param ocean - temporal form of environmental data layers: "cl" = climatological; "m" = monthly means; "wk" = weekly means
+#' @param ocean - temporal form of environmental data layers: "cl" = climatological; "doy" = daily means; NULL
 #' @param doy.rng - rnage of days of year to be loaded from disk as a rasterStack (default = 1:365)
 #' @param uv - are current velocity data to be loaded from disk
 #' @importFrom raster raster stack brick projectRaster extract

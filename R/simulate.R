@@ -40,7 +40,6 @@ simulate <-
       advect = TRUE,
       psi = 1, 
       taxis = NA, ## NA = no rheotaxis; "p" = positive; "n" = negative
-      shelf = TRUE,
       growth = TRUE,
       buffer = 10,
       b = 1.6, ## assumed sustained travel speed of body-lengths / s
@@ -55,7 +54,7 @@ simulate <-
     if (class(data$land)[1] != "RasterLayer") stop("distance2land must be a RasterLayer")
 
     if(mpar$advect & !all(c("u","v") %in% names(data))) {
-      cat("Turning off current-advected movement as ocean data do not contain currents\n")
+      cat("Turning off current-advected movement as data do not contain currents\n")
       mpar$advect <- FALSE
     }
     if (length(mpar)) {
@@ -100,8 +99,9 @@ simulate <-
       fl <- (mpar$w0 / 8987.9) ^ (1 / 2.9639)
       s <- rep(fl * mpar$b * 3.6, N)
     }
+    
     ## what is start week in env data
-    if(data$ocean == "doy") {
+    if(!is.null(data$ocean) & data$ocean == "doy") {
       d1 <- as.numeric(str_split(names(data$ts)[1], "d", simplify = TRUE)[,2]) - 1
     }
       
