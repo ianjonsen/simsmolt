@@ -99,7 +99,7 @@ mapsim <- function(x, data = NULL, xlim = NULL, ylim = NULL,
                        aes(x, y, group=id),
                        alpha = alpha, 
                        size = lwd,
-                     col = wespal[2])
+                     col = wespal[4])
     }
   if(last){
     m <- m + geom_point(data = sim.last, 
