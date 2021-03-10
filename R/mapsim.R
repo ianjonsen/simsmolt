@@ -26,8 +26,8 @@
 ##' @export
 
 mapsim <- function(x, data = NULL, xlim = NULL, ylim = NULL, 
-                          res = 5, esrf = TRUE, rec = TRUE, 
-                          alpha = 0.3, lwd = 0.25, size = 0.2, col = "red", pal = "Light Grays", 
+                          res = 5, esrf = FALSE, rec = TRUE, 
+                          alpha = 0.5, lwd = 0.25, size = 0.2, col = "red", pal = "Blues 3", 
                           crs = "+proj=laea +lat_0=41 +lon_0=-71 +units=km +datum=WGS84",
                           ...) {
   
@@ -64,18 +64,18 @@ mapsim <- function(x, data = NULL, xlim = NULL, ylim = NULL,
   
   if(!is.null(data)) {
     bathy <- stars::st_as_stars(data$bathy)
-    bathy.c <- stars::st_contour(bathy, contour_lines = TRUE, breaks = c(-1000, -999.99)) # to get continental shelf without many holes
+#    bathy.c <- stars::st_contour(bathy, contour_lines = TRUE, breaks = c(-1000, -999.99)) # to get continental shelf without many holes
   }
   
   ## generate plot
   m <- ggplot() +
-    geom_stars(data = bathy, downsample = res) + 
-    geom_sf(
-      data = bathy.c,
-      col = "white",
-      alpha = 0.25,
-      lwd = 0.4
-    ) +
+    suppressWarnings(geom_stars(data = bathy, downsample = res)) + 
+    # geom_sf(
+    #   data = bathy.c,
+    #   col = "white",
+    #   alpha = 0.75,
+    #   lwd = 0.4
+    # ) +
     scale_fill_gradientn(colours = hcl.colors(n=100, pal), na.value = "transparent") +
     theme_minimal()
   
@@ -113,7 +113,8 @@ mapsim <- function(x, data = NULL, xlim = NULL, ylim = NULL,
   
   
   m <- m + theme(
-    axis.title = element_blank()
+    axis.title = element_blank(),
+    legend.position = "none"
   )
   
   m

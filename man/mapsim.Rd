@@ -10,13 +10,13 @@ mapsim(
   xlim = NULL,
   ylim = NULL,
   res = 5,
-  esrf = TRUE,
+  esrf = FALSE,
   rec = TRUE,
-  alpha = 0.3,
+  alpha = 0.5,
   lwd = 0.25,
   size = 0.2,
   col = "red",
-  pal = "Light Grays",
+  pal = "Blues 3",
   crs = "+proj=laea +lat_0=41 +lon_0=-71 +units=km +datum=WGS84",
   ...
 )
