@@ -101,7 +101,7 @@ simulate <-
     }
     
     ## what is start week in env data
-    if(!is.null(data$ocean) & data$ocean == "doy") {
+    if(data$ocean == "doy") {
       d1 <- as.numeric(str_split(names(data$ts)[1], "d", simplify = TRUE)[,2]) - 1
     }
       
@@ -295,15 +295,28 @@ simulate <-
           dy = ds[, 2] - lag(xy[, 2]),
           u = u,
           v = v, 
-          ts = ts
-        )
+          ts = ifelse(mpar$temp, ts, NA)
+        ) 
     } 
-    X$ts[nrow(X)] <- ifelse(X$ts[nrow(X)] == 0, NA, X$ts[nrow(X)])
+    if(sum(is.na(X$ts)) == nrow(X)) {
+      X <- X %>% select(-ts)
+    } else {
+      X$ts[nrow(X)] <- ifelse(X$ts[nrow(X)] == 0, NA, X$ts[nrow(X)])
+    }
     
     sim <- X %>% as_tibble() 
+    
     ## remove records after sim is stopped for being stuck on land, etc...
-    sim <- sim %>%
-      filter(!is.na(x) & !is.na(y) & w != 0 & fl != 0 & s != 0)
+    if(mpar$land | mpar$boundary) {
+      if(mpar$growth) {
+        sim <- sim %>%
+          filter(!is.na(x) & !is.na(y) & w != 0 & fl != 0 & s != 0)
+      } else {
+        sim <- sim %>%
+          filter(!is.na(x) & !is.na(y))
+      }
+    }
+    
     nsim <- nrow(sim)
 
     sim <- sim %>%

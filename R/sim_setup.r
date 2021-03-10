@@ -127,34 +127,53 @@ sim_setup <-
           mutate(z = ifelse(z < -120, z + 100, z)) %>%
           mutate(id = rownames(.))
       
-      } else if (rec == "real") {
-        stn <- read_csv(file.path(recs, "stations.csv")) %>%
-          filter(stationstatus == "active" & stationclass == "deployed") %>%
-          rename(lat = latitude, lon = longitude) %>%
-          filter(lat >= 41, lat <= 68, lon >= -71, lon <= -43) %>%
-          select(-notes, -the_geom)
-        stn <- stn[grep("Acoustic", stn$station_type), ]
-        stn <- stn %>%
-          sf::st_as_sf(coords = c("lon","lat"), crs = 4326) %>%
-          sf::st_transform(., crs = prj)
-        recLocs <- sf::st_coordinates(stn) %>% as.data.frame()
-        names(recLocs) <- c("x","y")
-        sf::st_geometry(stn) <- NULL
-        stn <- cbind(stn, recLocs)
+      } else if (rec == "asf") {
+        # stn <- read_csv(file.path(recs, "stations.csv")) %>%
+        #   filter(stationstatus == "active" & stationclass == "deployed") %>%
+        #   rename(lat = latitude, lon = longitude) %>%
+        #   filter(lat >= 41, lat <= 68, lon >= -71, lon <= -43) %>%
+        #   select(-notes, -the_geom)
+        # stn <- stn[grep("Acoustic", stn$station_type), ]
+        # stn <- stn %>%
+        #   sf::st_as_sf(coords = c("lon","lat"), crs = 4326) %>%
+        #   sf::st_transform(., crs = prj)
+        # recLocs <- sf::st_coordinates(stn) %>% as.data.frame()
+        # names(recLocs) <- c("x","y")
+        # sf::st_geometry(stn) <- NULL
+        # stn <- cbind(stn, recLocs)
         
         ## grab ASF - PHS/SOBI receiver details
-        phs <- read_csv(file.path(recs, "ASF_2017-2020_Tx_SOBIandPHS.csv")) 
-        names(phs) <- tolower(names(phs))
-        phs_stn <- phs %>%
+        asf <- read_csv(file.path(recs, "ASF_2017-2020_Tx_SOBIandPHS.csv")) 
+        names(asf) <- tolower(names(asf))
+        asf_stn <- asf %>%
           select(date, receiver, year, otn_array, station_name, locality, region, lat, long) %>%
           rename(lon = long) %>%
           distinct(receiver, year, .keep_all = TRUE) %>%
           sf::st_as_sf(coords = c("lon","lat"), crs = 4326) %>%
           sf::st_transform(., crs = prj)
-        recLocs_asf <- sf::st_coordinates(phs_stn) %>% as.data.frame()
+        recLocs_asf <- sf::st_coordinates(asf_stn) %>% as.data.frame()
         names(recLocs_asf) <- c("x","y")
-        sf::st_geometry(phs_stn) <- NULL
-        phs_stn <- cbind(phs_stn, recLocs_asf)
+        sf::st_geometry(asf_stn) <- NULL
+        asf_stn <- cbind(asf_stn, recLocs_asf)
+        
+      } else if (rec == "esrf_g") {
+        esrf_grid <- read_csv(file.path(recs, "esrf_grid.csv")) %>%
+          select(3,2) %>%
+          rename(lon=LONG, lat=LAT) %>%
+          sf::st_as_sf(., coords = c("lon","lat"), crs = 4326) %>% 
+          sf::st_transform(., crs = prj) %>% 
+          sf::st_coordinates() %>% 
+          as_tibble() %>% 
+          rename(x=X, y=Y)
+      } else if (rec == "esrf_l") {
+        esrf_lines <- read_csv(file.path(recs, "esrf_lines.csv")) %>%
+          select(3,2) %>%
+          rename(lon=LONG, lat=LAT) %>%
+          sf::st_as_sf(., coords = c("lon","lat"), crs = 4326) %>% 
+          sf::st_transform(., crs = prj) %>% 
+          sf::st_coordinates() %>% 
+          as_tibble() %>% 
+          rename(x=X, y=Y)
       }
     
     out <- list(
@@ -183,13 +202,17 @@ sim_setup <-
           })
     }
     
-    if(!rec %in% c("none", "real")) {
+    if(!rec %in% c("none", "asf", "esrf_g", "esrf_l")) {
       out[["recLocs"]] <- recLocs
       out[["recPoly"]] <- recPoly_sf
       out[["rec"]] <- rec
-    } else if (rec == "real") {
+    } else if (rec == "asf") {
       #out[["recLocs"]] <- stn
-      out[["recLocs"]] <- phs_stn
+      out[["recLocs"]] <- asf_stn
+    } else if (rec == "esrf_g") {
+      out[["recLocs"]] <- esrf_grid
+    } else if (rec == "esrf_l") {
+      out[["recLocs"]] <- esrf_lines
     }
     
     out[["sobi.box"]] <- c(980,1030,1230,1275)

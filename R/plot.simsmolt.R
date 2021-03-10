@@ -55,8 +55,6 @@ plot.simsmolt <- function(x, data = NULL, xlim = NULL, ylim = NULL,
     sim <- sim %>% 
       mutate(growth = ifelse(id %in% hg.ids, "high", ifelse(id %in% lg.ids, "low", "intermediate")))
     
-    wespal <- wes_palette("Darjeeling2", type = "discrete")
-    
   } else if(is.na(class(x)[2])){
     
     ## handle single track
@@ -65,6 +63,8 @@ plot.simsmolt <- function(x, data = NULL, xlim = NULL, ylim = NULL,
     detect <- x$detect
     
   }
+  
+  wespal <- wes_palette("Darjeeling2", type = "discrete")
   
   if(!is.null(data)) {
     bathy <- stars::st_as_stars(data$bathy)
@@ -93,6 +93,8 @@ plot.simsmolt <- function(x, data = NULL, xlim = NULL, ylim = NULL,
       if (inherits(ras, "RasterLayer")) {
         ras <- stars::st_as_stars(ras)
       }
+    } else {
+      ras <- bathy
     }
   
   if (is.null(xlim))
