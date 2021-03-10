@@ -27,6 +27,7 @@
 
 mapsim <- function(x, data = NULL, xlim = NULL, ylim = NULL, 
                           res = 5, esrf = FALSE, rec = TRUE, 
+                          track = TRUE, last = FALSE,
                           alpha = 0.5, lwd = 0.25, size = 0.2, col = "red", pal = "Blues 3", 
                           crs = "+proj=laea +lat_0=41 +lon_0=-71 +units=km +datum=WGS84",
                           ...) {
@@ -89,21 +90,25 @@ mapsim <- function(x, data = NULL, xlim = NULL, ylim = NULL,
         data = data$recLocs,
         aes(x, y),
         colour = col,
-        size = 0.4
+        size = 1
       ) 
   }
   
-  m <- m + geom_path(data = sim,
+  if(track) {
+    m <- m + geom_path(data = sim,
                        aes(x, y, group=id),
                        alpha = alpha, 
                        size = lwd,
-                     col = wespal[2]) +
-      geom_point(data = sim.last, 
+                     col = wespal[2])
+    }
+  if(last){
+    m <- m + geom_point(data = sim.last, 
                  aes(x, y),
-                 colour = wespal[5],
+                 colour = wespal[1],
                  size = size,
                  alpha = 1)
-
+  }
+  
   if(!is.null(crs)) {
     m <- m + 
       coord_sf(crs = crs) +
