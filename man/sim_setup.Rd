@@ -5,7 +5,8 @@
 \title{Pre-simulation setup}
 \usage{
 sim_setup(
-  config = file.path("..", "simdata", "config.R"),
+  config = file.path("/", "Users", "jonsen", "OneDrive - Macquarie University",
+    "collab", "otn", "simdata", "config.R"),
   rec = "none",
   rspace = NULL,
   rnum = NULL,
@@ -25,7 +26,7 @@ sim_setup(
 
 \item{rnum}{- the number of receivers to be used on grid arrays (to approx. match to num used on lines)}
 
-\item{ocean}{- temporal form of environmental data layers: "cl" = climatological; "m" = monthly means; "wk" = weekly means}
+\item{ocean}{- temporal form of environmental data layers: "cl" = climatological; "doy" = daily means; FALSE = no env't data}
 
 \item{doy.rng}{- rnage of days of year to be loaded from disk as a rasterStack (default = 1:365)}
 

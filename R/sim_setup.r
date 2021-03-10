@@ -9,7 +9,7 @@
 #' @param rec - optional acoustic receiver locations (default is no receivers)
 #' @param rspace - nominal spacing (km) between receivers
 #' @param rnum - the number of receivers to be used on grid arrays (to approx. match to num used on lines)
-#' @param ocean - temporal form of environmental data layers: "cl" = climatological; "m" = monthly means; "wk" = weekly means
+#' @param ocean - temporal form of environmental data layers: "cl" = climatological; "doy" = daily means; FALSE = no env't data
 #' @param doy.rng - rnage of days of year to be loaded from disk as a rasterStack (default = 1:365)
 #' @param uv - are current velocity data to be loaded from disk
 #' @importFrom raster raster stack brick projectRaster extract
@@ -20,7 +20,8 @@
 #' @export
 #'
 sim_setup <-
-  function(config = file.path("..", "simdata", "config.R"), rec = "none", rspace = NULL, rnum = NULL,
+  function(config = file.path("/", "Users", "jonsen", "OneDrive - Macquarie University", "collab", "otn", "simdata", "config.R"), 
+           rec = "none", rspace = NULL, rnum = NULL,
            ocean = "doy", doy.rng = NULL, uv = FALSE, crs = NULL, esrf = TRUE) {
     
     ## FIXME: this needs to be generalized - provide spatial extent for query to download ETOPO2 data?
@@ -192,9 +193,10 @@ sim_setup <-
     }
     
     out[["sobi.box"]] <- c(980,1030,1230,1275)
-    if(esrf) out[["esrf"]] <- readRDS("../simdata/ESRF_regions/NLpoly.RDS")
+    if(esrf) out[["esrf"]] <- readRDS(file.path(polygons, "NLpoly.RDS"))
     
-    out$ocean <- ocean
-    out$prj <- prj
+    out[["ocean"]] <- ocean
+    out[["prj"]] <- prj
+    
     return(out)
   }
