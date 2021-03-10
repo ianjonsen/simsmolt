@@ -59,8 +59,12 @@ sim_detect <-
         }
     }
     } else if(!exists("rec", data)) {
-      sim_sf <- st_as_sf(s$sim, coords = c("x", "y"), crs = data$prj)
-      in.rng <- st_contains(data$recPoly, sim_sf)[[1]]
+      if(!is.null(data$recPoly)) {
+        sim_sf <- st_as_sf(s$sim, coords = c("x", "y"), crs = data$prj)
+        in.rng <- st_contains(data$recPoly, sim_sf)[[1]]
+      } else {
+        in.rng <- rep(TRUE, nrow(s$sim))
+      }
       path <- s$sim[in.rng, c("id","date","x","y")]
       path[, c("x","y")] <- path[, c("x","y")] * 1000
       if(length(in.rng) >= 1) {

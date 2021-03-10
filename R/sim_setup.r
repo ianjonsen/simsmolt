@@ -175,11 +175,12 @@ sim_setup <-
         recs <- recs %>%
           mutate(z = extract(raster(bathy), recs[, c("x","y")])) %>%
           mutate(id = rownames(.))
-        
-        poly <- sp::Polygon(recs[c(chull(recs[, c("x","y")]),54), c("x","y")])
-        recPoly <- SpatialPolygons(list(Polygons(list(poly), ID = 1)), 
+        if(rec == "esrf_grid") {
+          poly <- sp::Polygon(recs[c(chull(recs[, c("x","y")]),54), c("x","y")])
+          recPoly <- SpatialPolygons(list(Polygons(list(poly), ID = 1)), 
                                    integer(1), proj4string = CRS(prj))
-        recPoly_sf <- st_as_sf(recPoly)
+          recPoly_sf <- st_as_sf(recPoly)
+        }
     }
     
     out <- list(
@@ -217,7 +218,7 @@ sim_setup <-
       out[["recLocs"]] <- asf_stn
     } else if (rec %in% c("esrf_g","esrf_l")) {
       out[["recLocs"]] <- recs
-      out[["recPoly"]] <- recPoly_sf
+      out[["recPoly"]] <- ifelse(rec == "esrf_grid", recPoly_sf, NULL)
     } 
     
     out[["sobi.box"]] <- c(980,1030,1230,1275)
