@@ -15,8 +15,8 @@
 ##'
 ##' @importFrom ggplot2 ggplot coord_fixed aes coord_sf geom_sf
 ##' @importFrom ggplot2 scale_fill_gradientn stat_smooth geom_line
-##' @importFrom ggplot2 geom_path theme_minimal geom_point
-##' @importFrom ggplot2 aes_string theme ylab xlab guides guide_legend
+##' @importFrom ggplot2 geom_path theme_minimal geom_point element_blank
+##' @importFrom ggplot2 aes_string theme ylab xlab guides guide_legend xlim ylim
 ##' @importFrom raster extent crop nlayers
 ##' @importFrom dplyr "%>%"
 ##' @importFrom patchwork wrap_plots area

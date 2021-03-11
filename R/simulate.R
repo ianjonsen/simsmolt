@@ -233,7 +233,7 @@ simulate <-
                                       v = v[i])
                           },
                           rw = {
-                            
+
                             rw(n=1,
                                 data,
                                 xy = xy[i-1,],
