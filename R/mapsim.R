@@ -27,7 +27,7 @@
 
 mapsim <- function(x, data = NULL, xlim = NULL, ylim = NULL, 
                           res = 5, esrf = FALSE, rec = TRUE, 
-                          track = TRUE, last = FALSE,
+                          track = TRUE, tcol = "black", last = FALSE,
                           alpha = 0.5, lwd = 0.25, size = 0.2, col = "red", pal = "Blues 3", 
                           crs = "+proj=laea +lat_0=41 +lon_0=-71 +units=km +datum=WGS84",
                           ...) {
@@ -70,7 +70,7 @@ mapsim <- function(x, data = NULL, xlim = NULL, ylim = NULL,
   
   ## generate plot
   m <- ggplot() +
-    geom_stars(data = bathy, downsample = res) + 
+    suppressWarnings(geom_stars(data = bathy, downsample = res)) + 
     # geom_sf(
     #   data = bathy.c,
     #   col = "white",
@@ -99,7 +99,7 @@ mapsim <- function(x, data = NULL, xlim = NULL, ylim = NULL,
                        aes(x, y, group=id),
                        alpha = alpha, 
                        size = lwd,
-                     col = wespal[4])
+                     col = tcol)
     }
   if(last){
     m <- m + geom_point(data = sim.last, 

@@ -31,7 +31,7 @@ simulate <-
       move = "brw",
       start.dt = ISOdatetime(2018,07,09,00,00,00, tz="UTC"),
       start = c(995, 1240),    #c(750, 200)
-      coa = NULL, #c(400, 2390),      #c(610, 394),
+      coa = NULL, #c(400, 2390),     ## if coa != NULL then it overides mdir
       mdir = c(0, pi), # bias direction for N and S migrations
       rho = c(0.7, 0.33), # directional persistence for brw [1] and rw [2]
       ntries = 1,
@@ -222,7 +222,7 @@ simulate <-
                             brw(n=1, 
                                       data, 
                                       xy = xy[i-1,], 
-                                      coa = NULL, 
+                                      coa = mpar$coa, 
                                       dir = dir,
                                       buffer = mpar$buffer, 
                                       rho = mpar$rho[1],

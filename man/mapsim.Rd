@@ -13,6 +13,7 @@ mapsim(
   esrf = FALSE,
   rec = TRUE,
   track = TRUE,
+  tcol = "black",
   last = FALSE,
   alpha = 0.5,
   lwd = 0.25,

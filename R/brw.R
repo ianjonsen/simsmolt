@@ -10,7 +10,7 @@
 brw <- function(n = 1, data, xy = NULL, coa = NULL, dir = NULL, buffer = NULL, rho, a, b, taxis, u, v) {
   
   if(is.null(coa) & is.null(dir)) stop("Cannot implement a biased random walk without a centre of attraction or direction")
-  if(!is.null(coa) & !is.null(dir)) stop("Only one of a centre of attraction or direction may be specified, not both")
+#  if(!is.null(coa) & !is.null(dir)) stop("Only one of a centre of attraction or direction may be specified, not both")
  
   if (a > 0)
     st <- rweibull(n, a, b)
@@ -23,7 +23,7 @@ brw <- function(n = 1, data, xy = NULL, coa = NULL, dir = NULL, buffer = NULL, r
   d2l <- extract(data$land, rbind(xy))
 
   if(d2l > buffer | xy[1] < 300) {
-    if(!is.null(coa) & is.null(dir)) {
+    if(!is.null(coa)) {
       ## bias move step toward centre of attraction
       mu <- atan2(coa[1] - xy[1], coa[2] - xy[2]) 
     } else {
