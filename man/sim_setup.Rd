@@ -13,8 +13,7 @@ sim_setup(
   ocean = "doy",
   doy.rng = NULL,
   uv = FALSE,
-  crs = NULL,
-  esrf = TRUE
+  esrf_poly = TRUE
 )
 }
 \arguments{

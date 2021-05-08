@@ -21,7 +21,7 @@
 sim_setup <-
   function(config = file.path("/", "Users", "jonsen", "OneDrive - Macquarie University", "collab", "otn", "simdata", "config.R"), 
            rec = "none", rspace = NULL, rnum = NULL,
-           ocean = "doy", doy.rng = NULL, uv = FALSE, crs = NULL, esrf = TRUE) {
+           ocean = "doy", doy.rng = NULL, uv = FALSE, esrf_poly = TRUE) {
     
     ## FIXME: this needs to be generalized - provide spatial extent for query to download ETOPO2 data?
     ## FIXME:   or rely on user supplying their own bathymetry data
@@ -33,7 +33,7 @@ sim_setup <-
       ## FIXME:  prep code would prob require consistent receiver location / history format on OTN server
 
     source(config)  
-    if(is.null(crs)) prj <- "+proj=laea +lat_0=41 +lon_0=-71 +units=km +datum=WGS84"
+    if(is.null(prj)) prj <- "+proj=laea +lat_0=41 +lon_0=-71 +units=km +datum=WGS84"
     
       if(rec == "lines") {
         ## 4 lines from just N of SoBI to Nain, NL
@@ -126,34 +126,28 @@ sim_setup <-
           mutate(z = ifelse(z < -120, z + 100, z)) %>%
           mutate(id = rownames(.))
       
-      } else if (rec == "asf") {
-        # stn <- read.csv(file.path(recs, "stations.csv")) %>%
-        #   filter(stationstatus == "active" & stationclass == "deployed") %>%
-        #   rename(lat = latitude, lon = longitude) %>%
-        #   filter(lat >= 41, lat <= 68, lon >= -71, lon <= -43) %>%
-        #   select(-notes, -the_geom)
-        # stn <- stn[grep("Acoustic", stn$station_type), ]
-        # stn <- stn %>%
+      } else if (rec == "esrf") {
+        ## grab ASF - PHS/SOBI receiver details
+        # asf <- read.csv(file.path(recs, "ASF_2017-2020_Tx_SOBIandPHS.csv")) 
+        # names(asf) <- tolower(names(asf))
+        # asf_stn <- asf %>%
+        #   select(date, receiver, year, otn_array, station_name, locality, 
+        #          region, lat, lon=long) %>%
+        #   distinct(receiver, year, .keep_all = TRUE) %>%
         #   sf::st_as_sf(coords = c("lon","lat"), crs = 4326) %>%
         #   sf::st_transform(., crs = prj)
-        # recLocs <- sf::st_coordinates(stn) %>% as.data.frame()
-        # names(recLocs) <- c("x","y")
-        # sf::st_geometry(stn) <- NULL
-        # stn <- cbind(stn, recLocs)
-        
-        ## grab ASF - PHS/SOBI receiver details
-        asf <- read.csv(file.path(recs, "ASF_2017-2020_Tx_SOBIandPHS.csv")) 
-        names(asf) <- tolower(names(asf))
-        asf_stn <- asf %>%
-          select(date, receiver, year, otn_array, station_name, locality, region, lat, long) %>%
-          rename(lon = long) %>%
-          distinct(receiver, year, .keep_all = TRUE) %>%
-          sf::st_as_sf(coords = c("lon","lat"), crs = 4326) %>%
-          sf::st_transform(., crs = prj)
-        recLocs_asf <- sf::st_coordinates(asf_stn) %>% as.data.frame()
-        names(recLocs_asf) <- c("x","y")
-        sf::st_geometry(asf_stn) <- NULL
-        asf_stn <- cbind(asf_stn, recLocs_asf)
+        # recLocs_asf <- sf::st_coordinates(asf_stn) %>% as.data.frame()
+        # names(recLocs_asf) <- c("x","y")
+        # sf::st_geometry(asf_stn) <- NULL
+        # asf_stn <- cbind(asf_stn, recLocs_asf)
+        # 
+        ## grad all esrf-related receivers
+        esrf <- readRDS(file.path(recs, "recs.RDS")) %>%
+          sf::st_transform(crs  = prj)
+        recLocs <- sf::st_coordinates(esrf) %>% as.data.frame()
+        names(recLocs) <- c("x","y")
+        sf::st_geometry(esrf) <- NULL
+        esrf_rec <- cbind(esrf,recLocs)
         
       } else if(rec %in% c("esrf_g", "esrf_l")) {
 
@@ -209,13 +203,13 @@ sim_setup <-
           })
     }
     
-    if(!rec %in% c("none", "asf", "esrf_g", "esrf_l")) {
+    if(!rec %in% c("none", "esrf", "esrf_g", "esrf_l")) {
       out[["recLocs"]] <- recLocs
       out[["recPoly"]] <- recPoly_sf
       out[["rec"]] <- rec
-    } else if (rec == "asf") {
+    } else if (rec == "esrf") {
       #out[["recLocs"]] <- stn
-      out[["recLocs"]] <- asf_stn
+      out[["recLocs"]] <- esrf_rec
     } else if (rec %in% c("esrf_g","esrf_l")) {
       out[["recLocs"]] <- recs
       switch(rec, 
@@ -228,7 +222,7 @@ sim_setup <-
     } 
     
     out[["sobi.box"]] <- c(980,1030,1230,1275)
-    if(esrf) out[["esrf"]] <- readRDS(file.path(polygons, "NLpoly.RDS"))
+    if(esrf_poly) out[["esrfPoly"]] <- readRDS(file.path(polygons, "NLpoly.RDS"))
     
     out[["ocean"]] <- ocean
     out[["prj"]] <- prj

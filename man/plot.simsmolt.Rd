@@ -16,6 +16,7 @@
   rec = FALSE,
   track = TRUE,
   last = FALSE,
+  ts.plots = FALSE,
   alpha = 0.5,
   lwd = 0.2,
   size = 0.2,

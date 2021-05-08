@@ -81,7 +81,7 @@ mapsim <- function(x, data = NULL, xlim = NULL, ylim = NULL,
     theme_minimal()
   
   if(esrf) {
-    m <- m + geom_sf(data = data$esrf, col = NA, fill = "white", alpha = 0.25)
+    m <- m + geom_sf(data = data$esrf, col = NA, fill = "snow2", alpha = 0.25)
   }
   
   if(rec) {
@@ -90,7 +90,7 @@ mapsim <- function(x, data = NULL, xlim = NULL, ylim = NULL,
         data = data$recLocs,
         aes(x, y),
         colour = col,
-        size = 1
+        size = 0.5
       ) 
   }
   

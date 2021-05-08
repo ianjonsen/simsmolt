@@ -18,10 +18,10 @@
 ##'
 ##' @importFrom ggplot2 ggplot coord_fixed aes coord_sf geom_sf
 ##' @importFrom ggplot2 scale_fill_gradientn stat_smooth geom_line
-##' @importFrom ggplot2 geom_path theme_minimal geom_point
+##' @importFrom ggplot2 geom_path theme_minimal geom_point scale_colour_manual
 ##' @importFrom ggplot2 aes_string theme ylab xlab guides guide_legend
 ##' @importFrom raster extent crop nlayers
-##' @importFrom dplyr "%>%"
+##' @importFrom dplyr "%>%" mutate
 ##' @importFrom patchwork wrap_plots area
 ##' @importFrom sf st_transform st_as_sf st_crop st_bbox
 ##' @importFrom stars geom_stars st_as_stars st_contour
@@ -30,8 +30,12 @@
 ##' @export
 
 plot.simsmolt <- function(x, data = NULL, xlim = NULL, ylim = NULL, 
-                          raster = "ts", res = 5, esrf = TRUE, layer = NULL, rec = FALSE, track = TRUE, last = FALSE,
-                          alpha = 0.5, lwd = 0.2, size = 0.2, col = c("salmon", "red", "dodgerblue"), pal = "Light Grays", maxp = 5e4,
+                          raster = "ts", res = 5, esrf = TRUE, layer = NULL, 
+                          rec = FALSE, track = TRUE, last = FALSE,
+                          ts.plots = FALSE, 
+                          alpha = 0.5, lwd = 0.2, size = 0.2, 
+                          col = c("salmon", "red", "dodgerblue"), 
+                          pal = "Light Grays", maxp = 5e4,
                           landfill = grey(0.6),
                           crs = "+proj=laea +lat_0=41 +lon_0=-71 +units=km +datum=WGS84",
                           ...) {
@@ -183,77 +187,115 @@ plot.simsmolt <- function(x, data = NULL, xlim = NULL, ylim = NULL,
   ) +
     guides(colour = "none")
   
-  env24 <- lapply(x$rep, function(.) {
-    .$sim[seq(1, nrow(.$sim), by = 24), ]
+  if (ts.plots) {
+    ## generate time-series plots
+    env24 <- lapply(x$rep, function(.) {
+      .$sim[seq(1, nrow(.$sim), by = 24),]
     }) %>%
-    do.call(rbind, .)
-
-  env24 <- env24 %>% 
-    mutate(growth = ifelse(id %in% hg.ids, "high", ifelse(id %in% lg.ids, "low", "intermediate")))
+      do.call(rbind, .)
+    
+    env24 <- env24 %>%
+      mutate(growth = ifelse(
+        id %in% hg.ids,
+        "high",
+        ifelse(id %in% lg.ids, "low", "intermediate")
+      ))
+    
+    ## Mass gain/loss daily time-series
+    wp <- ggplot(env24, aes(date, w, group = id, colour = growth)) +
+      geom_line(lwd = 0.5,
+                alpha = 0.6) +
+      theme_minimal() +
+      labs(title = "Mass (g)") +
+      theme(axis.title = element_blank()) +
+      scale_colour_manual(values = wespal[c(4, 3, 2)])
+    
+    ## Fork-length daily time-series
+    fp <- ggplot(env24, aes(date, fl, group = id, colour = growth)) +
+      geom_line(lwd = 0.5,
+                alpha = 0.6) +
+      theme_minimal() +
+      labs(title = "Fork-length (m)") +
+      theme(axis.title = element_blank()) +
+      scale_colour_manual(values = wespal[c(4, 3, 2)])
+    
+    ## Temperature daily time-series
+    tp <- ggplot(env24, aes(date, ts, group = id, colour = growth)) +
+      geom_line(lwd = 0.5,
+                alpha = 0.6) +
+      theme_minimal() +
+      labs(title = "Temperature (ºC)") +
+      theme(axis.title = element_blank()) +
+      scale_colour_manual(values = wespal[c(4, 3, 2)])
+    
+    
+    ## daily displacement time-series
+    sim24 <- lapply(x$rep, function(.) {
+      .$sim %>%
+        mutate(yday = yday(date)) %>%
+        group_by(id, yday) %>%
+        summarise(
+          "swimming" = sqrt(sum(dx) ^ 2 + sum(dy) ^ 2),
+          "current" = sqrt(sum(u) ^ 2 + sum(v) ^ 2),
+          "total" = sqrt(sum(dx + u) ^ 2 + sum(dy + v) ^ 2),
+          .groups = "drop"
+        )
+    }) %>%
+      do.call(rbind, .) %>%
+      mutate(date = as.POSIXct(as.Date("2018-01-01") + yday)) %>%
+      pivot_longer(., cols = 3:5, names_to = "disp")
+    
+    ## combined displacement plots
+    dp <- ggplot(sim24, aes(date, value, group = id, col = disp)) +
+      geom_point(size = 0.2, alpha = 0.3) +
+      geom_smooth(
+        aes(group = disp),
+        method = "gam",
+        formula = y ~ s(x),
+        alpha = 0.3
+      ) +
+      theme_minimal() +
+      scale_colour_manual(values = wespal[c(3, 4, 2)],
+                          name = element_blank()) +
+      labs(title = "Daily displacement (km)") +
+      theme(axis.title = element_blank())
+    
+    layout <- c(
+      area(
+        t = 1,
+        l = 1,
+        b = 4,
+        r = 4
+      ),
+      area(
+        t = 1,
+        l = 5,
+        b = 2,
+        r = 6
+      ),
+      area(
+        t = 3,
+        l = 5,
+        b = 4,
+        r = 6
+      ),
+      area(
+        t = 5,
+        l = 5,
+        b = 6,
+        r = 6
+      ),
+      area(
+        t = 5,
+        l = 1,
+        b = 6,
+        r = 4
+      )
+    )
+    
+    wrap_plots(m, wp, fp, tp, dp, design = layout)
+  }
   
-  ### Generate time-series plots
-  ## Mass gain/loss daily time-series
-  wp <- ggplot(env24, aes(date, w, group = id, colour = growth)) +
-    geom_line(lwd = 0.5,
-              alpha = 0.6) +
-    theme_minimal() +
-    labs(title = "Mass (g)") +
-    theme(axis.title = element_blank()) +
-    scale_colour_manual(values = wespal[c(4,3,2)])
-  
-  ## Fork-length daily time-series
-  fp <- ggplot(env24, aes(date, fl, group = id, colour = growth)) +
-    geom_line(lwd = 0.5,
-              alpha = 0.6) +
-    theme_minimal() +
-    labs(title = "Fork-length (m)") +
-    theme(axis.title = element_blank()) +
-    scale_colour_manual(values = wespal[c(4,3,2)])
-  
-  ## Temperature daily time-series
-  tp <- ggplot(env24, aes(date, ts, group = id, colour = growth)) +
-    geom_line(lwd = 0.5,
-              alpha = 0.6) +
-    theme_minimal() +
-    labs(title = "Temperature (ºC)") +
-    theme(axis.title = element_blank()) +
-    scale_colour_manual(values = wespal[c(4,3,2)])
-
-  
-  ## daily displacement time-series
-  sim24 <- lapply(x$rep, function(.) {
-    .$sim %>% 
-      mutate(yday = yday(date)) %>%
-      group_by(id, yday) %>%
-      summarise("swimming" = sqrt(sum(dx)^2 + sum(dy)^2),
-                "current" = sqrt(sum(u)^2 + sum(v)^2),
-                "total" = sqrt(sum(dx+u)^2 + sum(dy + v)^2),
-                .groups = "drop") 
-  }) %>%
-    do.call(rbind,. ) %>%
-    mutate(date = as.POSIXct(as.Date("2018-01-01") + yday)) %>%
-    pivot_longer(., cols = 3:5, names_to = "disp")
-  
-  ## combined displacement plots
-  dp <- ggplot(sim24, aes(date, value, group = id, col = disp)) + 
-    geom_point(size=0.2, alpha = 0.3) + 
-    geom_smooth(aes(group = disp), 
-                method = "gam", 
-                formula=y~s(x), 
-                alpha = 0.3) + 
-    theme_minimal() + 
-    scale_colour_manual(values = wespal[c(3,4,2)], 
-                        name = element_blank()) +
-    labs(title = "Daily displacement (km)") +
-    theme(axis.title = element_blank())
-  
-  layout <- c(area(t=1,l=1,b=4,r=4),
-              area(t=1,l=5,b=2,r=6),
-              area(t=3,l=5,b=4,r=6),
-              area(t=5,l=5,b=6,r=6),
-              area(t=5,l=1,b=6,r=4)
-              )
-  
-  wrap_plots(m, wp, fp, tp, dp, design = layout)
+  if(!ts.plots) return(m)
   
 }
