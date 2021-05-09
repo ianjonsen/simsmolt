@@ -19,9 +19,7 @@
 #' @export
 #'
 sim_setup <-
-  function(config = file.path("/", "Users", "jonsen", "OneDrive - Macquarie University", "collab", "otn", "simdata", "config.R"), 
-           rec = "none", rspace = NULL, rnum = NULL,
-           ocean = "doy", doy.rng = NULL, uv = FALSE, esrf_poly = TRUE) {
+  function(config = file.path("/", "Users", "jonsen", "OneDrive - Macquarie University", "collab", "otn", "esrf", "fn", "config.R")) {
     
     ## FIXME: this needs to be generalized - provide spatial extent for query to download ETOPO2 data?
     ## FIXME:   or rely on user supplying their own bathymetry data
@@ -142,12 +140,21 @@ sim_setup <-
         # asf_stn <- cbind(asf_stn, recLocs_asf)
         # 
         ## grad all esrf-related receivers
-        esrf <- readRDS(file.path(recs, "recs.RDS")) %>%
+        esrf <- readRDS(file.path(recs.file, "recs.RDS")) %>%
           sf::st_transform(crs  = prj)
         recLocs <- sf::st_coordinates(esrf) %>% as.data.frame()
         names(recLocs) <- c("x","y")
         sf::st_geometry(esrf) <- NULL
-        esrf_rec <- cbind(esrf,recLocs)
+        esrf_rec <- cbind(esrf, recLocs)
+        
+        esrf_rec <- esrf_rec %>%
+          mutate(z = extract(raster(bathy), esrf_rec[, c("x","y")])) %>%
+          mutate(z = ifelse(z > -5, -5, z))
+        
+        poly <- sp::Polygon(esrf_rec[c(chull(esrf_rec[, c("x","y")]),54), c("x","y")])
+        recPoly <- SpatialPolygons(list(Polygons(list(poly), ID = 1)), 
+                                   integer(1), proj4string = CRS(prj))
+        recPoly_sf <- st_as_sf(recPoly)
         
       } else if(rec %in% c("esrf_g", "esrf_l")) {
 
@@ -208,8 +215,8 @@ sim_setup <-
       out[["recPoly"]] <- recPoly_sf
       out[["rec"]] <- rec
     } else if (rec == "esrf") {
-      #out[["recLocs"]] <- stn
       out[["recLocs"]] <- esrf_rec
+      out[["recPoly"]] <- recPoly_sf
     } else if (rec %in% c("esrf_g","esrf_l")) {
       out[["recLocs"]] <- recs
       switch(rec, 
@@ -222,7 +229,7 @@ sim_setup <-
     } 
     
     out[["sobi.box"]] <- c(980,1030,1230,1275)
-    if(esrf_poly) out[["esrfPoly"]] <- readRDS(file.path(polygons, "NLpoly.RDS"))
+    if(esrf_poly) out[["esrfPoly"]] <- readRDS(file.path(polygon.file, "NLpoly.RDS"))
     
     out[["ocean"]] <- ocean
     out[["prj"]] <- prj

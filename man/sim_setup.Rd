@@ -6,14 +6,7 @@
 \usage{
 sim_setup(
   config = file.path("/", "Users", "jonsen", "OneDrive - Macquarie University",
-    "collab", "otn", "simdata", "config.R"),
-  rec = "none",
-  rspace = NULL,
-  rnum = NULL,
-  ocean = "doy",
-  doy.rng = NULL,
-  uv = FALSE,
-  esrf_poly = TRUE
+    "collab", "otn", "esrf", "fn", "config.R")
 )
 }
 \arguments{
