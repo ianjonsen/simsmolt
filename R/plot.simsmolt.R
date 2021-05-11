@@ -51,7 +51,7 @@ plot.simsmolt <- function(x, data = NULL, xlim = NULL, ylim = NULL,
     detect <-
       lapply(x$rep, function(.)
         .$detect) %>% do.call(rbind, .)
-    
+    Nsim <- nrow(x)
     sim <- lapply(x$rep, function(.) .$sim) %>% do.call(rbind, .)
     sim.last <- lapply(x$rep, function(.) .$sim[nrow(.$sim), ]) %>% do.call(rbind, .)
     hg.ids <- which(sim.last$fl > quantile(sim.last$fl, 0.85))
@@ -60,7 +60,7 @@ plot.simsmolt <- function(x, data = NULL, xlim = NULL, ylim = NULL,
       mutate(growth = ifelse(id %in% hg.ids, "high", ifelse(id %in% lg.ids, "low", "intermediate")))
     
   } else if(is.na(class(x)[2])){
-    
+    Nsim <- 1
     ## handle single track
     sim <- x$sim
     sim.last <- x$sim[nrow(x$sim), ] 
@@ -124,7 +124,7 @@ plot.simsmolt <- function(x, data = NULL, xlim = NULL, ylim = NULL,
       guides(fill = guide_legend(title = ifelse(raster == "ts", "T ºC", "||uv|| km/h")))
   
       if(esrf) {
-        m <- m + geom_sf(data = data$esrf, col = NA, fill = "white", alpha = 0.25)
+        m <- m + geom_sf(data = data$esrfPoly, colour="snow2", fill=NA, lwd=1)
       }
     
   ## add land  
@@ -134,11 +134,20 @@ plot.simsmolt <- function(x, data = NULL, xlim = NULL, ylim = NULL,
 #            )
   
   if(track & !last) {
-   m <- m + geom_path(data = sim,
-              aes(x, y, group=id, colour = growth),
-              alpha = alpha, 
-              size = lwd) +
-    geom_point(data = sim.last, 
+    if(Nsim > 1) {
+      m <- m + geom_path(data = sim,
+                         aes(x, y, group=id, colour = growth),
+                         alpha = alpha, 
+                         size = lwd)
+    } else {
+      m <- m + geom_path(data = sim,
+                         aes(x, y, group=id),
+                         colour = "salmon",
+                         alpha = alpha, 
+                         size = lwd)
+    }
+   
+    m <- m + geom_point(data = sim.last, 
                aes(x, y),
                colour = col[2],
                size = size,

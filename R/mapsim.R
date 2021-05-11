@@ -27,8 +27,8 @@
 
 mapsim <- function(x, data = NULL, xlim = NULL, ylim = NULL, 
                           res = 5, esrf = FALSE, rec = TRUE, 
-                          track = TRUE, tcol = "black", last = FALSE,
-                          alpha = 0.5, lwd = 0.25, size = 0.2, col = "red", pal = "Blues 3", 
+                          track = TRUE, tcol = "salmon", last = FALSE,
+                          alpha = 0.5, lwd = 0.25, size = 0.2, reccol = "blue", pal = "Blues 3", 
                           crs = "+proj=laea +lat_0=41 +lon_0=-71 +units=km +datum=WGS84",
                           ...) {
   
@@ -46,6 +46,7 @@ mapsim <- function(x, data = NULL, xlim = NULL, ylim = NULL,
     
     sim <- lapply(x$rep, function(.) .$sim) %>% do.call(rbind, .)
     sim.last <- lapply(x$rep, function(.) .$sim[nrow(.$sim), ]) %>% do.call(rbind, .)
+    Nsim <- nrow(x)
     
   } else if(is.na(class(x)[2])){
     
@@ -53,7 +54,7 @@ mapsim <- function(x, data = NULL, xlim = NULL, ylim = NULL,
     sim <- x$sim
     sim.last <- x$sim[nrow(x$sim), ] 
     detect <- x$detect
-    
+    Nsim <- 1
   }
   
   wespal <- wes_palette("Darjeeling2", type = "discrete")
@@ -89,7 +90,7 @@ mapsim <- function(x, data = NULL, xlim = NULL, ylim = NULL,
       m + geom_point(
         data = data$recLocs,
         aes(x, y),
-        colour = col,
+        colour = reccol,
         size = 0.5
       ) 
   }
@@ -97,7 +98,7 @@ mapsim <- function(x, data = NULL, xlim = NULL, ylim = NULL,
   if(track) {
     m <- m + geom_path(data = sim,
                        aes(x, y, group=id),
-                       alpha = alpha, 
+                       alpha = ifelse(Nsim > 1, 0.1, alpha), 
                        size = lwd,
                      col = tcol)
     }

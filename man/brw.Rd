@@ -16,7 +16,9 @@ brw(
   b,
   taxis,
   u,
-  v
+  v,
+  shelf,
+  beta
 )
 }
 \description{

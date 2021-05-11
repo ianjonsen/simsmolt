@@ -141,6 +141,7 @@ sim_setup <-
         # 
         ## grad all esrf-related receivers
         esrf <- readRDS(file.path(recs.file, "recs.RDS")) %>%
+          rename(id = name) %>%
           sf::st_transform(crs  = prj)
         recLocs <- sf::st_coordinates(esrf) %>% as.data.frame()
         names(recLocs) <- c("x","y")
@@ -182,13 +183,15 @@ sim_setup <-
                                    integer(1), proj4string = CRS(prj))
           recPoly_sf <- st_as_sf(recPoly)
         }
-    }
+      }
     
     out <- list(
       bathy = raster(bathy),
       land = raster(d2land),
       land_dir = raster(land_dir)
     )
+    
+    if(!is.null(d2shelf)) out[["shelf"]] <- stack(d2shelf)
 
     if (!is.null(ocean)) {
       switch(ocean, 

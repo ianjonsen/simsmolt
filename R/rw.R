@@ -7,7 +7,7 @@
 #' @importFrom raster extract xyFromCell
 #' @export
 #' 
-rw <- function(n = 1, data, xy = NULL, buffer = NULL, rho, a, b, taxis, u, v){
+rw <- function(n = 1, data, xy = NULL, buffer = NULL, rho, a, b, taxis, u, v, shelf, beta){
   
   if (a > 0)
     st <- rweibull(n, a, b)

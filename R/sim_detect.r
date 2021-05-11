@@ -26,7 +26,7 @@ sim_detect <-
     
     recLocs <- data$recLocs 
     trans <- tmp.tr <- dt <- tmp.dt <- NULL
-    b <- s$params$pdrf
+    b <- s$params$pars$pdrf
     
     if(exists("rec", data)) {
       if (data$rec == "lines") {
@@ -81,7 +81,7 @@ sim_detect <-
     ## simulate detections given receiver locations & simulated transmission along track
       recLocs <- recLocs %>%
         mutate(x = x * 1000, y = y * 1000)
-      
+
       if(!is.null(trans)) {     
       detect <- trans %>% 
         pdet(trs = ., rec = recLocs[, c("id","x","y","z")], b = b)
