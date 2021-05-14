@@ -105,7 +105,11 @@ mapsim <- function(x, data = NULL, xlim = NULL, ylim = NULL,
       alpha = alpha,
       size = lwd
     )
+<<<<<<< HEAD
 
+=======
+    
+>>>>>>> 7734d493de5a7f923c0f04c7d80fe6a3df852640
     if (!is.null(detect)) {
       if (nrow(detect) > 0) {
         m <- m + geom_point(

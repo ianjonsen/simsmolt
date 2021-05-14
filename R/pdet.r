@@ -9,7 +9,7 @@
 #' @param b - a vector of two parameters (intercept & slope) for logistic detection range function
 #' @export
 #' 
-pdet <- function(trs = NULL, rec = NULL, b = NULL){
+pdet <- function(trs = NULL, rec = NULL, b = NULL, noise = FALSE){
   
 #3-D distance between gth receiver and each transmission
 # assume transmissions at surface...
@@ -22,7 +22,7 @@ pdet <- function(trs = NULL, rec = NULL, b = NULL){
   dimnames(dist) <- list(NULL, recv_id = rec$id)
   
   ## calculate probability of detection 
-  pr.det <- apply(dist, 2, function(.) plogis(b[1] + b[2] * .))
+  pr.det <- apply(dist, 2, function(.) plogis(b[1] + b[2] * .) * ifelse(noise, 0.5, 1))
 
   ## simulate detection
   det <- apply(pr.det, 2, function(x) rbinom(length(x),1,x))

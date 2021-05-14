@@ -2,9 +2,9 @@
 % Please edit documentation in R/sim_detect.r
 \name{sim_detect}
 \alias{sim_detect}
-\title{simulate acoustic transmissions & detection, using sim_move & presim output}
+\title{simulate acoustic transmissions & detection, using \code{simulate} & \code{sim_setup} output}
 \usage{
-sim_detect(s, data, delay = c(60, 180), burst = 5)
+sim_detect(s, data, delay = c(50, 130), burst = 5, noise = TRUE)
 }
 \arguments{
 \item{s}{- a simsmolt class list containing output from sim_setup and sim_move}
@@ -12,6 +12,8 @@ sim_detect(s, data, delay = c(60, 180), burst = 5)
 \item{delay}{- min & max time intervals (s) between transmissions}
 
 \item{burst}{- duration of each transmission (s)}
+
+\item{noise}{- simulate effect of noisy environment (reduces detection prob w dist by 50%)}
 }
 \description{
 simulates transmissions & detections along simulated track segments within a defined range of acoustic array(s)

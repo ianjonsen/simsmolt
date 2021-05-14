@@ -66,7 +66,7 @@ sim_par <-
       a = 0,
       w0 = 185,
       surv = 0.9936, ## daily survival rate
-      reten = 0.825^(1/60), ## daily tag retention rate (in first ~ 60 d - Brundson et al 2019 ICES JMarSci 76:7)
+      reten = 0.845^(1/60), ## daily V7/8 tag retention rate (in first ~ 60 d - Brundson et al 2019 ICES JMarSci 76:7)
       Dreten = 60, ## number of days within which tags can be expulsed
       pdrf = c(5, -0.02), # = p(0.5) @ 250 m  + < 0.01 @ 500 m   [c(4.865, -0.0139)  (~ consistent w HFX line V9 @ high power)]
       beta = c(-2, -2) # potential fn params to keep smolts on shelf

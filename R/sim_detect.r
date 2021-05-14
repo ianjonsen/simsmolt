@@ -1,4 +1,4 @@
-#' @title simulate acoustic transmissions & detection, using sim_move & presim output
+#' @title simulate acoustic transmissions & detection, using \code{simulate} & \code{sim_setup} output
 #' 
 #' @description simulates transmissions & detections along simulated track segments within a defined range of acoustic array(s)
 #' 
@@ -7,6 +7,7 @@
 #' @param s - a simsmolt class list containing output from sim_setup and sim_move
 #' @param delay - min & max time intervals (s) between transmissions
 #' @param burst - duration of each transmission (s)
+#' @param noise - simulate effect of noisy environment (reduces detection prob w dist by 50%)
 #' @importFrom sp Polygon Polygons SpatialPolygons CRS
 #' @importFrom sf st_as_sf st_contains
 #' @importFrom raster buffer
@@ -16,7 +17,7 @@
 #' @export
 #' 
 sim_detect <-
-  function(s, data, delay = c(60,180), burst = 5.0){
+  function(s, data, delay = c(50,130), burst = 5.0, noise = TRUE){
     
     ## simulate tag transmissions along track but only within +/-10 km of avg receiver location
     ##  otherwise trap() output is far too big to generate along full track
@@ -84,7 +85,7 @@ sim_detect <-
 
       if(!is.null(trans)) {     
       detect <- trans %>% 
-        pdet(trs = ., rec = recLocs[, c("id","x","y","z")], b = b)
+        pdet(trs = ., rec = recLocs[, c("id","x","y","z")], b = b, noise = noise)
       } else {
         detect <- NULL
       }
