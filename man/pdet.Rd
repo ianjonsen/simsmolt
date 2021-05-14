@@ -4,7 +4,7 @@
 \alias{pdet}
 \title{Utility fn to calculate distances b/w transmitter and reciever}
 \usage{
-pdet(trs = NULL, rec = NULL, b = NULL)
+pdet(trs = NULL, rec = NULL, b = NULL, noise = FALSE)
 }
 \arguments{
 \item{trs}{- a tibble of transmission locations (in m) with: id, x, y, et and line id}
