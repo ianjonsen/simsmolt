@@ -73,6 +73,11 @@ rw <- function(n = 1, data, xy = NULL, buffer = NULL, rho, a, b, taxis, u, v, sh
   
   
   new.xy <- c(xy[1] + sin(phi) * st, xy[2] + cos(phi) * st)
+  if(shelf) {
+    pv <- c(extract(data$shelf[[1]], rbind(new.xy))[1],
+            extract(data$shelf[[2]], rbind(new.xy))[1])
+    new.xy <- new.xy + pv * beta
+  }
   new.d2l <- extract(data$land, rbind(new.xy))
   
   ## if new location on land (0) then adjust so it's in water

@@ -16,6 +16,7 @@
 ##' @param growth logical
 ##' @param shelf logical; should smolts be constrained to stay in water > - 1000 m depth (continental shelf)
 ##' @param taxis "p" (+ve rheotaxis), "n" (-ve rheotaxis), NA (no taxis; default)
+##' @param migs migration scenario 1 or 2 (stop migration upon arrival to Grand Banks)
 ##' @param land keep track of sim rep hitting land (TRUE)
 ##' @param boundary keep track of sim rep hitting sim boundary (TRUE)
 ##' @param ... additional simulation control parameters
@@ -26,6 +27,7 @@
 ##'   \item{\code{growth}}{temperature-dependent growth}
 ##'   \item{\code{shelf}}{movements constrained to stay on shelf}
 ##'   \item{\code{taxis}}{behavioural response to currents}
+##'   \item{\code{migs}}{migration strategy}
 ##'   \item{\code{land}}{record if smolt gets "stuck" on land, thereby ending simulation}
 ##'   \item{\code{boundary}}{record if smolt hits simulation boundary, thereby ending simulation}
 ##'   \item{\code{pars}}{list of additional, required control parameters}
@@ -38,6 +40,7 @@ sim_par <-
            growth = TRUE,
            shelf = TRUE,
            taxis = c(NA,"p","n"),
+           migs = 2,
            land = FALSE,
            boundary = FALSE,
            ...) {
@@ -51,17 +54,22 @@ sim_par <-
       start.dt = ISOdatetime(2021,07,09,00,00,00, tz = "UTC"),
       start = c(995, 1240),
       coa = NULL,
-      mdir = c(-40, 160)/180*pi, # bias direction for N and S migrations
-      rho = c(0.7, 0.7), # directional persistence for brw [1] and rw [2]
+      mdir = c(75,-45)/180*pi, # bias direction for N migration (S migration is mdir - pi)
+      rho = c(0.6, 0.6), # directional persistence for brw [1] and rw [2]
+      turn = 2.5, # rate at which smolts turn N after rounding NF
       ntries = 1,
       ts.q = 0.75,
-      psi = 0.75,
+      psi = 0.9,
+      uvm = 1, # magnitude of current vectors: if uvm < 1 current strength is down-scaled
       buffer = 5,
       b = 2,
       a = 0,
       w0 = 185,
-      pdrf = c(3.017, -0.0139), #c(4.865, -0.0139) = p(0.5) @ 350 m (~ consistent w HFX line V9 @ high power)
-      beta = c(-10, -10) # potential fn params to keep smolts on shelf
+      surv = 0.9936, ## daily survival rate
+      reten = 0.825^(1/60), ## daily tag retention rate (in first ~ 60 d - Brundson et al 2019 ICES JMarSci 76:7)
+      Dreten = 60, ## number of days within which tags can be expulsed
+      pdrf = c(5, -0.02), # = p(0.5) @ 250 m  + < 0.01 @ 500 m   [c(4.865, -0.0139)  (~ consistent w HFX line V9 @ high power)]
+      beta = c(-2, -2) # potential fn params to keep smolts on shelf
     )
     
     ## overide default control pars
@@ -73,6 +81,7 @@ sim_par <-
          growth = growth,
          shelf = shelf,
          taxis = taxis,
+         migs = migs,
          land = land,
          boundary = boundary,
          pars = pars)

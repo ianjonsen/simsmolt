@@ -10,14 +10,12 @@ mapsim(
   xlim = NULL,
   ylim = NULL,
   res = 5,
-  esrf = FALSE,
   rec = TRUE,
   track = TRUE,
+  last = TRUE,
   tcol = "salmon",
-  last = FALSE,
   alpha = 0.5,
   lwd = 0.25,
-  size = 0.2,
   reccol = "blue",
   pal = "Blues 3",
   crs = "+proj=laea +lat_0=41 +lon_0=-71 +units=km +datum=WGS84",
@@ -41,9 +39,9 @@ mapsim(
 
 \item{lwd}{width of smolt track(s)}
 
-\item{size}{of smolt track end point(s)}
-
 \item{col}{colour for receiver locations}
+
+\item{size}{of smolt track end point(s)}
 }
 \description{
 Produce a simple map of simulated track(s) with or without receivers

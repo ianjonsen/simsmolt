@@ -22,13 +22,12 @@
 ##' @importFrom patchwork wrap_plots area
 ##' @importFrom sf st_transform st_as_sf st_crop st_bbox
 ##' @importFrom stars geom_stars st_as_stars st_contour
-##' @importFrom wesanderson wes_palette
 ##' @export
 
 mapsim <- function(x, data = NULL, xlim = NULL, ylim = NULL, 
-                          res = 5, esrf = FALSE, rec = TRUE, 
-                          track = TRUE, tcol = "salmon", last = FALSE,
-                          alpha = 0.5, lwd = 0.25, size = 0.2, reccol = "blue", pal = "Blues 3", 
+                          res = 5, rec = TRUE, 
+                          track = TRUE, last = TRUE, tcol = "salmon",
+                          alpha = 0.5, lwd = 0.25, reccol = "blue", pal = "Blues 3", 
                           crs = "+proj=laea +lat_0=41 +lon_0=-71 +units=km +datum=WGS84",
                           ...) {
   
@@ -40,9 +39,14 @@ mapsim <- function(x, data = NULL, xlim = NULL, ylim = NULL,
     if(sum(!compl) > 0) cat(sprintf("dropping %i failed runs", sum(!compl)))
     x <- x[compl, ]
     
-    detect <-
-      lapply(x$rep, function(.)
-        .$detect) %>% do.call(rbind, .)
+    if(any(sapply(x$rep, function(.)
+      "detect" %in% names(.)))) {
+      detect <-
+        lapply(x$rep, function(.)
+          .$detect) %>% do.call(rbind, .)
+    } else {
+      detect <- NULL
+    }
     
     sim <- lapply(x$rep, function(.) .$sim) %>% do.call(rbind, .)
     sim.last <- lapply(x$rep, function(.) .$sim[nrow(.$sim), ]) %>% do.call(rbind, .)
@@ -53,11 +57,10 @@ mapsim <- function(x, data = NULL, xlim = NULL, ylim = NULL,
     ## handle single track
     sim <- x$sim
     sim.last <- x$sim[nrow(x$sim), ] 
-    detect <- x$detect
+    if("detect" %in% names(x)) detect <- x$detect
+    else detect <- NULL
     Nsim <- 1
   }
-  
-  wespal <- wes_palette("Darjeeling2", type = "discrete")
   
   if (is.null(xlim))
     xlim <- c(extent(data$bathy)[1], extent(data$bathy)[2])
@@ -81,9 +84,8 @@ mapsim <- function(x, data = NULL, xlim = NULL, ylim = NULL,
     scale_fill_gradientn(colours = hcl.colors(n=100, pal), na.value = grey(0.8)) +
     theme_minimal()
   
-  if(esrf) {
-    m <- m + geom_sf(data = data$esrf, col = NA, fill = "snow2", alpha = 0.25)
-  }
+  ## ESRF Oil & Gas polygon  
+  m <- m + geom_sf(data = data$esrf, col = "snow2", fill = NA, lwd = 1, alpha = 0.35)
   
   if(rec) {
     m <-
@@ -95,18 +97,35 @@ mapsim <- function(x, data = NULL, xlim = NULL, ylim = NULL,
       ) 
   }
   
-  if(track) {
-    m <- m + geom_path(data = sim,
-                       aes(x, y, group=id),
-                       alpha = ifelse(Nsim > 1, 0.1, alpha), 
-                       size = lwd,
-                     col = tcol)
+  if (track) {
+    m <- m + geom_path(
+      data = sim,
+      aes(x, y, group = id),
+      colour = tcol,
+      alpha = alpha,
+      size = lwd
+    )
+    
+    if (!is.null(detect) & nrow(detect) > 0) {
+      m <- m + geom_point(
+        data = detect,
+        aes(recv_x, recv_y),
+        colour = "red",
+        size = 0.8
+      )
     }
+  }
+  
   if(last){
-    m <- m + geom_point(data = sim.last, 
+    m <- m + geom_point(data = sim.last %>% filter(surv==1 & reten==1), 
                  aes(x, y),
-                 colour = wespal[1],
-                 size = size,
+                 colour = "dodgerblue",
+                 size = 0.5,
+                 alpha = 1) +
+      geom_point(data = sim.last %>% filter(surv==0 | reten==0), 
+                 aes(x, y),
+                 colour = "black",
+                 size = 0.5,
                  alpha = 1)
   }
   

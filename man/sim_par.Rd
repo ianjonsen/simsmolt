@@ -11,6 +11,7 @@ sim_par(
   growth = TRUE,
   shelf = TRUE,
   taxis = c(NA, "p", "n"),
+  migs = 2,
   land = FALSE,
   boundary = FALSE,
   ...
@@ -29,6 +30,8 @@ sim_par(
 
 \item{taxis}{"p" (+ve rheotaxis), "n" (-ve rheotaxis), NA (no taxis; default)}
 
+\item{migs}{migration scenario 1 or 2 (stop migration upon arrival to Grand Banks)}
+
 \item{land}{keep track of sim rep hitting land (TRUE)}
 
 \item{boundary}{keep track of sim rep hitting sim boundary (TRUE)}
@@ -43,6 +46,7 @@ Returns a list with components
   \item{\code{growth}}{temperature-dependent growth}
   \item{\code{shelf}}{movements constrained to stay on shelf}
   \item{\code{taxis}}{behavioural response to currents}
+  \item{\code{migs}}{migration strategy}
   \item{\code{land}}{record if smolt gets "stuck" on land, thereby ending simulation}
   \item{\code{boundary}}{record if smolt hits simulation boundary, thereby ending simulation}
   \item{\code{pars}}{list of additional, required control parameters}

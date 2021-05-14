@@ -44,7 +44,11 @@ simulate <-
     ds[1,] <- c(NA, NA)
     
     ## define other vectors
-    u <- v <- vector("numeric", N)
+    reten <- dir <- surv <- m <- u <- v <- vector("numeric", N)
+    reten[1] <- 1
+    surv[1] <- 1
+    m[1] <- "brw"
+    dir[1] <- mpar$pars$mdir[1]
     
     if(mpar$growth) {
       s <- ts <- w <- fl <- vector("numeric", N)
@@ -61,53 +65,61 @@ simulate <-
     if(data$ocean == "doy") {
       d1 <- as.numeric(str_split(names(data$ts)[1], "d", simplify = TRUE)[,2]) - 1
     }
-      
+
     ## iterate movement
     for (i in 2:N) {
       if(i==2 && pb)  tpb <- txtProgressBar(min = 2, max = N, style = 3)
       
       ### Apply Energetics
       if(mpar$growth) {
-      ## extract Temperature
-        switch(data$ocean, 
-               cl = {
-                 ts[i-1] <- extract(data$ts, rbind(xy[i - 1, ])) - 273
-                 if(is.na(ts[i-1])){
-                   ## calc mean Temp within 2 km buffer of location @ time i-1
-                   ts[i-1] <- extract(data$ts, rbind(xy[i - 1, ]), buffer = 2, df = TRUE)[,2] %>%
-                     mean(., na.rm = TRUE) - 273
-                 }
-               },
-               doy = {
-                 ts[i-1] <- extract(data$ts[[(yday(mpar$pars$start.dt + i * 3600) - d1)]], rbind(xy[i - 1, ])) - 273
-                 if(is.na(ts[i-1])) {
-                   ## calc mean Temp within 2 km buffer of location @ time i-1
-                   ts[i-1] <- extract(data$ts[[(yday(mpar$pars$start.dt + i * 3600) - d1)]], rbind(xy[i - 1, ]), buffer = 2, df = TRUE)[,2] %>%
-                     mean(., na.rm = TRUE) - 273
-                 }
-               })
-      
-      ## calculate growth in current time step based on water temp at previous location, etc...
-      if(ts[i-1] <= 0 & !is.na(ts[i-1])) {
-        cat("\n stopping simulation: smolt has entered water <= 0 deg C")  
-        break
-      } else if(ts[i-1] > 0 & !is.na(ts[i-1])) {
-        w[i] <- growth(w[i-1], ts[i-1], s[i-1])
-        
-      } else if(is.na(ts[i-1])) {
-        cat("\n stopping simulation: NA value for temperature")
-        break
-      }
-        
-      ## convert W to fL - based on Byron et al 2014 (fig A1 in S1)
-      fl[i] <- (w[i] / 8987.9) ^ (1 / 2.9639)
-      ## smolts can't shrink their length... (this would unrealistically affect swim speed & energetics), so
-      ## if change in weight implies reduction in forklength, then stick with last forklength  - mimics loss of condition
-      if(fl[i] < fl[i-1]) fl[i] <- fl[i-1] 
-      
-      ## determine size-based average move step for current time step
-      ## assume avg swim speed of b bL/s
-      s[i] <- fl[i] * mpar$pars$b * 3.6 ## forklength * b m/s converted to km/h
+          ## extract Temperature
+          switch(data$ocean,
+                 cl = {
+                   ts[i - 1] <- extract(data$ts, rbind(xy[i - 1, ])) - 273
+                   if (is.na(ts[i - 1])) {
+                     ## calc mean Temp within 2 km buffer of location @ time i-1
+                     ts[i - 1] <-
+                       extract(data$ts, rbind(xy[i - 1, ]), buffer = 2, df = TRUE)[, 2] %>%
+                       mean(., na.rm = TRUE) - 273
+                   }
+                 },
+                 doy = {
+                   ts[i - 1] <-
+                     extract(data$ts[[(yday(mpar$pars$start.dt + i * 3600) - d1)]], rbind(xy[i - 1, ])) - 273
+                   if (is.na(ts[i - 1])) {
+                     ## calc mean Temp within 2 km buffer of location @ time i-1
+                     ts[i - 1] <-
+                       extract(data$ts[[(yday(mpar$pars$start.dt + i * 3600) - d1)]],
+                               rbind(xy[i - 1, ]),
+                               buffer = 2,
+                               df = TRUE)[, 2] %>%
+                       mean(., na.rm = TRUE) - 273
+                   }
+                 })
+          
+          ## calculate growth in current time step based on water temp at previous location, etc...
+          if (ts[i - 1] <= 0 & !is.na(ts[i - 1])) {
+            cat("\n stopping simulation: smolt has entered water <= 0 deg C")
+            break
+          } else if (ts[i - 1] > 0 & !is.na(ts[i - 1])) {
+            w[i] <- growth(w[i - 1], ts[i - 1], s[i - 1])
+            
+          } else if (is.na(ts[i - 1])) {
+            cat("\n stopping simulation: NA value for temperature")
+            break
+          }
+          
+          ## convert W to fL - based on Byron et al 2014 (fig A1 in S1)
+          fl[i] <- (w[i] / 8987.9) ^ (1 / 2.9639)
+          ## smolts can't shrink their length... (this would unrealistically affect swim speed & energetics), so
+          ## if change in weight implies reduction in forklength, then stick with last forklength  - mimics loss of condition
+          if (fl[i] < fl[i - 1]) {
+            fl[i] <- fl[i - 1]
+          }
+
+        ## determine size-based average move step for current time step
+        ## assume avg swim speed of b bL/s
+        s[i] <- fl[i] * mpar$pars$b * 3.6 ## forklength * b m/s converted to km/h
       } 
       
       ### Current Advection
@@ -115,8 +127,8 @@ simulate <-
         ## determine envt'l forcing
         ## determine advection due to current, convert from m/s to km/h
         if(data$ocean == "doy") {
-          u[i] <- extract(data$u[[(yday(mpar$pars$start.dt + i * 3600) - d1)]], rbind(xy[i - 1, ])) * 3.6 
-          v[i] <- extract(data$v[[(yday(mpar$pars$start.dt + i * 3600) - d1)]], rbind(xy[i - 1, ])) * 3.6
+          u[i] <- extract(data$u[[(yday(mpar$pars$start.dt + i * 3600) - d1)]], rbind(xy[i - 1, ])) * 3.6 * mpar$par$uvm
+          v[i] <- extract(data$v[[(yday(mpar$pars$start.dt + i * 3600) - d1)]], rbind(xy[i - 1, ])) * 3.6 * mpar$par$uvm
           } else if(data$ocean == "cl") {
           u[i] <- extract(data$u, rbind(xy[i - 1, ])) * 3.6 
           v[i] <- extract(data$v, rbind(xy[i - 1, ])) * 3.6
@@ -134,31 +146,63 @@ simulate <-
       }
 
       ### Temperature-dependent movement
+      ## Scenario 1 - a) smolts reverse BRW migration if SST <= min growth C for 3 h; 
+      ##    migs = 1  b) smolts use simple random walk & slow to 1 bl/s if in optimal SST for growth (ca 11 - 14 C) - but size-dependent
+      ##              
+      ## Scenario 2 - a) smolts reverse BRW migration if SST <= min growth C for 3 h;
+      ##    migs = 2  b) smolts use simple random walk & slow to 1 bl/s if in optimal SST for growth (ca 11 - 14 C) - but size-dependent
+      ##              c) smolts stop S migration when they arrive on Grand Banks (< y = 950) & adopt simple RW
+      ##
+      ## Scenario 3 - a) smolts travel E from NB/NS/S NF and turn N at random pt & at random rate after passing Avalon Penninsula;
+      ##              b) smolts reverse BRW migration direction if SST <= min growth Temp for 3 h
+      ##
       if (mpar$temp) {
-        
-        ## reverse migration bias from mpar$pars$mdir to mpar$pars$mdir - pi, if smolt in < 5 C water for 12 h
-        if(i > 12) { 
+        dir[i] <- dir[i-1]
+        ## reverse migration direction from mpar$pars$mdir to mpar$pars$mdir - pi, if smolt in SST <= min growth C for 3 h
+        if (i > 3) { 
           
           ## movement direction influenced by ts spatial gradient of current ts 
           ##  implies 0 or -ve growth, for current mass(w[i]) and speed (s[i])
           g.rng <- growth(w[i], seq(6, 20, l = 100), s[i])
           ts.mig <- seq(6, 20, l=100)[which(g.rng >= w[i])] %>% min()
-          ts.rng <- seq(6, 20, l = 100)[which(g.rng >= quantile(g.rng, mpar$pars$ts.q))]  %>% range()
+          dir[i] <- ifelse(all(ts[i - 1:3] <= ts.mig), (dir[i-1] - pi) %% pi, dir[i-1])
           
-          ## if smolt in optimal T range for growth then switch from biased RW to simple RW
-          dir <- ifelse(all(ts[i - 1:12] <= ts.mig), mpar$pars$mdir[2], mpar$pars$mdir[1])
-          move <- ifelse(ts[i-1] >= ts.rng[1] & ts[i-1] <= ts.rng[2], "rw", mpar$move)
+          # ## if smolt in optimal T range for growth then switch from biased RW to simple RW
+          # ts.rng <- seq(6, 20, l=100)[which(g.rng >= quantile(g.rng, mpar$pars$ts.q))]  %>% range()
+          # b.tmp <- mpar$pars$b
+          # if(ts[i-1] >= ts.rng[1] & ts[i-1] <= ts.rng[2]) {
+          #   move <- "rw"
+          #   mpar$pars$b <- 1
+          # } else {
+          #   move <- mpar$move
+          #   mpar$pars$b <- b.tmp
+          # }
             
         } else {
-          dir <- mpar$pars$mdir[1]
+          dir[i] <- dir[i-1]
           move <- mpar$move
+        }
+ 
+        ## if migration Scenario == 2, stop migration if arrived on Grand Bank
+        if (mpar$migs ==2 & xy[i-1, 2] <= 1000) {
+          
+          move <- "rw"
+          mpar$pars$b <- 1
+          mpar$pars$uvm <- 0.25
+          
+        } else if(mpar$migs == 3 & xy[i-1,1] >= runif(1, 1350, 1450)) { 
+          # change direction bias gradually once around SE NF, first to 0 N and then to mdir once N of 950
+          #   this should stop smolts from banging into St John's
+          if(xy[i-1,2] < 850 & dir[i] > -10/180*pi) dir[i] <- dir[i-1] - mpar$pars$turn/180*pi
+          else if(xy[i-1,2] >= 850 & dir[i] > mpar$pars$mdir[2]) dir[i] <- dir[i-1] - mpar$pars$turn/180*pi
+          else if(xy[i-1,2] >= 850 & dir[i] < mpar$pars$mdir[2]) dir[i] <- mpar$pars$mdir[2]
         }
       
       } else if(!mpar$temp) {
-        dir <- mpar$pars$mdir[1]
+        dir[i] <- mpar$pars$mdir
         move <- mpar$move
       }
-        
+       # cat("\r", move); flush.console()
         ## Movement
         ## First check if smolt is in SoBI & within 25 km of land, if so then move toward Lab Sea after which movement rules can be applied
       d2l <- extract(data$land, rbind(xy[i-1,]))
@@ -180,7 +224,7 @@ simulate <-
                                       data, 
                                       xy = xy[i-1,], 
                                       coa = mpar$pars$coa, 
-                                      dir = dir,
+                                      dir = dir[i],
                                       buffer = mpar$pars$buffer, 
                                       rho = mpar$pars$rho[1],
                                       a = mpar$pars$a,
@@ -213,7 +257,7 @@ simulate <-
       
       xy[i, 1:2] <- cbind(ds[i, 1] + u[i], 
                           ds[i, 2] + v[i])
-
+      m[i] <- move
       
       if((extract(data$land, rbind(xy[i, ])) == 0 | is.na(extract(data$land, rbind(xy[i, ]))))  & any(!is.na(xy[i,]))) {
         mpar$land <- TRUE
@@ -226,13 +270,34 @@ simulate <-
         cat("\n stopping simulation: hit a boundary")
         break
       } 
+      ## determine survival
+      if(!is.na(mpar$pars$surv)) {
+        surv[i] <-
+          rbinom(1, 1, mpar$pars$surv ^ (1 / 24)) # rescales daily survival to hourly
+        if (surv[i] == 0) {
+          cat("\n smolt is dead")
+          break
+        }
+      }
+      
+      ## determine tag retention
+      if(!is.na(mpar$pars$reten) & i <= mpar$pars$Dreten*24) {
+        reten[i] <- rbinom(1, 1, mpar$pars$reten ^ (1 / 24))
+        if(reten[i] == 0) {
+          cat("\n tag expulsion")
+          break
+        }
+      } else if(!is.na(mpar$pars$reten) & i > mpar$pars$Dreten*24) {
+        reten[i] <- 1
+      }
       
       if(pb){
         setTxtProgressBar(tpb, i)
         if(i==N) close(tpb)
       }
     }
-    
+  
+    N <- ifelse(!is.na(which(is.na(xy[,1]))[1] - 1), which(is.na(xy[,1]))[1] - 1, N)
     if(mpar$growth) {
     X <-
       data.frame(
@@ -245,8 +310,11 @@ simulate <-
         ts = ts,
         w = w,
         fl = fl,
-        s = s
-      )
+        s = s, 
+        surv = surv,
+        reten = reten,
+        m = m
+      )[1:N, ]
     } else if(!mpar$growth) {
       X <-
         data.frame(
@@ -256,8 +324,10 @@ simulate <-
           dy = ds[, 2] - lag(xy[, 2]),
           u = u,
           v = v, 
-          ts = ifelse(mpar$temp, ts, NA)
-        ) 
+          ts = ifelse(mpar$temp, ts, NA),
+          surv = surv,
+          reten = reten
+        )[1:N, ] 
     } 
     if(sum(is.na(X$ts)) == nrow(X)) {
       X <- X %>% select(-ts)
@@ -271,10 +341,10 @@ simulate <-
     if(mpar$land | mpar$boundary) {
       if(mpar$growth) {
         sim <- sim %>%
-          filter(!is.na(x) & !is.na(y) & w != 0 & fl != 0 & s != 0)
+          filter((!is.na(x) & !is.na(y) & w != 0 & fl != 0 & s != 0) | surv != 1 | reten != 1)
       } else {
         sim <- sim %>%
-          filter(!is.na(x) & !is.na(y))
+          filter((!is.na(x) & !is.na(y)) | surv != 1 | reten != 1)
       }
     }
     
