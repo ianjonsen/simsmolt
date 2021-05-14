@@ -105,14 +105,16 @@ mapsim <- function(x, data = NULL, xlim = NULL, ylim = NULL,
       alpha = alpha,
       size = lwd
     )
-    
-    if (!is.null(detect) & nrow(detect) > 0) {
-      m <- m + geom_point(
-        data = detect,
-        aes(recv_x, recv_y),
-        colour = "red",
-        size = 0.8
-      )
+
+    if (!is.null(detect)) {
+      if (nrow(detect) > 0) {
+        m <- m + geom_point(
+          data = detect,
+          aes(recv_x, recv_y),
+          colour = "red",
+          size = 0.8
+        )
+      }
     }
   }
   

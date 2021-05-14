@@ -156,6 +156,10 @@ simulate <-
       ## Scenario 3 - a) smolts travel E from NB/NS/S NF and turn N at random pt & at random rate after passing Avalon Penninsula;
       ##              b) smolts reverse BRW migration direction if SST <= min growth Temp for 3 h
       ##
+      ## Scenario 4 - a) smolts travel S from NB around NS
+      ##              b) smolts travel E from NS/S NF and turn N at random pt & at random rate after passing Avalon Penninsula;
+      ##              c) smolts reverse BRW migration direction if SST <= min growth Temp for 3 h
+      ##
       if (mpar$temp) {
         dir[i] <- dir[i-1]
         ## reverse migration direction from mpar$pars$mdir to mpar$pars$mdir - pi, if smolt in SST <= min growth C for 3 h
@@ -184,7 +188,7 @@ simulate <-
         }
  
         ## if migration Scenario == 2, stop migration if arrived on Grand Bank
-        if (mpar$migs ==2 & xy[i-1, 2] <= 1000) {
+        if (mpar$migs == 2 & xy[i-1, 2] <= 1000) {
           
           move <- "rw"
           mpar$pars$b <- 1
@@ -196,7 +200,30 @@ simulate <-
           if(xy[i-1,2] < 850 & dir[i] > -10/180*pi) dir[i] <- dir[i-1] - mpar$pars$turn/180*pi
           else if(xy[i-1,2] >= 850 & dir[i] > mpar$pars$mdir[2]) dir[i] <- dir[i-1] - mpar$pars$turn/180*pi
           else if(xy[i-1,2] >= 850 & dir[i] < mpar$pars$mdir[2]) dir[i] <- mpar$pars$mdir[2]
+          
+        } else if(mpar$migs == 4) {
+          # head S from StJohn river to S NS
+           if(xy[i-1,2] > 290) {
+             buff <- mpar$pars$buffer
+             mpar$pars$buffer <- 0
+             dir[i] <- mpar$pars$mdir[1]
+           }
+           if (xy[i-1,2] < 290 | xy[i-1,1] > 450) {
+             dir[i] <- dir[i-1] - mpar$pars$turn/180*pi
+             mpar$pars$buffer <- buff
+           }
+           if (xy[i-1,1] > 450 & dir[i] < mpar$pars$mdir[2]) {
+             dir[i] <- mpar$pars$mdir[2]
+           } 
+           if (xy[i-1,1] >= runif(1, 1350, 1450)) {
+             # change direction bias gradually once around SE NF, first to 0 N and then to mdir once N of 950
+             #   this should stop smolts from banging into St John's
+             if(xy[i-1,2] < 850 & dir[i] > -10/180*pi) dir[i] <- dir[i-1] - mpar$pars$turn/180*pi
+             else if(xy[i-1,2] >= 850 & dir[i] > mpar$pars$mdir[3]) dir[i] <- dir[i-1] - mpar$pars$turn/180*pi
+             else if(xy[i-1,2] >= 850 & dir[i] < mpar$pars$mdir[3]) dir[i] <- mpar$pars$mdir[3]
+           }
         }
+        
       
       } else if(!mpar$temp) {
         dir[i] <- mpar$pars$mdir
