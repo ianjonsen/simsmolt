@@ -175,17 +175,15 @@ simulate <-
         if(xy[i-1,1] < mpar$pars$NFline & xy[i-1,2] < 850) {
           dir[i] <- dir[i-1]
           
-        } else if(xy[i-1,1] >=  mpar$pars$NFline) {
+        } else if(xy[i-1,1] >=  mpar$pars$NFline & xy[i-1,2] < 850) {
           ## change direction bias gradually once around SE NF, 
           ##   first to 0 N and then to mdir once N of 950
           ##   this should stop smolts from banging into St John's
-          if (xy[i - 1, 2] < 850) {
-            dir[i] <- dir[i - 1] - mpar$pars$turn / 180 * pi
-            dir[i] <- ifelse(dir[i] < -0.1745, -0.1745, dir[i])
-  
-           } else if (xy[i - 1, 2] >= 850) {
-             dir[i] <- mpar$pars$mdir[2]
-           }
+          dir[i] <- dir[i - 1] - mpar$pars$turn / 180 * pi
+          dir[i] <- ifelse(dir[i] < -0.1745, -0.1745, dir[i]) 
+          
+        } else if (xy[i - 1, 2] >= 850) {
+            dir[i] <- mpar$pars$mdir[2]
         }
         
       } else if(mpar$scenario == 4) {
@@ -355,7 +353,8 @@ simulate <-
         fl = fl,
         s = s, 
         surv = surv,
-        reten = reten
+        reten = reten,
+        dir = dir
       )[1:N, ]
     } else if(!mpar$growth) {
       X <-
