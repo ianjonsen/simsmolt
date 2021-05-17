@@ -179,8 +179,9 @@ simulate <-
           ## change direction bias gradually once around SE NF, 
           ##   first to 0 N and then to mdir once N of 950
           ##   this should stop smolts from banging into St John's
-          if (xy[i - 1, 2] < 850 & dir[i-1] > -10 / 180 * pi) {
+          if (xy[i - 1, 2] < 850) {
             dir[i] <- dir[i - 1] - mpar$pars$turn / 180 * pi
+            dir[i] <- ifelse(dir[i] < -0.1745, -0.1745, dir[i])
   
            } else if (xy[i - 1, 2] >= 850) {
              dir[i] <- mpar$pars$mdir[2]
