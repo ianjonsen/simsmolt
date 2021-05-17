@@ -4,7 +4,7 @@
 \alias{pdet}
 \title{Utility fn to calculate distances b/w transmitter and reciever}
 \usage{
-pdet(trs = NULL, rec = NULL, b = NULL, noise = FALSE)
+pdet(trs = NULL, rec = NULL, b = NULL, noise = 1)
 }
 \arguments{
 \item{trs}{- a tibble of transmission locations (in m) with: id, x, y, et and line id}
@@ -12,6 +12,9 @@ pdet(trs = NULL, rec = NULL, b = NULL, noise = FALSE)
 \item{rec}{- a data.frame of receiver locations (in m) with: x, y, z}
 
 \item{b}{- a vector of two parameters (intercept & slope) for logistic detection range function}
+
+\item{noise}{- range 0 - 1; simulate effect of noisy environment. Reduces detection prob w dist 
+by specified proportion; default = 1, no reduction}
 }
 \description{
 assumes detection is a logistic fn of distance in 3-D

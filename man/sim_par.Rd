@@ -11,7 +11,7 @@ sim_par(
   growth = TRUE,
   shelf = TRUE,
   taxis = c(NA, "p", "n"),
-  migs = 2,
+  scenario = 2,
   land = FALSE,
   boundary = FALSE,
   ...
@@ -30,13 +30,13 @@ sim_par(
 
 \item{taxis}{"p" (+ve rheotaxis), "n" (-ve rheotaxis), NA (no taxis; default)}
 
-\item{migs}{migration scenario 1 or 2 (stop migration upon arrival to Grand Banks)}
-
 \item{land}{keep track of sim rep hitting land (TRUE)}
 
 \item{boundary}{keep track of sim rep hitting sim boundary (TRUE)}
 
 \item{...}{additional simulation control parameters}
+
+\item{migs}{migration scenario 1 or 2 (stop migration upon arrival to Grand Banks)}
 }
 \value{
 Returns a list with components

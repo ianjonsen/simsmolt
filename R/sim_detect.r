@@ -7,7 +7,8 @@
 #' @param s - a simsmolt class list containing output from sim_setup and sim_move
 #' @param delay - min & max time intervals (s) between transmissions
 #' @param burst - duration of each transmission (s)
-#' @param noise - simulate effect of noisy environment (reduces detection prob w dist by 50%)
+#' @param noise - range 0 - 1; simulate effect of noisy environment. Reduces detection prob w dist 
+#' by specified proportion; default = 1, no reduction
 #' @importFrom sp Polygon Polygons SpatialPolygons CRS
 #' @importFrom sf st_as_sf st_contains
 #' @importFrom raster buffer
@@ -17,7 +18,7 @@
 #' @export
 #' 
 sim_detect <-
-  function(s, data, delay = c(50,130), burst = 5.0, noise = TRUE){
+  function(s, data, delay = c(50,130), burst = 5.0, noise = 1){
     
     ## simulate tag transmissions along track but only within +/-10 km of avg receiver location
     ##  otherwise trap() output is far too big to generate along full track

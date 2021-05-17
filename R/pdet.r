@@ -7,9 +7,11 @@
 #' @param trs - a tibble of transmission locations (in m) with: id, x, y, et and line id
 #' @param rec - a data.frame of receiver locations (in m) with: x, y, z
 #' @param b - a vector of two parameters (intercept & slope) for logistic detection range function
+#' @param noise - range 0 - 1; simulate effect of noisy environment. Reduces detection prob w dist 
+#' by specified proportion; default = 1, no reduction
 #' @export
 #' 
-pdet <- function(trs = NULL, rec = NULL, b = NULL, noise = FALSE){
+pdet <- function(trs = NULL, rec = NULL, b = NULL, noise = 1){
   
 #3-D distance between gth receiver and each transmission
 # assume transmissions at surface...
@@ -22,7 +24,7 @@ pdet <- function(trs = NULL, rec = NULL, b = NULL, noise = FALSE){
   dimnames(dist) <- list(NULL, recv_id = rec$id)
   
   ## calculate probability of detection 
-  pr.det <- apply(dist, 2, function(.) plogis(b[1] + b[2] * .) * ifelse(noise, 0.5, 1))
+  pr.det <- apply(dist, 2, function(.) plogis(b[1] + b[2] * .) * noise)
 
   ## simulate detection
   det <- apply(pr.det, 2, function(x) rbinom(length(x),1,x))

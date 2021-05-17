@@ -4,7 +4,7 @@
 \alias{sim_detect}
 \title{simulate acoustic transmissions & detection, using \code{simulate} & \code{sim_setup} output}
 \usage{
-sim_detect(s, data, delay = c(50, 130), burst = 5, noise = TRUE)
+sim_detect(s, data, delay = c(50, 130), burst = 5, noise = 1)
 }
 \arguments{
 \item{s}{- a simsmolt class list containing output from sim_setup and sim_move}
@@ -13,7 +13,8 @@ sim_detect(s, data, delay = c(50, 130), burst = 5, noise = TRUE)
 
 \item{burst}{- duration of each transmission (s)}
 
-\item{noise}{- simulate effect of noisy environment (reduces detection prob w dist by 50%)}
+\item{noise}{- range 0 - 1; simulate effect of noisy environment. Reduces detection prob w dist 
+by specified proportion; default = 1, no reduction}
 }
 \description{
 simulates transmissions & detections along simulated track segments within a defined range of acoustic array(s)

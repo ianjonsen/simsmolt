@@ -47,7 +47,9 @@ simulate <-
     reten <- dir <- surv <- m <- u <- v <- vector("numeric", N)
     reten[1] <- 1
     surv[1] <- 1
+    ## present movement type
     m[1] <- "brw"
+    ## present migration direction
     dir[1] <- mpar$pars$mdir[1]
     
     if(mpar$growth) {
@@ -144,8 +146,8 @@ simulate <-
                                    xy[2] <= data$sobi.box[4])) {
         u[i] <- v[i] <- 0
       }
-
-      ### Temperature-dependent movement
+      
+      ### Migration scenarios
       ## Scenario 1 - a) smolts reverse BRW migration if SST <= min growth C for 3 h; 
       ##    migs = 1  b) smolts use simple random walk & slow to 1 bl/s if in optimal SST for growth (ca 11 - 14 C) - but size-dependent
       ##              
@@ -160,17 +162,69 @@ simulate <-
       ##              b) smolts travel E from NS/S NF and turn N at random pt & at random rate after passing Avalon Penninsula;
       ##              c) smolts reverse BRW migration direction if SST <= min growth Temp for 3 h
       ##
+      
+      ## First, biased RW for migration
+      move <- mpar$move
+      dir[i] <- dir[i-1]
+
+      ## Second, check where we are and adjust migration direction if necessary - depending on Scenario
+      ## if migration Scenario == 2, stop migration if arrived on Grand Bank
+      if (mpar$scenario == 2 & xy[i-1, 2] <= 1000) {
+        
+        move <- "rw"
+        mpar$pars$b <- 1
+        mpar$pars$uvm <- 0.25
+        
+      } else if(mpar$scenario == 3 & xy[i-1,1] >=  mpar$pars$NFline) { 
+        # change direction bias gradually once around SE NF, first to 0 N and then to mdir once N of 950
+        #   this should stop smolts from banging into St John's
+        if(xy[i-1,2] < 850 & dir[i] > -10/180*pi) dir[i] <- dir[i-1] - mpar$pars$turn/180*pi
+        else if(xy[i-1,2] >= 850 & dir[i] > mpar$pars$mdir[2]) dir[i] <- dir[i-1] - mpar$pars$turn/180*pi
+        else if(xy[i-1,2] >= 850 & dir[i] < mpar$pars$mdir[2]) dir[i] <- mpar$pars$mdir[2]
+        
+        browser()
+        
+      } else if(mpar$scenario == 4) {
+        # head S from StJohn river to S NS
+        if(xy[i-1,2] > 290) {
+          ## reset land buffer to 1 km to ensure migration out of BoF
+          buff <- mpar$pars$buffer
+          mpar$pars$buffer <- 1
+          dir[i] <- mpar$pars$mdir[1]
+          
+        } else if (xy[i-1,2] < 290 & dir[i] > mpar$pars$mdir[2]) {
+          ## start turning toward new migration heading (to Grand Banks)
+          dir[i] <- dir[i] - mpar$pars$turn/180*pi
+          ## re-establish original land buffer once out of BoF
+          mpar$pars$buffer <- buff
+          
+        } else if (xy[i-1,2] < 290 & dir[i] < mpar$pars$mdir[2]) {
+          ## stop the turn once new migration heading is reached
+            dir[i] <- mpar$pars$mdir[2]
+            
+        }
+        
+        if (xy[i-1,1] >= mpar$pars$NFline) {
+          # change direction bias gradually once around SE NF, first to 0 N and then to mdir once N of 950
+          #   this should stop smolts from banging into St John's
+          if(xy[i-1,2] < 850 & dir[i] > -10/180*pi) dir[i] <- dir[i-1] - mpar$pars$turn/180*pi
+          else if(xy[i-1,2] >= 850 & dir[i] > mpar$pars$mdir[3]) dir[i] <- dir[i-1] - mpar$pars$turn/180*pi
+          else if(xy[i-1,2] >= 850 & dir[i] < mpar$pars$mdir[3]) dir[i] <- mpar$pars$mdir[3]
+        }
+      }
+      
+      ## Temperature-dependent alteration of migration direction - reverse course if water too cold
+      ##  Thie over-rides migration scenario in the short-term
       if (mpar$temp) {
-        dir[i] <- dir[i-1]
         ## reverse migration direction from mpar$pars$mdir to mpar$pars$mdir - pi, if smolt in SST <= min growth C for 3 h
         if (i > 3) { 
-          
-          ## movement direction influenced by ts spatial gradient of current ts 
+          ## movement direction influenced by Temp experienced over past 3 h
           ##  implies 0 or -ve growth, for current mass(w[i]) and speed (s[i])
           g.rng <- growth(w[i], seq(6, 20, l = 100), s[i])
           ts.mig <- seq(6, 20, l=100)[which(g.rng >= w[i])] %>% min()
           dir[i] <- ifelse(all(ts[i - 1:3] <= ts.mig), (dir[i-1] - pi) %% pi, dir[i-1])
           
+          ## can use this for longer runs (ie. Kelts w 440 d tags)
           # ## if smolt in optimal T range for growth then switch from biased RW to simple RW
           # ts.rng <- seq(6, 20, l=100)[which(g.rng >= quantile(g.rng, mpar$pars$ts.q))]  %>% range()
           # b.tmp <- mpar$pars$b
@@ -182,56 +236,12 @@ simulate <-
           #   mpar$pars$b <- b.tmp
           # }
             
-        } else {
-          dir[i] <- dir[i-1]
-          move <- mpar$move
-        }
- 
-        ## if migration Scenario == 2, stop migration if arrived on Grand Bank
-        if (mpar$migs == 2 & xy[i-1, 2] <= 1000) {
-          
-          move <- "rw"
-          mpar$pars$b <- 1
-          mpar$pars$uvm <- 0.25
-          
-        } else if(mpar$migs == 3 & xy[i-1,1] >= runif(1, 1350, 1450)) { 
-          # change direction bias gradually once around SE NF, first to 0 N and then to mdir once N of 950
-          #   this should stop smolts from banging into St John's
-          if(xy[i-1,2] < 850 & dir[i] > -10/180*pi) dir[i] <- dir[i-1] - mpar$pars$turn/180*pi
-          else if(xy[i-1,2] >= 850 & dir[i] > mpar$pars$mdir[2]) dir[i] <- dir[i-1] - mpar$pars$turn/180*pi
-          else if(xy[i-1,2] >= 850 & dir[i] < mpar$pars$mdir[2]) dir[i] <- mpar$pars$mdir[2]
-          
-        } else if(mpar$migs == 4) {
-          # head S from StJohn river to S NS
-           if(xy[i-1,2] > 290) {
-             buff <- mpar$pars$buffer
-             mpar$pars$buffer <- 0
-             dir[i] <- mpar$pars$mdir[1]
-           }
-           if (xy[i-1,2] < 290 | xy[i-1,1] > 450) {
-             dir[i] <- dir[i-1] - mpar$pars$turn/180*pi
-             mpar$pars$buffer <- buff
-           }
-           if (xy[i-1,1] > 450 & dir[i] < mpar$pars$mdir[2]) {
-             dir[i] <- mpar$pars$mdir[2]
-           } 
-           if (xy[i-1,1] >= runif(1, 1350, 1450)) {
-             # change direction bias gradually once around SE NF, first to 0 N and then to mdir once N of 950
-             #   this should stop smolts from banging into St John's
-             if(xy[i-1,2] < 850 & dir[i] > -10/180*pi) dir[i] <- dir[i-1] - mpar$pars$turn/180*pi
-             else if(xy[i-1,2] >= 850 & dir[i] > mpar$pars$mdir[3]) dir[i] <- dir[i-1] - mpar$pars$turn/180*pi
-             else if(xy[i-1,2] >= 850 & dir[i] < mpar$pars$mdir[3]) dir[i] <- mpar$pars$mdir[3]
-           }
-        }
-        
+        } 
       
-      } else if(!mpar$temp) {
-        dir[i] <- mpar$pars$mdir
-        move <- mpar$move
-      }
-       # cat("\r", move); flush.console()
-        ## Movement
-        ## First check if smolt is in SoBI & within 25 km of land, if so then move toward Lab Sea after which movement rules can be applied
+      } 
+        
+      ## Movement kernel
+      ## First check if smolt is in SoBI & within 25 km of land, if so then move toward Lab Sea after which reg movement rules can be applied
       d2l <- extract(data$land, rbind(xy[i-1,]))
         if(all(xy[i-1,1] >= data$sobi.box[1], 
                xy[i-1,1] <= data$sobi.box[2], 
