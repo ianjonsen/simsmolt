@@ -182,10 +182,7 @@ simulate <-
           if (xy[i - 1, 2] < 850 & dir[i-1] > -10 / 180 * pi) {
             dir[i] <- dir[i - 1] - mpar$pars$turn / 180 * pi
   
-           } else if (xy[i - 1, 2] >= 850 & dir[i] > mpar$pars$mdir[2]) {
-             dir[i] <- dir[i - 1] - mpar$pars$turn / 180 * pi
-             
-           } else if (xy[i - 1, 2] >= 850 & dir[i] < mpar$pars$mdir[2]) {
+           } else if (xy[i - 1, 2] >= 850) {
              dir[i] <- mpar$pars$mdir[2]
            }
         }
