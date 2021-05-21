@@ -24,12 +24,36 @@
 ##' @importFrom stars geom_stars st_as_stars st_contour
 ##' @export
 
-mapsim <- function(x, data = NULL, xlim = NULL, ylim = NULL, 
-                          res = 5, rec = TRUE, 
-                          track = TRUE, last = TRUE, tcol = "salmon",
-                          alpha = 0.5, lwd = 0.25, reccol = "blue", pal = "Blues 3", 
-                          crs = "+proj=laea +lat_0=41 +lon_0=-71 +units=km +datum=WGS84",
-                          ...) {
+mapsim <- function(x,
+                   data = NULL,
+                   xlim = NULL,
+                   ylim = NULL,
+                   res = 5,
+                   rec = TRUE,
+                   track = TRUE,
+                   last = TRUE,
+                   det = TRUE,
+                   dt = NULL,
+                   ol = TRUE,
+                   hl = "orange",
+                   tcol = "salmon",
+                   alpha = 0.5,
+                   lwd = 0.25,
+                   reccol = "blue",
+                   detcol = "red",
+                   pal = "Blues 3",
+                   crs = "+proj=laea +lat_0=41 +lon_0=-71 +units=km +datum=WGS84",
+                   ...) {
+  
+  if(!is.null(dt) & ol == FALSE) {
+    track <- FALSE
+    last <- FALSE
+  } else if(!is.null(dt) & ol == TRUE) {
+    track <- TRUE
+    last <- last
+  }
+  
+  if(!is.null(dt) & !inherits(dt, "POSIXt")) stop("dt must be a POSIX class date")
   
   ## process simulated tracks
   if (!is.na(class(x)[2]) && (class(x)[2] == "tbl_df")) {
@@ -106,16 +130,36 @@ mapsim <- function(x, data = NULL, xlim = NULL, ylim = NULL,
       size = lwd
     )
 
-    if (!is.null(detect)) {
+    if (!is.null(detect) & det) {
       if (nrow(detect) > 0) {
         m <- m + geom_point(
           data = detect,
           aes(recv_x, recv_y),
-          colour = "red",
+          colour = detcol,
           size = 0.8
         )
       }
     }
+  }
+  
+  ## plot overlay after track
+  if(!is.null(dt)) {
+    if(length(dt) == 1) {
+      m <- m + geom_path(
+        data = subset(sim, date > dt & date <= dt + 86400),
+        aes(x, y, group = id),
+        colour = hl,
+        size = lwd+0.3
+      )  
+    } else if(length(dt == 2)) {
+      m <- m + geom_path(
+        data = subset(sim, date > dt[1] & date <= dt[2]),
+        aes(x, y, group = id),
+        colour = hl,
+        size = lwd+0.3
+      ) 
+    }
+    
   }
   
   if(last){

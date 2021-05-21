@@ -35,6 +35,7 @@ pdet <- function(trs = NULL, rec = NULL, b = NULL, noise = 1){
       trns_id = id,
       date = date,
       recv_id = id.1,
+      recv_array = array,
       trns_x = x,
       trns_y = y,
       recv_x = x.1,
@@ -50,6 +51,7 @@ pdet <- function(trs = NULL, rec = NULL, b = NULL, noise = 1){
     ) %>%
     select(trns_id,
            recv_id,
+           recv_array,
            date,
            trns_x,
            trns_y,
@@ -57,7 +59,7 @@ pdet <- function(trs = NULL, rec = NULL, b = NULL, noise = 1){
            recv_y,
            recv_z, 
            dist) %>%
-    arrange(recv_id, date)
+    arrange(recv_id, recv_array, date)
 
 out
 
