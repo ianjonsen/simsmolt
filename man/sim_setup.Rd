@@ -6,21 +6,18 @@
 \usage{
 sim_setup(
   config = file.path("/", "Users", "jonsen", "OneDrive - Macquarie University",
-    "collab", "otn", "esrf", "fn", "config.R")
+    "collab", "otn", "esrf", "fn", "config.R"),
+  ocean = "doy",
+  doy.rng = 1:365,
+  uv = TRUE
 )
 }
 \arguments{
 \item{config}{- path to config.R script containing file.paths for required & optional environmental layers (see Details)}
 
-\item{rec}{- optional acoustic receiver locations (default is no receivers)}
+\item{ocean}{- temporal form of environmental data layers: "cl" = climatology; "doy" = daily means; FALSE = no env't data}
 
-\item{rspace}{- nominal spacing (km) between receivers}
-
-\item{rnum}{- the number of receivers to be used on grid arrays (to approx. match to num used on lines)}
-
-\item{ocean}{- temporal form of environmental data layers: "cl" = climatological; "doy" = daily means; FALSE = no env't data}
-
-\item{doy.rng}{- rnage of days of year to be loaded from disk as a rasterStack (default = 1:365)}
+\item{doy.rng}{- range of days of year to be loaded from disk as a rasterStack (default = 1:365)}
 
 \item{uv}{- are current velocity data to be loaded from disk}
 }
