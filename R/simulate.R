@@ -155,13 +155,14 @@ simulate <-
       ##    migs = 2  b) smolts use simple random walk & slow to 1 bl/s if in optimal SST for growth (ca 11 - 14 C) - but size-dependent
       ##              c) smolts stop S migration when they arrive on Grand Banks (< y = 950) & adopt simple RW
       ##
-      ## Scenario 3 - a) smolts travel E from NB/NS/S NF and turn N at random pt & at random rate after passing Avalon Penninsula;
+      ## Scenario 3 - a) smolts travel E from NB/NS/S NL and turn N at random pt & at random rate after passing Avalon Penninsula;
       ##              b) smolts reverse BRW migration direction if SST <= min growth Temp for 3 h
       ##
       ## Scenario 4 - a) smolts travel S from NB around NS
-      ##              b) smolts travel E from NS/S NF and turn N at random pt & at random rate after passing Avalon Penninsula;
+      ##              b) smolts travel E from NS/S NL and turn N at random pt & at random rate after passing Avalon Penninsula;
       ##              c) smolts reverse BRW migration direction if SST <= min growth Temp for 3 h
       ##
+      ## Scenario 5 - a) smolts depart Campbellton River and head N with migration influenced by SST
       
       ## Check where we are and adjust migration direction if necessary - depending on Scenario
       ## if migration Scenario == 2, stop migration if arrived on Grand Bank
@@ -214,6 +215,9 @@ simulate <-
           else if(xy[i-1,2] >= 850 & dir[i] > mpar$pars$mdir[3]) dir[i] <- dir[i-1] - mpar$pars$turn/180*pi
           else if(xy[i-1,2] >= 850 & dir[i] < mpar$pars$mdir[3]) dir[i] <- mpar$pars$mdir[3]
         }
+      } else if(mpar$scenario == 5) {
+        ## Campbellton River, NL
+        dir[i] <- mpar$pars$mdir[1]
       }
       
       ## Temperature-dependent alteration of migration direction - 
