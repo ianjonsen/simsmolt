@@ -56,7 +56,7 @@ sim_par <-
       coa = NULL,
       mdir = c(75,-45)/180*pi, # bias direction for N migration (S migration is mdir - pi)
       NFline = runif(1, 1350, 1450), # location on x-axis at which smolt turns N to Lab Shelf
-      rho = c(0.6, 0.6), # directional persistence for brw [1] and rw [2]
+      rho = c(0.6, 0.4), # directional persistence for brw [1] and rw [2]
       turn = 2.5, # rate at which smolts turn N after rounding NF
       ntries = 1,
       ts.q = 0.75,

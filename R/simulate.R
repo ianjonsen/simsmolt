@@ -129,16 +129,20 @@ simulate <-
         ## determine envt'l forcing
         ## determine advection due to current, convert from m/s to km/h
         if(data$ocean == "doy") {
-          u[i] <- extract(data$u[[(yday(mpar$pars$start.dt + i * 3600) - d1)]], rbind(xy[i - 1, ])) * 3.6 * mpar$par$uvm
-          v[i] <- extract(data$v[[(yday(mpar$pars$start.dt + i * 3600) - d1)]], rbind(xy[i - 1, ])) * 3.6 * mpar$par$uvm
+          u[i] <- extract(data$u[[(yday(mpar$pars$start.dt + i * 3600) - d1)]], 
+                          rbind(xy[i - 1, ])) * 3.6 * mpar$par$uvm
+          v[i] <- extract(data$v[[(yday(mpar$pars$start.dt + i * 3600) - d1)]], 
+                          rbind(xy[i - 1, ])) * 3.6 * mpar$par$uvm
           } else if(data$ocean == "cl") {
           u[i] <- extract(data$u, rbind(xy[i - 1, ])) * 3.6 
           v[i] <- extract(data$v, rbind(xy[i - 1, ])) * 3.6
           }
         
         # downscale advection effect over first 21 d then increase to 1 over 7 d
-        u[i] <- ifelse(is.na(u[i]), 0, u[i]) * ifelse(i < 500, mpar$pars$psi, ifelse(i < 668, -2 + i * 0.004491, 1))
-        v[i] <- ifelse(is.na(v[i]), 0, v[i]) * ifelse(i < 500, mpar$pars$psi, ifelse(i < 668, -2 + i * 0.004491, 1))
+        u[i] <- ifelse(is.na(u[i]), 0, u[i]) * ifelse(i < 500, mpar$pars$psi, 
+                                                      ifelse(i < 668, -2 + i * 0.004491, 1))
+        v[i] <- ifelse(is.na(v[i]), 0, v[i]) * ifelse(i < 500, mpar$pars$psi, 
+                                                      ifelse(i < 668, -2 + i * 0.004491, 1))
         
       } else if(!mpar$advect | all(xy[1] >= data$sobi.box[1], 
                                    xy[1] <= data$sobi.box[2], 
@@ -217,7 +221,16 @@ simulate <-
         }
       } else if(mpar$scenario == 5) {
         ## Campbellton River, NL
-        dir[i] <- mpar$pars$mdir[1]
+        if(xy[i-1,1] < 1300 | xy[i-1,2] < 1300) {
+          dir[i] <- mpar$pars$mdir[1]
+          # set rho to more diffuse movement
+          rho <- mpar$pars$rho[1] ## preserve original rho[1] so we can go back to it
+          mpar$pars$rho[1] <- mpar$pars$rho[2]
+        } else if(xy[i-1,1] >= 1300 | xy[i-1,2] >=1300) {
+          ## now start heading NW in directed fashion
+          dir[i] <- mpar$pars$mdir[2]
+          mpar$pars$rho[1] <- rho
+        }
       }
       
       ## Temperature-dependent alteration of migration direction - 
