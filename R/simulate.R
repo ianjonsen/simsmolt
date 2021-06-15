@@ -222,16 +222,14 @@ simulate <-
         }
       } else if(mpar$scenario == 5) {
         ## Campbellton River, NL
-        dir[i] <- dir[i-1]
-        if((xy[i-1,1] >=1300 | xy[i-1,2] >= 1200) & dir[i] >= 10) {
-          dir[i] <- dir[i-1] - mpar$pars$turn / 180*pi
-          r12 <- 2
-        } else if((xy[i-1,1] >=1300 | xy[i-1,2]) >= 1200 & dir[i] > mpar$pars$mdir[2]) {
-          dir[i] <- dir[i-1] - mpar$pars$turn / 180*pi
-          r12 <- 2
-        } else if((xy[i-1,1] >=1300 | xy[i-1,2]) >= 1200 & dir[i] < mpar$pars$mdir[2]) {
+        if(xy[i-1,2] < 1200) {
+          dir[i] <- dir[i-1]
+          if(dir[i-1] != mpar$pars$mdir[2]) r12 <- 1
+        } else if(xy[i-1,2] >= 1200) {
           dir[i] <- mpar$pars$mdir[2]
           r12 <- 2
+        } else {
+          dir[i] <- dir[i-1]
         }
       }
       
