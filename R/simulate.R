@@ -51,6 +51,7 @@ simulate <-
     move <- mpar$move
     ## present migration direction
     dir[1] <- mpar$pars$mdir[1]
+    r12 <- 1 ## start out using mpar$pars$rho[r12]
     
     if(mpar$growth) {
       s <- ts <- w <- fl <- vector("numeric", N)
@@ -221,15 +222,16 @@ simulate <-
         }
       } else if(mpar$scenario == 5) {
         ## Campbellton River, NL
-        if(xy[i-1,1] < 1300 | xy[i-1,2] < 1300) {
-          dir[i] <- mpar$pars$mdir[1]
-          # set rho to more diffuse movement
-          rho <- mpar$pars$rho[1] ## preserve original rho[1] so we can go back to it
-          mpar$pars$rho[1] <- mpar$pars$rho[2]
-        } else if(xy[i-1,1] >= 1300 | xy[i-1,2] >=1300) {
-          ## now start heading NW in directed fashion
+        dir[i] <- dir[i-1]
+        if((xy[i-1,1] >=1300 | xy[i-1,2] >= 1200) & dir[i] >= 10) {
+          dir[i] <- dir[i-1] - mpar$pars$turn / 180*pi
+          r12 <- 2
+        } else if((xy[i-1,1] >=1300 | xy[i-1,2]) >= 1200 & dir[i] > mpar$pars$mdir[2]) {
+          dir[i] <- dir[i-1] - mpar$pars$turn / 180*pi
+          r12 <- 2
+        } else if((xy[i-1,1] >=1300 | xy[i-1,2]) >= 1200 & dir[i] < mpar$pars$mdir[2]) {
           dir[i] <- mpar$pars$mdir[2]
-          mpar$pars$rho[1] <- rho
+          r12 <- 2
         }
       }
       
@@ -285,7 +287,7 @@ simulate <-
                                       coa = mpar$pars$coa, 
                                       dir = dir[i],
                                       buffer = mpar$pars$buffer, 
-                                      rho = mpar$pars$rho[1],
+                                      rho = mpar$pars$rho[r12],
                                       a = mpar$pars$a,
                                       b = s[i], 
                                       taxis = mpar$taxis,
