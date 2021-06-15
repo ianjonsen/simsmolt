@@ -248,7 +248,7 @@ simulate <-
                            (dir[i] - pi) %% pi, 
                            dir[i])
           dir[i] <- ifelse((dir[i] < -70 | dir[i] > 70) & 
-                             ts[i - 1:3] > ts.mig, 
+                             all(ts[i - 1:3] > ts.mig), 
                            (dir[i] + pi) %% pi, 
                            dir[i])
           
