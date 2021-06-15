@@ -244,7 +244,13 @@ simulate <-
           ##  implies 0 or -ve growth, for current mass(w[i]) and speed (s[i])
           g.rng <- growth(w[i], seq(6, 20, l = 100), s[i])
           ts.mig <- seq(6, 20, l=100)[which(g.rng >= w[i])] %>% min()
-          dir[i] <- ifelse(all(ts[i - 1:3] <= ts.mig), (dir[i] - pi) %% pi, dir[i])
+          dir[i] <- ifelse(all(ts[i - 1:3] <= ts.mig), 
+                           (dir[i] - pi) %% pi, 
+                           dir[i])
+          dir[i] <- ifelse((dir[i] < -70 | dir[i] > 70) & 
+                             ts[i - 1:3] > ts.mig, 
+                           (dir[i] + pi) %% pi, 
+                           dir[i])
           
           ## can use this for longer runs (ie. Kelts w 440 d tags)
           # ## if smolt in optimal T range for growth then switch from biased RW to simple RW
