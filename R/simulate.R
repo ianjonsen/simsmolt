@@ -50,7 +50,8 @@ simulate <-
     ## movement type
     move <- mpar$move
     ## present migration direction
-    dir[1] <- mpar$pars$mdir[1]
+    md <- 1
+    dir[1] <- mpar$pars$mdir[md]
     r12 <- 1 ## start out using mpar$pars$rho[r12]
     
     if(mpar$growth) {
@@ -162,80 +163,80 @@ simulate <-
       }
       
       ### Migration scenarios
-      ## Scenario 1 - a) smolts reverse BRW migration if SST <= min growth C for 3 h; 
-      ##    migs = 1  b) smolts use simple random walk & slow to 1 bl/s if in optimal SST for growth (ca 11 - 14 C) - but size-dependent
-      ##              
-      ## Scenario 2 - a) smolts reverse BRW migration if SST <= min growth C for 3 h;
-      ##    migs = 2  b) smolts use simple random walk & slow to 1 bl/s if in optimal SST for growth (ca 11 - 14 C) - but size-dependent
-      ##              c) smolts stop S migration when they arrive on Grand Banks (< y = 950) & adopt simple RW
-      ##
-      ## Scenario 3 - a) smolts travel E from NS/S NL and turn N at random pt & at random rate after passing Avalon Penninsula;
-      ##              b) smolts reverse BRW migration direction if SST <= min growth Temp for 3 h
-      ##
-      ## Scenario 4 - a) smolts travel S from NB around NS
-      ##              b) smolts travel E from NS/S NL and turn N at random pt & at random rate after passing Avalon Penninsula;
-      ##              c) smolts reverse BRW migration direction if SST <= min growth Temp for 3 h
-      ##
-      ## Scenario 5 - a) smolts depart Campbellton River and head N with migration influenced by SST
-      
-      ## Check where we are and adjust migration direction if necessary - depending on Scenario
-      ## if migration Scenario == 2, stop migration if arrived on Grand Bank
       if (mpar$scenario == 2 & xy[i-1, 2] <= 1000) {
-        
+        ## stop migration if arrived on Grand Bank  
         move <- "rw"
         mpar$pars$b <- 1
         mpar$pars$uvm <- 0.25
         
       } else if(mpar$scenario == 3) { 
+        ## 1) smolts travel E from NS/S NL and turn N at random pt & at random rate after passing 
+        ##            Avalon Penninsula;
+        ## 2) smolts reverse BRW migration direction if SST <= min growth Temp for 3 h
+        
         if(xy[i-1,1] < mpar$pars$NFline & xy[i-1,2] < 850) {
           dir[i] <- dir[i-1]
-          
         } else if(xy[i-1,1] >=  mpar$pars$NFline & xy[i-1,2] < 850) {
           ## change direction bias gradually once around SE NF, 
           ##   first to 0 N and then to mdir once N of 950
           ##   this should stop smolts from banging into St John's
           dir[i] <- dir[i - 1] - mpar$pars$turn / 180 * pi
           dir[i] <- ifelse(dir[i] < -0.1745, -0.1745, dir[i]) 
-          
         } else if (xy[i - 1, 2] >= 850) {
-            dir[i] <- mpar$pars$mdir[2]
+          md <- 2
+          dir[i] <- mpar$pars$mdir[md]
         }
         
       } else if(mpar$scenario == 4) {
+        ## 1) smolts travel S from NB around NS
+        ## 2) smolts travel E from NS/S NL and turn N at random pt & 
+        ##           at random rate after passing Avalon Penninsula;
+        ## 3) smolts reverse BRW migration direction if SST <= min growth Temp for 3 h
+        
         # head S from StJohn river to S NS
         if(xy[i-1,2] > 290) {
           ## reset land buffer to 1 km to ensure migration out of BoF
           buff <- mpar$pars$buffer
           mpar$pars$buffer <- 1
           dir[i] <- dir[i-1]
-          
         } else if (xy[i-1,2] < 290 & dir[i] > mpar$pars$mdir[2]) {
           ## start turning toward new migration heading (to Grand Banks)
+          md <- 2
           dir[i] <- dir[i-1] - mpar$pars$turn/180*pi
           ## re-establish original land buffer once out of BoF
           mpar$pars$buffer <- buff
           
         } else if (xy[i-1,2] < 290 & dir[i] < mpar$pars$mdir[2]) {
           ## stop the turn once new migration heading is reached
-            dir[i] <- mpar$pars$mdir[2]
-            
+            md <- 2
+            dir[i] <- mpar$pars$mdir[md]
         }
-        
         if (xy[i-1,1] >= mpar$pars$NFline) {
           ## change direction bias gradually once around SE NF, 
           ##   first to 0 N and then to mdir once N of 950
           ##   this should stop smolts from banging into St John's
-          if(xy[i-1,2] < 850 & dir[i] > -10/180*pi) dir[i] <- dir[i-1] - mpar$pars$turn/180*pi
-          else if(xy[i-1,2] >= 850 & dir[i] > mpar$pars$mdir[3]) dir[i] <- dir[i-1] - mpar$pars$turn/180*pi
-          else if(xy[i-1,2] >= 850 & dir[i] < mpar$pars$mdir[3]) dir[i] <- mpar$pars$mdir[3]
+          if(xy[i-1,2] < 850 & dir[i] > -10/180*pi) {
+            dir[i] <- dir[i-1] - mpar$pars$turn/180*pi
+          } else if(xy[i-1,2] >= 850 & dir[i] > mpar$pars$mdir[3]) {
+            md <- 3
+            dir[i] <- dir[i-1] - mpar$pars$turn/180*pi
+          } else if(xy[i-1,2] >= 850 & dir[i] < mpar$pars$mdir[3]) {
+            md <- 3
+            dir[i] <- mpar$pars$mdir[md]
+          }
         }
+        
       } else if(mpar$scenario == 5) {
+        ## 1) smolts depart Campbellton River and head N with migration influenced by SST
         ## Campbellton River, NL
         if(xy[i-1,2] < 1200) {
           dir[i] <- dir[i-1]
-          if(dir[i-1] != mpar$pars$mdir[2]) r12 <- 1
+          if(dir[i-1] != mpar$pars$mdir[2]) {
+            r12 <- 1
+          }
         } else if(xy[i-1,2] >= 1200) {
-          dir[i] <- mpar$pars$mdir[2]
+          md <- 2
+          dir[i] <- mpar$pars$mdir[md]
           r12 <- 2
         } else {
           dir[i] <- dir[i-1]
@@ -254,11 +255,11 @@ simulate <-
           g.rng <- growth(w[i], seq(6, 20, l = 100), s[i])
           ts.mig <- seq(6, 20, l=100)[which(g.rng >= w[i])] %>% min()
           dir[i] <- ifelse(all(ts[i - 1:3] <= ts.mig), 
-                           (dir[i] - pi) %% pi, 
+                           (mpar$pars$mdir[md] - pi) %% pi, 
                            dir[i])
           dir[i] <- ifelse((dir[i] < -70 | dir[i] > 70) & 
                              all(ts[i - 1:3] > ts.mig), 
-                           (dir[i] + pi) %% pi, 
+                           mpar$pars$mdir[md], 
                            dir[i])
           
           ## can use this for longer runs (ie. Kelts w 440 d tags)
