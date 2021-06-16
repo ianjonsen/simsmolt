@@ -60,8 +60,9 @@ simulate <-
       fl[1] <- (w[1] / 8987.9) ^ (1 / 2.9639)
       s[1] <- fl[1] * mpar$pars$b * 3.6 ## initial swim speed (fl * b body-lengths / s) - in km/h
     } else {
-      fl <- (mpar$pars$w0 / 8987.9) ^ (1 / 2.9639)
-      s <- rep(fl * mpar$pars$b * 3.6, N)
+      w <- rep(w[1], N)
+      fl <- rep((w[1] / 8987.9) ^ (1 / 2.9639), N)
+      s <- fl * mpar$pars$b * 3.6
     }
     
     ## what is start week in env data
@@ -139,11 +140,19 @@ simulate <-
           v[i] <- extract(data$v, rbind(xy[i - 1, ])) * 3.6
           }
         
-        # downscale advection effect over first 21 d then increase to 1 over 7 d
-        u[i] <- ifelse(is.na(u[i]), 0, u[i]) * ifelse(i < 500, mpar$pars$psi, 
-                                                      ifelse(i < 668, -2 + i * 0.004491, 1))
-        v[i] <- ifelse(is.na(v[i]), 0, v[i]) * ifelse(i < 500, mpar$pars$psi, 
-                                                      ifelse(i < 668, -2 + i * 0.004491, 1))
+        ## following only applies if start is in SoBI
+        ## downscale advection effect over first 21 d then increase to 1 over 7 d
+        if(!scenario %in% 3:5) {
+          
+          u[i] <- ifelse(is.na(u[i]), 0, u[i]) * 
+            ifelse(i < 500, mpar$pars$psi, 
+                   ifelse(i < 668, -2 + i * 0.004491, 1)
+                   )
+          v[i] <- ifelse(is.na(v[i]), 0, v[i]) * 
+            ifelse(i < 500, mpar$pars$psi, 
+                   ifelse(i < 668, -2 + i * 0.004491, 1)
+                   )
+        }
         
       } else if(!mpar$advect | all(xy[1] >= data$sobi.box[1], 
                                    xy[1] <= data$sobi.box[2], 
@@ -160,7 +169,7 @@ simulate <-
       ##    migs = 2  b) smolts use simple random walk & slow to 1 bl/s if in optimal SST for growth (ca 11 - 14 C) - but size-dependent
       ##              c) smolts stop S migration when they arrive on Grand Banks (< y = 950) & adopt simple RW
       ##
-      ## Scenario 3 - a) smolts travel E from NB/NS/S NL and turn N at random pt & at random rate after passing Avalon Penninsula;
+      ## Scenario 3 - a) smolts travel E from NS/S NL and turn N at random pt & at random rate after passing Avalon Penninsula;
       ##              b) smolts reverse BRW migration direction if SST <= min growth Temp for 3 h
       ##
       ## Scenario 4 - a) smolts travel S from NB around NS
