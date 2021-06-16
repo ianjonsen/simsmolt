@@ -180,6 +180,8 @@ simulate <-
       
       ## Check where we are and adjust migration direction if necessary - depending on Scenario
       ## if migration Scenario == 2, stop migration if arrived on Grand Bank
+      
+      ## Migration direction scenarios
       if (mpar$scenario == 2 & xy[i-1, 2] <= 1000) {
         
         move <- "rw"
@@ -192,7 +194,7 @@ simulate <-
           
         } else if(xy[i-1,1] >=  mpar$pars$NFline & xy[i-1,2] < 850) {
           ## change direction bias gradually once around SE NF, 
-          ##   first to 0 N and then to mdir once N of 950
+          ##   first to 0 N and then to mdir once N of 850
           ##   this should stop smolts from banging into St John's
           dir[i] <- dir[i - 1] - mpar$pars$turn / 180 * pi
           dir[i] <- ifelse(dir[i] < -0.1745, -0.1745, dir[i]) 
@@ -218,7 +220,6 @@ simulate <-
         } else if (xy[i-1,2] < 290 & dir[i] < mpar$pars$mdir[2]) {
           ## stop the turn once new migration heading is reached
             dir[i] <- mpar$pars$mdir[2]
-            
         }
         
         if (xy[i-1,1] >= mpar$pars$NFline) {
