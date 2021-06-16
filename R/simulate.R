@@ -142,7 +142,7 @@ simulate <-
         
         ## following only applies if start is in SoBI
         ## downscale advection effect over first 21 d then increase to 1 over 7 d
-        if(!scenario %in% 3:5) {
+        if(!mpar$scenario %in% 3:5) {
           
           u[i] <- ifelse(is.na(u[i]), 0, u[i]) * 
             ifelse(i < 500, mpar$pars$psi, 
