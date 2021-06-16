@@ -257,7 +257,7 @@ simulate <-
           dir[i] <- ifelse(all(ts[i - 1:3] <= ts.mig), 
                            (mpar$pars$mdir[md] - pi) %% pi, 
                            dir[i])
-          dir[i] <- ifelse((dir[i] < -70 | dir[i] > 70) & 
+          dir[i] <- ifelse(abs(dir[i] - mpar$pas$mdir[md]) > 45 & 
                              all(ts[i - 1:3] > ts.mig), 
                            mpar$pars$mdir[md], 
                            dir[i])
