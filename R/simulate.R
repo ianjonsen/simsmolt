@@ -170,9 +170,9 @@ simulate <-
         mpar$pars$uvm <- 0.25
         
       } else if(mpar$scenario == 3) { 
-        ## 1) smolts travel E from NS/S NL and turn N at random pt & at random rate after passing 
+        ## 1) travel E from NS/S NL and turn N at random pt & at random rate after passing 
         ##            Avalon Penninsula;
-        ## 2) smolts reverse BRW migration direction if SST <= min growth Temp for 3 h
+        ## 2) reverse BRW migration direction if SST <= min growth Temp for 3 h
         
         if(xy[i-1,1] < mpar$pars$NFline & xy[i-1,2] < 850) {
           dir[i] <- dir[i-1]
