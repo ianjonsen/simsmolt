@@ -29,11 +29,6 @@ simulate <-
     if (is.null(data))
       stop("Can't find output from sim_setup()\n")
     if (class(data$land)[1] != "RasterLayer") stop("distance2land must be a RasterLayer")
-    
-    if(mpar$advect & !all(c("u","v") %in% names(data))) {
-      cat("Turning off current-advected movement as data do not contain currents\n")
-      mpar$advect <- FALSE
-    }
       
     ## define location matrix & initialise start position
     ## ds - active swimming displacements
@@ -67,100 +62,51 @@ simulate <-
     }
     
     ## what is start week in env data
-    if(data$ocean == "doy") {
-      d1 <- as.numeric(str_split(names(data$ts)[1], "d", simplify = TRUE)[,2]) - 1
-    }
+    d1 <- as.numeric(str_split(names(data$ts)[1], "d", simplify = TRUE)[,2]) - 1
 
     ## iterate movement
     for (i in 2:N) {
       if(i==2 && pb)  tpb <- txtProgressBar(min = 2, max = N, style = 3)
       
       ### Apply Energetics
-      if(mpar$growth) {
-          ## extract Temperature
-          switch(data$ocean,
-                 cl = {
-                   ts[i - 1] <- extract(data$ts, rbind(xy[i - 1, ])) - 273
-                   if (is.na(ts[i - 1])) {
-                     ## calc mean Temp within 2 km buffer of location @ time i-1
-                     ts[i - 1] <-
-                       extract(data$ts, rbind(xy[i - 1, ]), buffer = 2, df = TRUE)[, 2] %>%
-                       mean(., na.rm = TRUE) - 273
-                   }
-                 },
-                 doy = {
-                   ts[i - 1] <-
-                     extract(data$ts[[(yday(mpar$pars$start.dt + i * 3600) - d1)]], rbind(xy[i - 1, ])) - 273
-                   if (is.na(ts[i - 1])) {
-                     ## calc mean Temp within 2 km buffer of location @ time i-1
-                     ts[i - 1] <-
-                       extract(data$ts[[(yday(mpar$pars$start.dt + i * 3600) - d1)]],
-                               rbind(xy[i - 1, ]),
-                               buffer = 2,
-                               df = TRUE)[, 2] %>%
-                       mean(., na.rm = TRUE) - 273
-                   }
-                 })
+      if (mpar$growth) {
+        ## extract Temperature
+        ts[i - 1] <- extract(data$ts[[(yday(mpar$pars$start.dt + i * 3600) - d1)]], 
+                             rbind(xy[i - 1,])) - 273
+        if (is.na(ts[i - 1])) {
+          ## calc mean Temp within 2 km buffer of location @ time i-1
+          ts[i - 1] <-
+            extract(data$ts[[(yday(mpar$pars$start.dt + i * 3600) - d1)]],
+                    rbind(xy[i - 1,]),
+                    buffer = 2,
+                    df = TRUE)[, 2] %>%
+            mean(., na.rm = TRUE) - 273
+        }
+        
+        ## calculate growth in current time step based on water temp at previous location, etc...
+        if (ts[i - 1] <= 0 & !is.na(ts[i - 1])) {
+          cat("\n stopping simulation: smolt has entered water <= 0 deg C")
+          break
+        } else if (ts[i - 1] > 0 & !is.na(ts[i - 1])) {
+          w[i] <- growth(w[i - 1], ts[i - 1], s[i - 1])
           
-          ## calculate growth in current time step based on water temp at previous location, etc...
-          if (ts[i - 1] <= 0 & !is.na(ts[i - 1])) {
-            cat("\n stopping simulation: smolt has entered water <= 0 deg C")
-            break
-          } else if (ts[i - 1] > 0 & !is.na(ts[i - 1])) {
-            w[i] <- growth(w[i - 1], ts[i - 1], s[i - 1])
-            
-          } else if (is.na(ts[i - 1])) {
-            cat("\n stopping simulation: NA value for temperature")
-            break
-          }
+        } else if (is.na(ts[i - 1])) {
+          cat("\n stopping simulation: NA value for temperature")
+          break
+        }
           
-          ## convert W to fL - based on Byron et al 2014 (fig A1 in S1)
-          fl[i] <- (w[i] / 8987.9) ^ (1 / 2.9639)
-          ## smolts can't shrink their length... (this would unrealistically affect swim speed & energetics), so
-          ## if change in weight implies reduction in forklength, then stick with last forklength  - mimics loss of condition
-          if (fl[i] < fl[i - 1]) {
-            fl[i] <- fl[i - 1]
-          }
-
+        ## convert W to fL - based on Byron et al 2014 (fig A1 in S1)
+        fl[i] <- (w[i] / 8987.9) ^ (1 / 2.9639)
+        ## smolts can't shrink their length... (this would unrealistically affect swim speed & energetics), so
+        ## if change in weight implies reduction in forklength, then stick with last forklength  - mimics loss of condition
+        if (fl[i] < fl[i - 1]) {
+          fl[i] <- fl[i - 1]
+        }
+        
         ## determine size-based average move step for current time step
         ## assume avg swim speed of b bL/s
         s[i] <- fl[i] * mpar$pars$b * 3.6 ## forklength * b m/s converted to km/h
       } 
-      
-      ### Current Advection
-      if (mpar$advect) {
-        ## determine envt'l forcing
-        ## determine advection due to current, convert from m/s to km/h
-        if(data$ocean == "doy") {
-          u[i] <- extract(data$u[[(yday(mpar$pars$start.dt + i * 3600) - d1)]], 
-                          rbind(xy[i - 1, ])) * 3.6 * mpar$par$uvm
-          v[i] <- extract(data$v[[(yday(mpar$pars$start.dt + i * 3600) - d1)]], 
-                          rbind(xy[i - 1, ])) * 3.6 * mpar$par$uvm
-          } else if(data$ocean == "cl") {
-          u[i] <- extract(data$u, rbind(xy[i - 1, ])) * 3.6 
-          v[i] <- extract(data$v, rbind(xy[i - 1, ])) * 3.6
-          }
-        
-        ## following only applies if start is in SoBI
-        ## downscale advection effect over first 21 d then increase to 1 over 7 d
-        if(!mpar$scenario %in% 3:5) {
-          
-          u[i] <- ifelse(is.na(u[i]), 0, u[i]) * 
-            ifelse(i < 500, mpar$pars$psi, 
-                   ifelse(i < 668, -2 + i * 0.004491, 1)
-                   )
-          v[i] <- ifelse(is.na(v[i]), 0, v[i]) * 
-            ifelse(i < 500, mpar$pars$psi, 
-                   ifelse(i < 668, -2 + i * 0.004491, 1)
-                   )
-        }
-        
-      } else if(!mpar$advect | all(xy[1] >= data$sobi.box[1], 
-                                   xy[1] <= data$sobi.box[2], 
-                                   xy[2] >= data$sobi.box[3], 
-                                   xy[2] <= data$sobi.box[4])) {
-        u[i] <- v[i] <- 0
-      }
       
       ## Migration direction scenarios
       if (mpar$scenario == 2 & xy[i-1, 2] <= 1000) {
@@ -304,9 +250,6 @@ simulate <-
                                       rho = mpar$pars$rho[r12],
                                       a = mpar$pars$a,
                                       b = s[i], 
-                                      taxis = mpar$taxis,
-                                      u = u[i],
-                                      v = v[i], 
                                       shelf = mpar$shelf,
                                       beta = mpar$pars$beta)
                           },
@@ -319,9 +262,6 @@ simulate <-
                                 rho = mpar$pars$rho[2],
                                 a = mpar$pars$a,
                                 b = s[i],
-                                taxis = mpar$taxis,
-                                u = u[i],
-                                v = v[i],
                                 shelf = mpar$shelf,
                                 beta = mpar$pars$beta)
                           },
@@ -329,6 +269,20 @@ simulate <-
                             ds[i, ] <- rbind(xy[i-1, 1:2])
                           })
         }
+      
+      ### Current Advection
+      if (mpar$advect) {
+        ## determine envt'l forcing
+        ## determine advection due to current, convert from m/s to km/h
+        u[i] <- extract(data$u[[(yday(mpar$pars$start.dt + i * 3600) - d1)]], 
+                        rbind(xy[i - 1, ])) * 3.6 * mpar$par$uvm
+        v[i] <- extract(data$v[[(yday(mpar$pars$start.dt + i * 3600) - d1)]], 
+                        rbind(xy[i - 1, ])) * 3.6 * mpar$par$uvm
+ 
+        
+      } else if(!mpar$advect) {
+        u[i] <- v[i] <- 0
+      }
       
       xy[i, 1:2] <- cbind(ds[i, 1] + u[i], 
                           ds[i, 2] + v[i])

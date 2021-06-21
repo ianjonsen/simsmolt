@@ -10,8 +10,7 @@ sim_par(
   advect = TRUE,
   growth = TRUE,
   shelf = TRUE,
-  taxis = c(NA, "p", "n"),
-  scenario = 2,
+  scenario = "rs",
   land = FALSE,
   boundary = FALSE,
   ...
@@ -28,8 +27,6 @@ sim_par(
 
 \item{shelf}{logical; should smolts be constrained to stay in water > - 1000 m depth (continental shelf)}
 
-\item{taxis}{"p" (+ve rheotaxis), "n" (-ve rheotaxis), NA (no taxis; default)}
-
 \item{land}{keep track of sim rep hitting land (TRUE)}
 
 \item{boundary}{keep track of sim rep hitting sim boundary (TRUE)}
@@ -45,7 +42,6 @@ Returns a list with components
   \item{\code{advect}}{ocean-current-dependent movements}
   \item{\code{growth}}{temperature-dependent growth}
   \item{\code{shelf}}{movements constrained to stay on shelf}
-  \item{\code{taxis}}{behavioural response to currents}
   \item{\code{migs}}{migration strategy}
   \item{\code{land}}{record if smolt gets "stuck" on land, thereby ending simulation}
   \item{\code{boundary}}{record if smolt hits simulation boundary, thereby ending simulation}
@@ -59,7 +55,7 @@ The movement process used predominantly in the simulation is
 selected by the \code{move} argument.  Additional 
 parameters include: \code{temp} is movement temperature-dependent; \code{advect} do ocean
 currents influence movement; \code{growth} do smolts grow in temp-dependent fashion; 
-\code{taxis} do smolts active swim with/against current; \code{start.date}; 
+\code{start.date}; 
 \code{start} (location); \code{coa} centre of attraction (can be NULL); 
 \code{mdir} directional bias (a 2-element vector);
 \code{rho} concentration of step directions (for wrapped-Cauchy, a 2-element vector); ...

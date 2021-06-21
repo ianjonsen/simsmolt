@@ -7,7 +7,7 @@
 #' @importFrom raster extract xyFromCell
 #' @export
 #' 
-rw <- function(n = 1, data, xy = NULL, buffer = NULL, rho, a, b, taxis, u, v, shelf, beta){
+rw <- function(n = 1, data, xy = NULL, buffer = NULL, rho, a, b, shelf, beta){
   
   if (a > 0)
     st <- rweibull(n, a, b)
@@ -49,28 +49,7 @@ rw <- function(n = 1, data, xy = NULL, buffer = NULL, rho, a, b, taxis, u, v, sh
     }
   }
   
-  phi0 <- rwrpcauchy(n, mu, rho)
-  
-  ## account for any rheotaxis by modifying the step bearing phi to orient against current (taxis = "p") or with current (taxis = "n")
-  ## strength of rheotaxis (adherence to the current direction) is a function of the ratio of current magnitude to active movement step length ()
-  if(!is.na(taxis)) {
-    switch(taxis,
-           p = {
-             rhb <- atan2(u,v) # against current
-             rhm <- sqrt(u^2+v^2)
-             rh.wt <- ifelse(rhm / st > 1, 1, rhm / st)
-             phi <- atan2(sum(sin(rhb * rh.wt), sin(phi0 * (1 - rh.wt))), sum(cos(rhb * rh.wt), cos(phi0 * (1 - rh.wt))))
-           },
-           n = {
-             rhb <- atan2(v,u) # with current
-             rhm <- sqrt(u^2+v^2)
-             rh.wt <- ifelse(rhm / st > 1, 1, rhm / st)
-             phi <- atan2(sum(sin(rhb * rh.wt), sin(phi0 * (1 - rh.wt))), sum(cos(rhb * rh.wt), cos(phi0 * (1 - rh.wt))))
-           })
-  } else {
-    phi <- phi0
-  }
-  
+  phi <- rwrpcauchy(n, mu, rho)
   
   new.xy <- c(xy[1] + sin(phi) * st, xy[2] + cos(phi) * st)
   if(shelf) {

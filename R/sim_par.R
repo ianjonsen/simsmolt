@@ -4,7 +4,7 @@
 ##' selected by the \code{move} argument.  Additional 
 ##' parameters include: \code{temp} is movement temperature-dependent; \code{advect} do ocean
 ##' currents influence movement; \code{growth} do smolts grow in temp-dependent fashion; 
-##' \code{taxis} do smolts active swim with/against current; \code{start.date}; 
+##' \code{start.date}; 
 ##' \code{start} (location); \code{coa} centre of attraction (can be NULL); 
 ##' \code{mdir} directional bias (a 2-element vector);
 ##' \code{rho} concentration of step directions (for wrapped-Cauchy, a 2-element vector); ...
@@ -15,7 +15,6 @@
 ##' @param advect logical
 ##' @param growth logical
 ##' @param shelf logical; should smolts be constrained to stay in water > - 1000 m depth (continental shelf)
-##' @param taxis "p" (+ve rheotaxis), "n" (-ve rheotaxis), NA (no taxis; default)
 ##' @param migs migration scenario 1 or 2 (stop migration upon arrival to Grand Banks)
 ##' @param land keep track of sim rep hitting land (TRUE)
 ##' @param boundary keep track of sim rep hitting sim boundary (TRUE)
@@ -26,7 +25,6 @@
 ##'   \item{\code{advect}}{ocean-current-dependent movements}
 ##'   \item{\code{growth}}{temperature-dependent growth}
 ##'   \item{\code{shelf}}{movements constrained to stay on shelf}
-##'   \item{\code{taxis}}{behavioural response to currents}
 ##'   \item{\code{migs}}{migration strategy}
 ##'   \item{\code{land}}{record if smolt gets "stuck" on land, thereby ending simulation}
 ##'   \item{\code{boundary}}{record if smolt hits simulation boundary, thereby ending simulation}
@@ -39,18 +37,17 @@ sim_par <-
            advect = TRUE,
            growth = TRUE,
            shelf = TRUE,
-           taxis = c(NA,"p","n"),
-           scenario = 2,
+           scenario = "rs",
            land = FALSE,
            boundary = FALSE,
            ...) {
     
     move <- match.arg(move)
-    taxis <- match.arg(taxis)
     
     dots <- list(...)
     
     pars <- list(
+      N = 1440,
       start.dt = ISOdatetime(2021,07,09,00,00,00, tz = "UTC"),
       start = c(995, 1240),
       coa = NULL,
@@ -81,7 +78,6 @@ sim_par <-
          advect = advect,
          growth = growth,
          shelf = shelf,
-         taxis = taxis,
          scenario = scenario,
          land = land,
          boundary = boundary,

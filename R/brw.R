@@ -7,7 +7,7 @@
 #' @importFrom raster extract xyFromCell
 #' @export
 #' 
-brw <- function(n = 1, data, xy = NULL, coa = NULL, dir = NULL, buffer = NULL, rho, a, b, taxis, u, v, shelf, beta) {
+brw <- function(n = 1, data, xy = NULL, coa = NULL, dir = NULL, buffer = NULL, rho, a, b, shelf, beta) {
   
   if(is.null(coa) & is.null(dir)) stop("Cannot implement a biased random walk without a centre of attraction or direction")
 #  if(!is.null(coa) & !is.null(dir)) stop("Only one of a centre of attraction or direction may be specified, not both")
@@ -45,27 +45,7 @@ brw <- function(n = 1, data, xy = NULL, coa = NULL, dir = NULL, buffer = NULL, r
       }
   } 
   
-  phi0 <- rwrpcauchy(n, mu, rho)
-  
-  ## account for any rheotaxis by modifying the step bearing phi to orient against current (taxis = "p") or with current (taxis = "n")
-  ## strength of rheotaxis (adherence to the current direction) is a function of the ratio of current magnitude to active movement step length ()
-  if(!is.na(taxis)) {
-    switch(taxis,
-           p = {
-             rhb <- atan2(u,v) # against current
-             rhm <- sqrt(u^2+v^2)
-             rh.wt <- ifelse(rhm / st > 1, 1, rhm / st)
-             phi <- atan2(sum(sin(rhb * rh.wt), sin(phi0 * (1 - rh.wt))), sum(cos(rhb * rh.wt), cos(phi0 * (1 - rh.wt))))
-           },
-           n = {
-             rhb <- atan2(v,u) # with current
-             rhm <- sqrt(u^2+v^2)
-             rh.wt <- ifelse(rhm / st > 1, 1, rhm / st)
-             phi <- atan2(sum(sin(rhb * rh.wt), sin(phi0 * (1 - rh.wt))), sum(cos(rhb * rh.wt), cos(phi0 * (1 - rh.wt))))
-           })
-  } else {
-    phi <- phi0
-  }
+  phi <- rwrpcauchy(n, mu, rho)
   
   new.xy <- c(xy[1] + sin(phi) * st, xy[2] + cos(phi) * st)
   if(shelf) {

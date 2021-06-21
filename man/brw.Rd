@@ -14,9 +14,6 @@ brw(
   rho,
   a,
   b,
-  taxis,
-  u,
-  v,
   shelf,
   beta
 )
