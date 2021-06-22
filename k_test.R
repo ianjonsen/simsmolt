@@ -19,27 +19,30 @@ start.dt <- lubridate::as_datetime(which(terra::extract(d$ts, cbind(spars$x, spa
 om.delay <-
   round(as.numeric(start.dt - lubridate::as_datetime(spars$dt)), 0)
 
-sim <- lapply(1:10, function(i) {
+sim <- lapply(1:1, function(i) {
   simKcam(
       id = i,
       data = d,
       mpar = with(subset(spars, river == "Campbellton"), 
-                  sim_par(growth=FALSE,
+                  sim_par(growth=TRUE,
                           scenario = "rs",
-                          N = (80 - om.delay) * 24,
+                          N = (100 - om.delay) * 24,
                           start = cbind(x,y), 
                           start.dt = start.dt,
                           mdir = runif(1,120,160) / 180*pi,
                           coa = cbind(x,y), 
                           w0 = s.w0 + om.delay, # guess 1 g/d growth after tagging
                           b = 1.6,
-                          rho = 0.6,
+                          rho = 0.4,
                           surv = 0.9968, # increase by 0.0032 1 - (1 - 0.9936)/2 for kelts
                           Dreten = 0, # assume no tag expulsion
-                          buffer = 2,
+                          buffer = 5,
                           pdrf = c(5, -0.01), # = p(0.5) @ 500 m  + < 0.01 @ 1000 m   V13
                           beta = c(-2, -2))),
       pb = TRUE) %>%
         sim_detect(., data = d, delay = c(70,150), noise = 0.5)
 }) 
+
+run <- tibble(id = 1:1, rep=sim)
+class(run) <- append(class(run), "simsmolt", 0)
   

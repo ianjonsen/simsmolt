@@ -10,11 +10,11 @@
 moveKcam <- function(data, xy = NULL, mpar, i, s, ts, w) {
   
   ## if xy S of 1100 then apply fixed movement to get away from NL Islands
-  if(xy[2] <= 1100 & xy[1] >= 1100 & xy[1] <= 1230) {
-    phi <- rwrpcauchy(1, -5/180*pi, 0.9)
-    new.xy <- c(xy[1] + sin(phi) * s, xy[2] + cos(phi) * s)
-
-  } else {
+  # if(xy[2] <= 1100 & xy[1] >= 1100 & xy[1] <= 1230) {
+  #   phi <- rwrpcauchy(1, -5/180*pi, 0.9)
+  #   new.xy <- c(xy[1] + sin(phi) * s, xy[2] + cos(phi) * s)
+  # 
+  # } else {
     ## regular movement
     ## calculate distance to land
     d2l <- terra::extract(data$land, rbind(xy))
@@ -36,9 +36,11 @@ moveKcam <- function(data, xy = NULL, mpar, i, s, ts, w) {
       if(mpar$growth) {
         ## Temperature-dependent direction reversal (instantaneous)
         g.rng <- growth(w, seq(6, 20, l = 100), s)
-        ts.mig <- seq(6, 20, l = 100)[which(g.rng >= w)] %>% min()
-        if(ts <= ts.mig)
-        phi <- ifelse(ts <= ts.mig, phi - pi, phi)
+        ts.mig <- seq(6, 20, l = 100)[which(g.rng >= w)] %>% min() * 0.75
+        if(ts <= ts.mig) {
+          phi <- ifelse(ts <= ts.mig, runif(1,pi-0.4,pi+0.4), phi)
+          cat("\ncold water")
+        }
       } else {
         ## Temperature-dependent travel rate
         s <- ifelse(ts <= 5, s * 0.1, s)
@@ -74,7 +76,7 @@ moveKcam <- function(data, xy = NULL, mpar, i, s, ts, w) {
     } else if(is.na(new.d2l)) {
       new.xy <- c(NA,NA)
     } 
-  }
+#  }
   
   cbind(new.xy[1], new.xy[2], phi %% (2*pi))
   
