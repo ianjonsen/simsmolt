@@ -41,16 +41,10 @@ simKcam <-
     reten <- dir <- surv <- m <- u <- v <- ts <- vector("numeric", N)
     reten[1] <- 1
     surv[1] <- 1
-    ## movement type
-    move <- mpar$move
-    ## present migration direction
-    md <- 1
-    dir[1] <- mpar$pars$mdir[md]
-    r12 <- 1 ## start out using mpar$pars$rho[r12]
+
     
     if(mpar$growth) {
       s <- w <- fl <- vector("numeric", N)
-      # move_dir <- rep(NA, N)
       w[1] <- mpar$pars$w0
       fl[1] <- (w[1] / 8987.9) ^ (1 / 2.9639)
       s[1] <- fl[1] * mpar$pars$b * 3.6 ## initial swim speed (fl * b body-lengths / s) - in km/h
@@ -64,7 +58,7 @@ simKcam <-
     ## what is start week in env data
     d1 <- as.numeric(str_split(names(data$ts)[1], "d", simplify = TRUE)[,2]) - 1
     
-    ## iterate movement
+    ## iterate ment
     for (i in 2:N) {
       if(i==2 && pb)  tpb <- txtProgressBar(min = 2, max = N, style = 3)
       
@@ -74,7 +68,7 @@ simKcam <-
       if (is.na(ts[i - 1])) {
         ## calc mean Temp within 2 km buffer of location @ time i-1
         ts[i - 1] <-
-          terra::extract(data$ts[[(yday(mpar$pars$start.dt + i * 3600) - d1)]],
+          extract(data$ts[[(yday(mpar$pars$start.dt + i * 3600) - d1)]],
                          rbind(xy[i - 1,]),
                          buffer = 2,
                          df = TRUE)[, 2] %>%
@@ -84,10 +78,11 @@ simKcam <-
       ### Apply Energetics
       if (mpar$growth) {
         ## calculate growth in current time step based on water temp at previous location
-        if (ts[i - 1] <= 0 & !is.na(ts[i - 1])) {
-          cat("\n stopping simulation: smolt has entered water <= 0 deg C")
-          break
-        } else if (ts[i - 1] > 0 & !is.na(ts[i - 1])) {
+ #       if (ts[i - 1] <= 0 & !is.na(ts[i - 1])) {
+ #         cat("\n stopping simulation: smolt has entered water <= 0 deg C")
+ #         break
+ #       } else 
+        if (ts[i - 1] > 0 & !is.na(ts[i - 1])) {
           w[i] <- growth(w[i - 1], ts[i - 1], s[i - 1])
           
         } else if (is.na(ts[i - 1])) {
@@ -104,12 +99,12 @@ simKcam <-
           fl[i] <- fl[i - 1]
         }
         
-        ## determine size-based average move step for current time step
+        ## determine size-based average  step for current time step
         ## assume avg swim speed of b bodylengths/s
         s[i] <- fl[i] * mpar$pars$b * 3.6 ## forklength * b m/s converted to km/h
       } 
       
-      ## Movement kernel
+      ## ment kernel
       ds[i,] <- moveKcam(data, xy = xy[i-1,], mpar = mpar, i, s = s[i], ts = ts[i-1], w = w[i])
         
       ### Current Advection
@@ -196,7 +191,7 @@ simKcam <-
     
     sim <- X %>% as_tibble() 
     
-    ## remove records after sim is stopped for being stuck on land, etc...
+    ## re records after sim is stopped for being stuck on land, etc...
     if(mpar$land | mpar$boundary) {
     sim <- sim %>%
           filter((!is.na(x) & !is.na(y) & w != 0 & fl != 0 & s != 0) | surv != 1 | reten != 1)
