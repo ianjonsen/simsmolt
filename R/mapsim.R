@@ -13,8 +13,8 @@
 ##' @param size of smolt track end point(s)
 
 ##'
-##' @importFrom ggplot2 ggplot coord_fixed aes coord_sf geom_sf
-##' @importFrom ggplot2 scale_fill_gradientn stat_smooth geom_line
+##' @importFrom ggplot2 ggplot coord_fixed aes coord_sf geom_sf guide_colourbar
+##' @importFrom ggplot2 scale_fill_gradientn stat_smooth geom_line guides
 ##' @importFrom ggplot2 geom_path theme_minimal geom_point element_blank
 ##' @importFrom ggplot2 aes_string theme ylab xlab guides guide_legend xlim ylim
 ##' @importFrom raster extent crop nlayers
@@ -105,7 +105,7 @@ mapsim <- function(x,
     #   alpha = 0.75,
     #   lwd = 0.4
     # ) +
-    scale_fill_gradientn(colours = hcl.colors(n=100, pal), na.value = grey(0.8)) +
+    scale_fill_gradientn(colours = hcl.colors(n=100, pal), na.value = grey(0.8), guide = "none") +
     theme_minimal()
   
   ## ESRF Oil & Gas polygon  
@@ -124,11 +124,13 @@ mapsim <- function(x,
   if (track) {
     m <- m + geom_path(
       data = sim,
-      aes(x, y, group = id),
-      colour = tcol,
+      aes(x, y, group = id, col = ts),
+#      colour = tcol,
       alpha = alpha,
       size = lwd
-    )
+    ) +
+      scale_colour_gradientn(colours = hcl.colors(n=100, "Temp"),
+                             na.value = "black")
 
     if (!is.null(detect) & det) {
       if (nrow(detect) > 0) {
@@ -184,9 +186,9 @@ mapsim <- function(x,
   
   
   m <- m + theme(
-    axis.title = element_blank(),
-    legend.position = "none"
-  )
+    axis.title = element_blank()
+  ) +
+    guides(colour = guide_colourbar(title = "Temp"))
   
   suppressWarnings(m)
 }

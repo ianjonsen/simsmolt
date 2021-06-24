@@ -7,11 +7,12 @@
 #' @importFrom raster extract xyFromCell
 #' @export
 #' 
-moveKcam <- function(data, xy = NULL, mpar, i, s, ts, w) {
-  
+moveKcam <- function(data, xy = NULL, mpar, i, step, ts, w) {
+    
+    phi <- NULL
     ## regular movement
     ## calculate distance to land
-    d2l <- terra::extract(data$land, rbind(xy))
+    d2l <- extract(data$land, rbind(xy))
     
     if (d2l > mpar$pars$buffer) {
       switch(mpar$scenario, 
@@ -46,59 +47,62 @@ moveKcam <- function(data, xy = NULL, mpar, i, s, ts, w) {
                }
              })
       
-#      if(mpar$growth) {
         ## Temperature-dependent direction reversal (instantaneous)
-        g.rng <- growth(w, seq(6, 20, l = 100), s)
-        ts.mig <- seq(6, 20, l = 100)[which(g.rng >= w)] %>% min() * 0.5 #0.75
-        if(ts <= ts.mig) {
-          phi <- ifelse(ts <= ts.mig, runif(1,pi-0.4,pi+0.4), phi)
+        g.rng <- growth(w, seq(1, 25, l = 100), step)
+        tsm <- seq(1, 25, l = 100)[which(g.rng >= w)] %>% min() * 0.5 #0.75
+        if(ts <= tsm) {
+          cells <- extract(data$ts[[(yday(mpar$pars$start.dt + i * 3600))]],
+                                   y = cbind(xy[1], xy[2]),
+                                   buffer = 15,
+                                   df = TRUE,
+                                   cellnumbers = TRUE)
+          ## take 1st location at max ts
+          cell.tmax <- cells[cells[, 3] == max(cells[, 3], na.rm = TRUE), "cells"]
+          xys <- xyFromCell(data$ts[[(yday(mpar$pars$start.dt + i * 3600))]], cell.tmax) %>% as.vector()
+          phi <- atan2(xys[1] - xy[1], xys[2] - xy[2])
+
         }
-#      } else {
-#        ## Temperature-dependent travel rate
-#        s <- ifelse(ts <= 5, s * 0.1, s)
-#      }
       
     } else {
       ## direct kelt to move parallel to land
       if(xy[2] < 1200) {
-        mu <- (terra::extract(data$land_dir, rbind(xy)) + 0.5 * pi)
+        phi <- as.numeric(extract(data$land_dir, rbind(xy)) + 0.5 * pi)
         if (d2l <= 2) {
-          mu <-
-            (mu + 0.5 * pi) ## move in opposite direction of land if within 2km
+          phi <-
+            (phi + 0.5 * pi) ## move in opposite direction of land if within 2km
         }
       } else {
         ## if kelt near Greenland then move parallel to land in either direction
         sg <- sample(c(-1,1), size = 1)
-        mu <- (terra::extract(data$land_dir, rbind(xy)) + sg * 0.5 * pi)
-        if (d2l <= 2) {
-          mu <-
-            (mu + sg * 0.5 * pi) ## move in opposite direction of land if within 2km
+        phi <- as.numeric(extract(data$land_dir, rbind(xy)) + sg * 0.5 * pi)
+        if (d2l <= 5) {
+          phi <-
+            (phi + sg * 0.5 * pi) ## move in opposite direction of land if within 5km
         }
       }
-      phi <- rwrpcauchy(1, mu, 0.95)
     }   
     
-    new.xy <- c(xy[1] + sin(phi) * s, xy[2] + cos(phi) * s)
-    if(mpar$shelf) {
+    new.xy <- c(xy[1] + sin(phi) * step, xy[2] + cos(phi) * step)
+    
+    if(mpar$shelf & d2l <= 30) {
       pv <- c(extract(data$shelf[[1]], rbind(new.xy))[1],
               extract(data$shelf[[2]], rbind(new.xy))[1])
       new.xy <- new.xy + pv * mpar$pars$beta
     }
     
     ## check if new xy close/on land
-    new.d2l <- terra::extract(data$land, rbind(new.xy))
-    
+    new.d2l <- extract(data$land, rbind(new.xy))
+
     ## if new location on land (0) then adjust so it's in water
     if(!is.na(new.d2l) & new.d2l == 0) {
-      ## find all nearby cells within 3 km & select the one farthest from land
-      cells <- terra::extract(data$land, rbind(new.xy), buffer = 3, cellnumbers = TRUE, df = TRUE)
+      ## find all nearby cells within 5 km & select the one farthest from land
+      cells <- extract(data$land, rbind(new.xy), buffer = 5, cellnumbers = TRUE, df = TRUE)
       cell.max <- cells[cells[, 3] == max(cells[, 3], na.rm = TRUE), 2][1]
-      new.xy <- xyFromCell(data$land, cell.max)
+      new.xy <- xyFromCell(data$land, cell.max) %>% as.vector()
       
     } else if(is.na(new.d2l)) {
       new.xy <- c(NA,NA)
     } 
-#  }
   
   cbind(new.xy[1], new.xy[2], phi %% (2*pi))
   

@@ -4,9 +4,9 @@
 \alias{moveKcam}
 \title{random walk movement kernel for Campbellton River kelts}
 \usage{
-moveKcam(data, xy = NULL, mpar, i, s, ts, w)
+moveKcam(data, xy = NULL, mpar, i, step, ts, w)
 
-moveKcam(data, xy = NULL, mpar, i, s, ts, w)
+moveKcam(data, xy = NULL, mpar, i, step, ts, w)
 }
 \description{
 utility function not to be called by user
