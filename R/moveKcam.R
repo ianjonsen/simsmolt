@@ -51,9 +51,10 @@ moveKcam <- function(data, xy = NULL, mpar, i, step, ts, w) {
         g.rng <- growth(w, seq(1, 25, l = 100), step)
         tsm <- seq(1, 25, l = 100)[which(g.rng >= w)] %>% min() * 0.5 #0.75
         if(ts <= tsm) {
+          browser()
           cells <- extract(data$ts[[(yday(mpar$pars$start.dt + i * 3600))]],
                                    y = cbind(xy[1], xy[2]),
-                                   buffer = 15,
+                                   buffer = 5,
                                    df = TRUE,
                                    cellnumbers = TRUE)
           ## take 1st location at max ts
