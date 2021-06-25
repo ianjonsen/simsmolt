@@ -86,7 +86,8 @@ moveKstm <- function(data, xy = NULL, mpar, i, step, ts, w) {
       ## take 1st location at max ts
       cell.tmax <- cells[cells[, 3] == max(cells[, 3], na.rm = TRUE), "cells"]
       xys <- xyFromCell(data$ts[[(yday(mpar$pars$start.dt + i * 3600))]], cell.tmax) %>% as.vector()
-      phi <- atan2(xys[1] - xy[1], xys[2] - xy[2])
+      mu <- atan2(xys[1] - xy[1], xys[2] - xy[2])
+      phi <- rwrpcauchy(1, mu, mpar$pars$rho)
 
     }
 

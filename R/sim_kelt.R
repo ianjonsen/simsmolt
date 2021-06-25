@@ -20,7 +20,7 @@
 sim_kelt <-
   function(id=1,
            data = NULL,
-           river = c("cam","stm","lah"),
+           river = c("cam","stm","lah","drift"),
            mpar = sim_par(),
            pb = TRUE
   ) {
@@ -134,6 +134,9 @@ sim_kelt <-
                                   s = s[i],
                                   ts = ts[i-1],
                                   w = w[i])
+                       },
+                       drift = {
+                         cbind(xy[i-1,1], xy[i-1,2], NA)
                        })
 
       ### Current Advection

@@ -19,7 +19,7 @@ start.dt <- lubridate::as_datetime(which(extract(d$ts, cbind(spars$x+10, spars$y
 om.delay <-
   round(as.numeric(start.dt - lubridate::as_datetime(spars$dt)), 0)
 
-n <- 5
+n <- 10
 coa1 <- data.frame(x = rep(1550,n), y = runif(n,600,775))
 coa2 <- data.frame(x = runif(n,1200,1800), y = rep(2450,n))        ## for "as" scenarios
 coa3 <- data.frame(x = runif(n,1350,1450), y = 550)
