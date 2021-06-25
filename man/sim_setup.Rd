@@ -6,14 +6,11 @@
 \usage{
 sim_setup(
   config = file.path("/", "Users", "jonsen", "OneDrive - Macquarie University",
-    "collab", "otn", "esrf", "fn", "config.R"),
-  doy.rng = 1:365
+    "collab", "otn", "esrf", "fn", "config.R")
 )
 }
 \arguments{
 \item{config}{- path to config.R script containing file.paths for required & optional environmental layers (see Details)}
-
-\item{doy.rng}{- range of days of year to be loaded from disk as a rasterStack (default = 1:365)}
 }
 \description{
 load required rasters, receiver locations

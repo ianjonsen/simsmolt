@@ -1,11 +1,11 @@
 ##' \code{sim_par} defines the simulation parameters & control scenarios used by \code{simulate}.
 ##'
 ##' The movement process used predominantly in the simulation is
-##' selected by the \code{move} argument.  Additional 
+##' selected by the \code{move} argument.  Additional
 ##' parameters include: \code{temp} is movement temperature-dependent; \code{advect} do ocean
-##' currents influence movement; \code{growth} do smolts grow in temp-dependent fashion; 
-##' \code{start.date}; 
-##' \code{start} (location); \code{coa} centre of attraction (can be NULL); 
+##' currents influence movement; \code{growth} do smolts grow in temp-dependent fashion;
+##' \code{start.date};
+##' \code{start} (location); \code{coa} centre of attraction (can be NULL);
 ##' \code{mdir} directional bias (a 2-element vector);
 ##' \code{rho} concentration of step directions (for wrapped-Cauchy, a 2-element vector); ...
 ##'
@@ -41,18 +41,20 @@ sim_par <-
            land = FALSE,
            boundary = FALSE,
            ...) {
-    
+
     move <- match.arg(move)
-    
+
     dots <- list(...)
-    
+
     pars <- list(
       N = 1440,
       start.dt = ISOdatetime(2021,07,09,00,00,00, tz = "UTC"),
       start = c(995, 1240),
       coa = NULL,
       mdir = c(75,-45)/180*pi, # bias direction for N migration (S migration is mdir - pi)
-      NFline = runif(1, 1350, 1450), # location on x-axis at which smolt turns N to Lab Shelf
+      NFline.x = runif(1, 1350, 1450), # location on x-axis at which smolt turns N to Lab Shelf
+      NFline.y = runif(1, 650, 775),
+      pN = 0.75,
       rho = c(0.6, 0.4), # directional persistence for brw [1] and rw [2]
       turn = 2.5, # rate at which smolts turn N after rounding NF
       ntries = 1,
@@ -69,10 +71,10 @@ sim_par <-
       pdrf = c(5, -0.02), # = p(0.5) @ 250 m  + < 0.01 @ 500 m   [c(4.865, -0.0139)  (~ consistent w HFX line V9 @ high power)]
       beta = c(-2, -2) # potential fn params to keep smolts on shelf
     )
-    
+
     ## overide default control pars
     pars[names(dots)] <- dots
-    
+
     list(move = move,
          temp = temp,
          advect = advect,

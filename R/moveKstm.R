@@ -33,24 +33,51 @@ moveKstm <- function(data, xy = NULL, mpar, i, step, ts, w) {
              }
            },
            as = {
-             if(i < round(mpar$pars$N * 0.85)) {
-               ## state 1: migration toward W Greenland
-               delta <- c(mpar$pars$coa[1,1] - xy[1], mpar$pars$coa[1,2] - xy[2])
+             if(i < round(mpar$pars$N * mpar$pars$pN)) {
+               ## state 1: migration toward E NL
+               if(xy[1] < mpar$pars$NFline.x) {
+                 delta <- c(mpar$pars$coa[1,1] - xy[1], mpar$pars$coa[1,2] - xy[2])
 
-               mu <- atan2(delta[1], delta[2])
-               rho <- tanh(mpar$pars$r * sqrt(sum(delta^2)))
-               phi <- rwrpcauchy(1, mu, rho)
-             } else if (i >= round(mpar$pars$N * 0.85)) {
-               ## state 2: migration back to spawing river
-               mu <- atan2(mpar$pars$coa[2,1] - xy[1], mpar$pars$coa[2,2] - xy[2])
-               phi <- rwrpcauchy(1, mu, mpar$pars$rho)
+                 mu <- atan2(delta[1], delta[2])
+                 rho <- tanh(mpar$pars$r * sqrt(sum(delta^2)))
+                 phi <- rwrpcauchy(1, mu, rho)
+
+               } else if(xy[1] >=  mpar$pars$NFline.x) {
+                ## state 2a: turn toward W Greenland
+                delta <- c(mpar$pars$coa[2,1] - xy[1], mpar$pars$coa[2,2] - xy[2])
+
+                mu <- atan2(delta[1], delta[2])
+                rho <- tanh(mpar$pars$r * sqrt(sum(delta^2)))
+                phi <- rwrpcauchy(1, mu, rho)
+
+               }
+               if(xy[2] > 775) {
+                  ## state 2: migration toward W Greenland, unconstrained in x axis
+                 delta <- c(mpar$pars$coa[2,1] - xy[1], mpar$pars$coa[2,2] - xy[2])
+
+                 mu <- atan2(delta[1], delta[2])
+                 rho <- tanh(mpar$pars$r * sqrt(sum(delta^2)))
+                 phi <- rwrpcauchy(1, mu, rho)
+               }
+             } else if (i >= round(mpar$pars$N * mpar$pars$pN)) {
+               ## state 3: migration back to E NL
+               if(xy[2] > mpar$pars$NFline.y) {
+                 mu <- atan2(mpar$pars$coa[3,1] - xy[1], mpar$pars$coa[3,2] - xy[2])
+                 phi <- rwrpcauchy(1, mu, mpar$pars$rho)
+
+               } else if(xy[2] <= mpar$pars$NFline.y |
+                         xy[1] < mpar$pars$coa[3,1]) {
+                 ## state 4: migration back to spawning river
+                 mu <- atan2(mpar$pars$coa[4,1] - xy[1], mpar$pars$coa[4,2] - xy[2])
+                 phi <- rwrpcauchy(1, mu, mpar$pars$rho)
+               }
              }
            })
 
     ## Temperature-dependent direction reversal (instantaneous)
-    g.rng <- growth(w, seq(1, 25, l = 100), step)
-    tsm <- seq(1, 25, l = 100)[which(g.rng >= w)] %>% min() * 0.5 #0.75
-    if(ts <= tsm) {
+#    g.rng <- growth(w, seq(1, 25, l = 100), step)
+#    tsm <- seq(1, 25, l = 100)[which(g.rng >= w)] * 0.5 #0.75
+    if(ts <= 5) {
       cells <- extract(data$ts[[(yday(mpar$pars$start.dt + i * 3600))]],
                        y = cbind(xy[1], xy[2]),
                        buffer = 5,
@@ -84,7 +111,7 @@ moveKstm <- function(data, xy = NULL, mpar, i, step, ts, w) {
 
   new.xy <- c(xy[1] + sin(phi) * step, xy[2] + cos(phi) * step)
 
-  if(mpar$shelf & d2l <= 30) {
+  if(mpar$shelf & d2l <= 20) {
     pv <- c(extract(data$shelf[[1]], rbind(new.xy))[1],
             extract(data$shelf[[2]], rbind(new.xy))[1])
     new.xy <- new.xy + pv * mpar$pars$beta

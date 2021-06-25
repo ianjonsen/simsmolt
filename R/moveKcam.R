@@ -33,14 +33,14 @@ moveKcam <- function(data, xy = NULL, mpar, i, step, ts, w) {
                }
                },
              as = {
-               if(i < round(mpar$pars$N * 0.85)) {
+               if(i < round(mpar$pars$N * mpar$pars$pN)) {
                  ## state 1: migration toward W Greenland
                  delta <- c(mpar$pars$coa[1,1] - xy[1], mpar$pars$coa[1,2] - xy[2])
 
                  mu <- atan2(delta[1], delta[2])
                  rho <- tanh(mpar$pars$r * sqrt(sum(delta^2)))
                  phi <- rwrpcauchy(1, mu, rho)
-               } else if (i >= round(mpar$pars$N * 0.85)) {
+               } else if (i >= round(mpar$pars$N * mpar$pars$pN)) {
                  ## state 2: migration back to spawing river
                  mu <- atan2(mpar$pars$coa[2,1] - xy[1], mpar$pars$coa[2,2] - xy[2])
                  phi <- rwrpcauchy(1, mu, mpar$pars$rho)
@@ -58,7 +58,8 @@ moveKcam <- function(data, xy = NULL, mpar, i, step, ts, w) {
                                    cellnumbers = TRUE)
           ## take 1st location at max ts
           cell.tmax <- cells[cells[, 3] == max(cells[, 3], na.rm = TRUE), "cells"]
-          xys <- xyFromCell(data$ts[[(yday(mpar$pars$start.dt + i * 3600))]], cell.tmax) %>% as.vector()
+          xys <- xyFromCell(data$ts[[(yday(mpar$pars$start.dt + i * 3600))]],
+                            cell.tmax) %>% as.vector()
           phi <- atan2(xys[1] - xy[1], xys[2] - xy[2])
 
         }
