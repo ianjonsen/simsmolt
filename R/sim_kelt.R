@@ -144,9 +144,9 @@ sim_kelt <-
         ## determine envt'l forcing
         ## determine advection due to current, convert from m/s to km/h
         u[i] <- extract(data$u[[(yday(mpar$pars$start.dt + i * 3600) - d1)]],
-                        rbind(xy[i - 1, ])) * 3.6 * mpar$par$uvm
+                        rbind(xy[i - 1, ]), method = "bilinear") * 3.6 * mpar$par$uvm
         v[i] <- extract(data$v[[(yday(mpar$pars$start.dt + i * 3600) - d1)]],
-                        rbind(xy[i - 1, ])) * 3.6 * mpar$par$uvm
+                        rbind(xy[i - 1, ]), method = "bilinear") * 3.6 * mpar$par$uvm
 
         ## turn off advection in sobi.box b/c too challenging to get smolts through w currents...
       } else if(!mpar$advect | all(xy[1] >= data$sobi.box[1],

@@ -41,7 +41,7 @@ sim <- lapply(1:n, function(i) {
                           start.dt = start.dt,
                           coa = cbind(c(coa1$x[i], coa2$x[i], x+10),
                                       c(coa1$y[i], coa2$y[i], y-5)), ## for "as" cbind(c(coa1$x[i],x-10), c(coa1$y[i],y-40)),
-                          r = 0.00125, #0.001, #0.00125,
+                          r = 0.001,#0.0005, #0.001, #0.00125,
                           w0 = s.w0 + om.delay, # guess 1 g/d growth after tagging
                           uvm = 1,
                           b = 1.6,
