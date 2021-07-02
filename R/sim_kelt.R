@@ -58,19 +58,16 @@ sim_kelt <-
       s <- fl * mpar$pars$b * 3.6
     }
 
-    ## what is start week in env data
-    d1 <- as.numeric(str_split(names(data$ts)[1], "d", simplify = TRUE)[,2]) - 1
-
     ## iterate ment
     for (i in 2:N) {
       if(i==2 && pb)  tpb <- txtProgressBar(min = 2, max = N, style = 3)
       ## extract Temperature
-      ts[i - 1] <- extract(data$ts[[(yday(mpar$pars$start.dt + i * 3600) - d1)]],
+      ts[i - 1] <- extract(data$ts[[yday(mpar$pars$start.dt + i * 3600)]],
                                   rbind(xy[i - 1,])) - 273
       if (is.na(ts[i - 1])) {
         ## calc mean Temp within 2 km buffer of location @ time i-1
         ts[i - 1] <-
-          extract(data$ts[[(yday(mpar$pars$start.dt + i * 3600) - d1)]],
+          extract(data$ts[[yday(mpar$pars$start.dt + i * 3600)]],
                          rbind(xy[i - 1,]),
                          method = "bilinear",
                          df = TRUE)[, 2] %>%
@@ -143,10 +140,10 @@ sim_kelt <-
       if (mpar$advect) {
         ## determine envt'l forcing
         ## determine advection due to current, convert from m/s to km/h
-        u[i] <- extract(data$u[[(yday(mpar$pars$start.dt + i * 3600) - d1)]],
+        u[i] <- extract(data$u[[yday(mpar$pars$start.dt + i * 3600)]],
                         rbind(xy[i - 1, ]), method = "bilinear") * 3.6 * mpar$par$uvm
-        v[i] <- extract(data$v[[(yday(mpar$pars$start.dt + i * 3600) - d1)]],
-                        rbind(xy[i - 1, ]), method = "bilinear") * 3.6 * mpar$par$uvm
+        v[i] <- extract(data$v[[yday(mpar$pars$start.dt + i * 3600)]],
+                        rbind(xy[i - 1, ]), method = "bilinear") * 3.6 * mpar$par$uvm * -1
 
         ## turn off advection in sobi.box b/c too challenging to get smolts through w currents...
       } else if(!mpar$advect | all(xy[1] >= data$sobi.box[1],
