@@ -143,7 +143,7 @@ sim_kelt <-
         u[i] <- extract(data$u[[yday(mpar$pars$start.dt + i * 3600)]],
                         rbind(xy[i - 1, ]), method = "bilinear") * 3.6 * mpar$par$uvm
         v[i] <- extract(data$v[[yday(mpar$pars$start.dt + i * 3600)]],
-                        rbind(xy[i - 1, ]), method = "bilinear") * 3.6 * mpar$par$uvm * -1
+                        rbind(xy[i - 1, ]), method = "bilinear") * 3.6 * mpar$par$uvm
 
         ## turn off advection in sobi.box b/c too challenging to get smolts through w currents...
       } else if(!mpar$advect | all(xy[1] >= data$sobi.box[1],
