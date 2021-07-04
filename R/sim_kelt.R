@@ -37,8 +37,7 @@ sim_kelt <-
     ## dl - displacements to deflect away from land
     xy <- matrix(NA, N, 2)
     xy[1,] <- cbind(mpar$pars$start)       #cbind(sloc[1], sloc[2])
-    ds <- matrix(NA, N, 3)
-#    ds[1,] <- c(NA, NA, NA)
+    ds <- matrix(NA, N, 2)
 
     ## define other vectors
     reten <- dir <- surv <- m <- u <- v <- ts <- vector("numeric", N)
@@ -133,7 +132,10 @@ sim_kelt <-
                                   w = w[i])
                        },
                        drift = {
-                         cbind(xy[i-1,1], xy[i-1,2], NA)
+                         ## add moveDrift.R to implement land avoidance
+                         moveDrifter(data,
+                                     xy = xy[i-1,],
+                                     mpar = mpar)
                        })
 
       ### Current Advection
@@ -141,9 +143,9 @@ sim_kelt <-
         ## determine envt'l forcing
         ## determine advection due to current, convert from m/s to km/h
         u[i] <- extract(data$u[[yday(mpar$pars$start.dt + i * 3600)]],
-                        rbind(xy[i - 1, ]), method = "bilinear") * 3.6 * mpar$par$uvm
+                        rbind(xy[i - 1, ]), method = "simple") * 3.6 * mpar$par$uvm
         v[i] <- extract(data$v[[yday(mpar$pars$start.dt + i * 3600)]],
-                        rbind(xy[i - 1, ]), method = "bilinear") * 3.6 * mpar$par$uvm
+                        rbind(xy[i - 1, ]), method = "simple") * 3.6 * mpar$par$uvm
 
         ## turn off advection in sobi.box b/c too challenging to get smolts through w currents...
       } else if(!mpar$advect | all(xy[1] >= data$sobi.box[1],
@@ -156,7 +158,8 @@ sim_kelt <-
       xy[i, 1:2] <- cbind(ds[i, 1] + u[i],
                           ds[i, 2] + v[i])
 
-      if((extract(data$land, rbind(xy[i, ])) == 0 | is.na(extract(data$land, rbind(xy[i, ]))))  & any(!is.na(xy[i,]))) {
+      if((extract(data$land, rbind(xy[i, ])) == 0 |
+          is.na(extract(data$land, rbind(xy[i, ]))))  & any(!is.na(xy[i,]))) {
         mpar$land <- TRUE
         cat("\n stopping simulation: stuck on land")
         break
@@ -201,7 +204,6 @@ sim_kelt <-
         y = xy[, 2],
         dx = ds[, 1] - lag(xy[, 1]),
         dy = ds[, 2] - lag(xy[, 2]),
-        phi = ds[, 3],
         u = u,
         v = v,
         ts = ts,

@@ -132,6 +132,6 @@ moveKstm <- function(data, xy = NULL, mpar, i, step, ts, w) {
     new.xy <- c(NA,NA)
   }
 
-  cbind(new.xy[1], new.xy[2], phi %% (2*pi))
+  cbind(new.xy[1], new.xy[2])
 
 }
