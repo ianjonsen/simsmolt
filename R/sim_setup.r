@@ -25,16 +25,13 @@ sim_setup <-
       ## FIXME:  prep code would prob require consistent receiver location / history format on OTN server
 
     source(config)
-    if(is.null(prj)) prj <- "+proj=laea +lat_0=41 +lon_0=-71 +units=km +datum=WGS84"
+    if(is.null(prj)) "+proj=stere +lat_0=90 +lon_0=-100 +k=0.933012425899506 +x_0=4245000 +y_0=5295000 +R=6371229 +units=km +no_defs"
 
     out <- list(
       bathy = raster(bathy),
       land = raster(d2land),
       land_dir = raster(land_dir)
     )
-
-    if (!is.null(d2shelf))
-      out[["shelf"]] <- stack(d2shelf)
 
     out[["u"]] <- stack(file.path(riops, "riops_doy_u.grd"))
     out[["v"]] <- stack(file.path(riops, "riops_doy_v.grd"))
