@@ -52,11 +52,11 @@ Returns a list with components
 }
 \details{
 The movement process used predominantly in the simulation is
-selected by the \code{move} argument.  Additional 
+selected by the \code{move} argument.  Additional
 parameters include: \code{temp} is movement temperature-dependent; \code{advect} do ocean
-currents influence movement; \code{growth} do smolts grow in temp-dependent fashion; 
-\code{start.date}; 
-\code{start} (location); \code{coa} centre of attraction (can be NULL); 
+currents influence movement; \code{growth} do smolts grow in temp-dependent fashion;
+\code{start.date};
+\code{start} (location); \code{coa} centre of attraction (can be NULL);
 \code{mdir} directional bias (a 2-element vector);
 \code{rho} concentration of step directions (for wrapped-Cauchy, a 2-element vector); ...
 }

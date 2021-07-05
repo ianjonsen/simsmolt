@@ -7,7 +7,7 @@
 sim_kelt(
   id = 1,
   data = NULL,
-  river = c("cam", "stm", "lah"),
+  river = c("cam", "stm", "lah", "drift"),
   mpar = sim_par(),
   pb = TRUE
 )
