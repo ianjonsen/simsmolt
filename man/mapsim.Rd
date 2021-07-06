@@ -9,7 +9,7 @@ mapsim(
   data = NULL,
   xlim = NULL,
   ylim = NULL,
-  res = 5,
+  res = 2,
   rec = TRUE,
   track = TRUE,
   last = TRUE,
@@ -23,7 +23,7 @@ mapsim(
   reccol = "blue",
   detcol = "red",
   pal = "Blues 3",
-  crs = "+proj=laea +lat_0=41 +lon_0=-71 +units=km +datum=WGS84",
+  prj = "+proj=laea +lat_0=41 +lon_0=-71 +units=km +datum=WGS84",
   ...
 )
 }

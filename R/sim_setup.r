@@ -15,20 +15,11 @@
 sim_setup <-
   function(config = file.path("/", "Users", "jonsen", "OneDrive - Macquarie University", "collab", "otn", "esrf", "fn", "config.R")) {
 
-    ## FIXME: this needs to be generalized - provide spatial extent for query to download ETOPO2 data?
-    ## FIXME:   or rely on user supplying their own bathymetry data
-
-    ## load receiver location data
-
-      ## FIXME: this needs to be generalized - do receiver data munging prior to using this function...
-      ## FIXME:  could generalize by accessing OTN server to pull requested receiver data from anywhere...
-      ## FIXME:  prep code would prob require consistent receiver location / history format on OTN server
-
     source(config)
-    if(is.null(prj)) "+proj=stere +lat_0=90 +lon_0=-100 +k=0.933012425899506 +x_0=4245000 +y_0=5295000 +R=6371229 +units=km +no_defs"
+    if(is.null(prj)) prj <- "+proj=stere +lat_0=90 +lon_0=-100 +k=0.933012425899506 +x_0=4245000 +y_0=5295000 +R=6371229 +units=km +no_defs"
 
     out <- list(
-      bathy = raster(bathy),
+      bathy = bathy,
       land = raster(d2land),
       land_dir = raster(land_dir)
     )
@@ -42,6 +33,7 @@ sim_setup <-
 
     out[["sobi.box"]] <- c(980,1030,1230,1275)
     out[["esrfPoly"]] <- readRDS(file.path(polygon.file, "NLpoly.RDS"))
+
 
     out[["prj"]] <- prj
 
