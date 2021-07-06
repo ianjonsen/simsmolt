@@ -33,9 +33,6 @@ sim_setup <-
       land_dir = raster(land_dir)
     )
 
-    if (!is.null(d2shelf))
-      out[["shelf"]] <- stack(d2shelf)
-
     out[["u"]] <- stack(file.path(riops, "riops_doy_u.grd"))
     out[["v"]] <- stack(file.path(riops, "riops_doy_v.grd"))
     out[["ts"]] <- stack(file.path(riops, "riops_doy_t.grd"))
