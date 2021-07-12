@@ -66,7 +66,7 @@ moveKcam <- function(data, xy = NULL, mpar, i, step, ts, w) {
 
     } else {
       ## direct kelt to move parallel to land
-      if(xy[2] < 1200) {
+      if(xy[2] < 2300) {
         phi <- as.numeric(extract(data$land_dir, rbind(xy)) + 0.5 * pi)
         if (d2l <= 2) {
           phi <-

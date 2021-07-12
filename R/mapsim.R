@@ -95,7 +95,7 @@ mapsim <- function(x,
   st_geometry(sim) <- NULL
 
   ## project bathy
-  bathy <- projectRaster(bathy, crs = prj)
+  bathy <- projectRaster(data$bathy, crs = prj)
 
   if (is.null(xlim))
     xlim <- c(extent(bathy)[1], extent(bathy)[2])

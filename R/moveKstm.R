@@ -51,7 +51,7 @@ moveKstm <- function(data, xy = NULL, mpar, i, step, ts, w) {
                 phi <- rwrpcauchy(1, mu, rho)
 
                }
-               if(xy[2] > 775) {
+               if(xy[2] > 2070) {
                   ## state 2: migration toward W Greenland, unconstrained in x axis
                  delta <- c(mpar$pars$coa[2,1] - xy[1], mpar$pars$coa[2,2] - xy[2])
 
@@ -93,7 +93,7 @@ moveKstm <- function(data, xy = NULL, mpar, i, step, ts, w) {
 
   } else {
     ## direct kelt to move parallel to land
-    if(xy[2] < 1200) {
+    if(xy[2] < 2300) {
       phi <- as.numeric(extract(data$land_dir, rbind(xy)) + 0.5 * pi)
       if (d2l <= 2) {
         phi <-

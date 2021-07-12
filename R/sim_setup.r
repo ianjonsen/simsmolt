@@ -15,18 +15,18 @@
 sim_setup <-
   function(config = file.path("/", "Users", "jonsen", "OneDrive - Macquarie University", "collab", "otn", "esrf", "fn", "config.R")) {
 
-    source(config)
+    suppressWarnings(source(config, local = TRUE, echo=FALSE))
     if(is.null(prj)) prj <- "+proj=stere +lat_0=90 +lon_0=-100 +k=0.933012425899506 +x_0=4245000 +y_0=5295000 +R=6371229 +units=km +no_defs"
 
     out <- list(
-      bathy = bathy,
-      land = raster(d2land),
-      land_dir = raster(land_dir)
+      bathy = suppressWarnings(raster(bathy)),
+      land = suppressWarnings(raster(d2land)),
+      land_dir = suppressWarnings(raster(land_dir))
     )
 
-    out[["u"]] <- stack(file.path(riops, "riops_doy_u.grd"))
-    out[["v"]] <- stack(file.path(riops, "riops_doy_v.grd"))
-    out[["ts"]] <- stack(file.path(riops, "riops_doy_t.grd"))
+    out[["u"]] <- suppressWarnings(stack(file.path(riops, "riops_doy_u.grd")))
+    out[["v"]] <- suppressWarnings(stack(file.path(riops, "riops_doy_v.grd")))
+    out[["ts"]] <- suppressWarnings(stack(file.path(riops, "riops_doy_t.grd")))
 
     out[["recLocs"]] <- esrf_rec
     out[["recPoly"]] <- recPoly_sf

@@ -49,11 +49,11 @@ sim_par <-
     pars <- list(
       N = 1440,
       start.dt = ISOdatetime(2021,07,09,00,00,00, tz = "UTC"),
-      start = c(995, 1240),
+      start = c(7305, 1425),
       coa = NULL,
       mdir = c(75,-45)/180*pi, # bias direction for N migration (S migration is mdir - pi)
-      NFline.x = runif(1, 1350, 1450), # location on x-axis at which smolt turns N to Lab Shelf
-      NFline.y = runif(1, 650, 775),
+      NFline.x = runif(1, 7760, 7775), # location on x-axis at which smolt turns N to Lab Shelf
+      NFline.y = runif(1, 1950, 2125),
       pN = 0.75,
       rho = c(0.6, 0.4), # directional persistence for brw [1] and rw [2]
       turn = 2.5, # rate at which smolts turn N after rounding NF
