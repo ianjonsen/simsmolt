@@ -52,7 +52,7 @@ sim_par <-
       start = c(7305, 1425),
       coa = NULL,
       mdir = c(75,-45)/180*pi, # bias direction for N migration (S migration is mdir - pi)
-      NFline.x = runif(1, 7760, 7775), # location on x-axis at which smolt turns N to Lab Shelf
+      NFline.x = runif(1, 7700, 7900), # location on x-axis at which smolt turns N to Lab Shelf
       NFline.y = runif(1, 1950, 2125),
       pN = 0.75,
       rho = c(0.6, 0.4), # directional persistence for brw [1] and rw [2]
