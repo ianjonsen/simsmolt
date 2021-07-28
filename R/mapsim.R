@@ -121,7 +121,8 @@ mapsim <- function(x,
     #   alpha = 0.75,
     #   lwd = 0.4
     # ) +
-    scale_fill_gradientn(colours = hcl.colors(n=100, pal), na.value = grey(0.8), guide = "none") +
+    scale_fill_gradientn(colours = hcl.colors(n=100, pal), 
+                         na.value = grey(0.8), guide = "none") +
     theme_minimal()
 
   ## ESRF Oil & Gas polygon
