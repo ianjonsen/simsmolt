@@ -13,7 +13,7 @@
 #' @export
 #'
 sim_setup <-
-  function(config = file.path("/", "Users", "jonsen", "OneDrive - Macquarie University", "collab", "otn", "esrf", "fn", "config.R")) {
+  function(config = config) {
 
     suppressWarnings(source(config, local = TRUE, echo=FALSE))
     if(is.null(prj)) prj <- "+proj=stere +lat_0=90 +lon_0=-100 +k=0.933012425899506 +x_0=4245000 +y_0=5295000 +R=6371229 +units=km +no_defs"

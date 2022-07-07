@@ -13,6 +13,7 @@
 ##' @param move "brw" a biased RW; "rw" simple RW; "drift" no active swimming
 ##' @param temp logical
 ##' @param advect logical
+##' @param noise numeric; add small random component to u,v vectors - only applies when mode = "drift"
 ##' @param growth logical
 ##' @param shelf logical; should smolts be constrained to stay in water > - 1000 m depth (continental shelf)
 ##' @param migs migration scenario 1 or 2 (stop migration upon arrival to Grand Banks)
@@ -23,6 +24,7 @@
 ##'   \item{\code{move}}{the main move process}
 ##'   \item{\code{temp}}{temperature-dependent movements}
 ##'   \item{\code{advect}}{ocean-current-dependent movements}
+##'   \item{\code{noise}}{add random noise to current u,v values}
 ##'   \item{\code{growth}}{temperature-dependent growth}
 ##'   \item{\code{shelf}}{movements constrained to stay on shelf}
 ##'   \item{\code{migs}}{migration strategy}
@@ -35,6 +37,7 @@ sim_par <-
   function(move = c("brw","rw","drift"),
            temp = TRUE,
            advect = TRUE,
+           noise = NULL,
            growth = TRUE,
            shelf = TRUE,
            scenario = "rs",
@@ -78,6 +81,7 @@ sim_par <-
     list(move = move,
          temp = temp,
          advect = advect,
+         noise = noise,
          growth = growth,
          shelf = shelf,
          scenario = scenario,

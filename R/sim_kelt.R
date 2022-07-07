@@ -57,7 +57,7 @@ sim_kelt <-
       s <- fl * mpar$pars$b * 3.6
     }
 
-    ## iterate ment
+    ## iterate movement
     for (i in 2:N) {
       if(i==2 && pb)  tpb <- txtProgressBar(min = 2, max = N, style = 3)
       ## extract Temperature

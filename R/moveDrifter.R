@@ -21,6 +21,9 @@ moveDrifter <- function(data, xy = NULL, mpar) {
     new.xy <- xyFromCell(data$land, cell.max) %>% as.vector()
     newxy <- cbind(new.xy[1], new.xy[2])
   }
-
-  return(newxy)
+  if(!is.null(mpar$noise)) {
+    return(newxy + rnorm(2, 0, mpar$noise))
+  } else {
+    return(newxy)
+  }
 }

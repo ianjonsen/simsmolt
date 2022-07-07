@@ -8,6 +8,7 @@ sim_par(
   move = c("brw", "rw", "drift"),
   temp = TRUE,
   advect = TRUE,
+  noise = NULL,
   growth = TRUE,
   shelf = TRUE,
   scenario = "rs",
@@ -22,6 +23,8 @@ sim_par(
 \item{temp}{logical}
 
 \item{advect}{logical}
+
+\item{noise}{numeric; add small random component to u,v vectors - only applies when mode = "drift"}
 
 \item{growth}{logical}
 
@@ -40,6 +43,7 @@ Returns a list with components
   \item{\code{move}}{the main move process}
   \item{\code{temp}}{temperature-dependent movements}
   \item{\code{advect}}{ocean-current-dependent movements}
+  \item{\code{noise}}{add random noise to current u,v values}
   \item{\code{growth}}{temperature-dependent growth}
   \item{\code{shelf}}{movements constrained to stay on shelf}
   \item{\code{migs}}{migration strategy}

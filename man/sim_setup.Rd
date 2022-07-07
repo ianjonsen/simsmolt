@@ -4,10 +4,7 @@
 \alias{sim_setup}
 \title{Pre-simulation setup}
 \usage{
-sim_setup(
-  config = file.path("/", "Users", "jonsen", "OneDrive - Macquarie University",
-    "collab", "otn", "esrf", "fn", "config.R")
-)
+sim_setup(config = config)
 }
 \arguments{
 \item{config}{- path to config.R script containing file.paths for required & optional environmental layers (see Details)}
